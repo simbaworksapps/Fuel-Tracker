@@ -172,9 +172,14 @@ p {
 
 .totals-grid {
   grid-column: 1 / -1;
+  position: sticky;
+  top: var(--sticky-offset, 0);
+  z-index: 19;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
+  padding: 8px 0;
+  background: var(--bg);
 }
 
 .metric {
@@ -458,6 +463,14 @@ p {
 
 .empty-state span {
   font-size: .88rem;
+}
+
+.back-top-btn {
+  justify-self: stretch;
+}
+
+.back-top-btn[hidden] {
+  display: none;
 }
 
 .modal {

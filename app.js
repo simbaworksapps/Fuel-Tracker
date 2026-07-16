@@ -8,6 +8,7 @@ const els = {
   contactCount: $("contactCount"),
   receiverList: $("receiverList"),
   emptyState: $("emptyState"),
+  backToTopBtn: $("backToTopBtn"),
   exportBtn: $("exportBtn"),
   importBtn: $("importBtn"),
   importFile: $("importFile"),
@@ -62,6 +63,7 @@ let confirmAction = null;
 let deferredInstallPrompt = null;
 let waitingWorker = null;
 let activeFilter = { query: "", from: "", to: "" };
+let suppressClicksUntil = 0;
 
 function id() {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -354,6 +356,20 @@ function render() {
     els.emptyState.querySelector("span").textContent = "Tap the plus button to log the first offload.";
   }
   els.receiverList.innerHTML = groups.map(renderReceiverCard).join("");
+  updateBackToTopVisibility();
+}
+
+function updateStickyOffset() {
+  const header = document.querySelector(".app-header");
+  const height = header ? Math.ceil(header.getBoundingClientRect().height) : 0;
+  document.documentElement.style.setProperty("--sticky-offset", `${height}px`);
+}
+
+function updateBackToTopVisibility() {
+  requestAnimationFrame(() => {
+    const canScroll = document.documentElement.scrollHeight > window.innerHeight + 24;
+    els.backToTopBtn.hidden = !canScroll || currentEntries().length === 0;
+  });
 }
 
 function renderReceiverCard(group) {
@@ -711,12 +727,20 @@ function initInstall() {
 }
 
 function initEvents() {
+  updateStickyOffset();
+  window.addEventListener("resize", () => {
+    updateStickyOffset();
+    updateBackToTopVisibility();
+  });
+  window.addEventListener("scroll", updateBackToTopVisibility, { passive: true });
+
   const onPress = (el, handler) => {
     let lastPointerAt = 0;
     el.addEventListener("pointerup", (event) => {
       event.preventDefault();
       event.stopPropagation();
       lastPointerAt = Date.now();
+      suppressClicksUntil = Date.now() + 700;
       handler(event);
     });
     el.addEventListener("click", (event) => {
@@ -769,6 +793,7 @@ function initEvents() {
   });
 
   els.exportBtn.addEventListener("click", exportData);
+  els.backToTopBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
   els.importFile.addEventListener("change", () => importData(els.importFile.files?.[0]));
   onPress(els.filterBtn, openFilterAfterTap);
   onPress(els.applyFilterBtn, applyFilter);
@@ -805,6 +830,11 @@ function initEvents() {
   document.querySelectorAll(".modal-close").forEach((button) => {
     button.addEventListener("click", () => closeModal(button.dataset.close));
   });
+  document.addEventListener("click", (event) => {
+    if (Date.now() > suppressClicksUntil) return;
+    event.preventDefault();
+    event.stopPropagation();
+  }, true);
   document.querySelectorAll(".modal").forEach((modal) => {
     modal.addEventListener("click", (event) => {
       if (event.target === modal) event.preventDefault();
