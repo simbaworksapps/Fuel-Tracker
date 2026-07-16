@@ -65,6 +65,10 @@ let waitingWorker = null;
 let activeFilter = { query: "", from: "", to: "" };
 let suppressClicksUntil = 0;
 
+function usesFinePointer() {
+  return Boolean(window.matchMedia?.("(hover: hover) and (pointer: fine)")?.matches);
+}
+
 function id() {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -472,7 +476,7 @@ function focusForKeyboard(el) {
 
 function focusAndSelect(el) {
   focusForKeyboard(el);
-  selectInputValue(el);
+  if (usesFinePointer()) selectInputValue(el);
 }
 
 function selectInputValue(el) {
@@ -848,9 +852,11 @@ function initEvents() {
   });
 
   els.offloadForm.querySelectorAll("input").forEach((el) => {
-    el.addEventListener("focus", () => selectInputValue(el));
+    el.addEventListener("focus", () => {
+      if (usesFinePointer()) selectInputValue(el);
+    });
     el.addEventListener("click", () => {
-      if (window.matchMedia?.("(hover: hover) and (pointer: fine)")?.matches) selectInputValue(el);
+      if (usesFinePointer()) selectInputValue(el);
     });
   });
 
