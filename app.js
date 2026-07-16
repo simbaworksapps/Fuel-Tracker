@@ -164,12 +164,12 @@ function formatEntryDate(value) {
   const localInputMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
   if (localInputMatch) {
     const [, year, month, day, hour, minute] = localInputMatch;
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    return `${pad(day)} ${months[Number(month) - 1]} ${hour}${minute}Z`;
+    const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+    return `${pad(day)}${months[Number(month) - 1]}${String(year).slice(-2)} ${hour}${minute}Z`;
   }
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value || "--";
-  return `${pad(date.getUTCDate())} ${date.toLocaleString(undefined, { month: "short", timeZone: "UTC" })} ${pad(date.getUTCHours())}${pad(date.getUTCMinutes())}Z`;
+  return `${pad(date.getUTCDate())}${date.toLocaleString(undefined, { month: "short", timeZone: "UTC" }).toUpperCase()}${String(date.getUTCFullYear()).slice(-2)} ${pad(date.getUTCHours())}${pad(date.getUTCMinutes())}Z`;
 }
 
 function entryTimestamp(value) {
