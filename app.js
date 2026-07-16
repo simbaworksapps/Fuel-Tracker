@@ -524,6 +524,10 @@ function openFilter() {
   openModal("filterModal");
 }
 
+function openFilterAfterTap() {
+  window.setTimeout(openFilter, 140);
+}
+
 function applyFilter() {
   const from = els.filterFrom.value;
   const to = els.filterTo.value;
@@ -766,7 +770,7 @@ function initEvents() {
 
   els.exportBtn.addEventListener("click", exportData);
   els.importFile.addEventListener("change", () => importData(els.importFile.files?.[0]));
-  onPress(els.filterBtn, openFilter);
+  onPress(els.filterBtn, openFilterAfterTap);
   onPress(els.applyFilterBtn, applyFilter);
   onPress(els.clearFilterBtn, clearFilter);
   els.filterQuery.addEventListener("keydown", (event) => {
