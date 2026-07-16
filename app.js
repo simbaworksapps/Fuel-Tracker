@@ -460,6 +460,16 @@ function focusForKeyboard(el) {
   el.focus({ preventScroll: true });
 }
 
+function selectInputValue(el) {
+  requestAnimationFrame(() => {
+    try {
+      el.select();
+    } catch {
+      // Some native date/time controls do not expose selectable text.
+    }
+  });
+}
+
 function openNewEntry(receiver = null) {
   resetForm();
   els.modalTitle.textContent = receiver ? "Add Offload" : "Add Receiver";
@@ -816,8 +826,9 @@ function initEvents() {
     if (cursor !== null) els.callsign.setSelectionRange(cursor, cursor);
   });
 
-  [els.fuelStart, els.fuelEnd, els.burnRate, els.contacts].forEach((el) => {
-    el.addEventListener("focus", () => requestAnimationFrame(() => el.select()));
+  els.offloadForm.querySelectorAll("input").forEach((el) => {
+    el.addEventListener("focus", () => selectInputValue(el));
+    el.addEventListener("click", () => selectInputValue(el));
   });
 
   els.boomTime.addEventListener("keydown", (event) => {
