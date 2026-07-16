@@ -460,6 +460,11 @@ function focusForKeyboard(el) {
   el.focus({ preventScroll: true });
 }
 
+function focusAndSelect(el) {
+  focusForKeyboard(el);
+  selectInputValue(el);
+}
+
 function selectInputValue(el) {
   requestAnimationFrame(() => {
     try {
@@ -480,7 +485,9 @@ function openNewEntry(receiver = null) {
     els.receiverType.value = entryType(receiver.entries[0]) === "UNKNOWN" ? "" : entryType(receiver.entries[0]);
   }
   openModal("offloadModal");
-  focusForKeyboard(receiver ? els.fuelStart : els.callsign);
+  const focusTarget = receiver ? els.fuelStart : els.callsign;
+  focusAndSelect(focusTarget);
+  if (!receiver) window.setTimeout(() => focusAndSelect(els.callsign), 120);
 }
 
 function submitOffloadForm() {
