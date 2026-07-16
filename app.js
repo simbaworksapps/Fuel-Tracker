@@ -387,8 +387,8 @@ function renderReceiverCard(group) {
         ${group.entries.map(renderEntryRow).join("")}
       </div>
       <div class="card-actions">
-        <button class="mini-btn add-to-receiver" type="button" data-receiver-key="${escapeHtml(group.key)}">Add Offload</button>
-        <button class="mini-btn danger-outline delete-receiver" type="button" data-receiver-key="${escapeHtml(group.key)}">Delete</button>
+        <button class="mini-btn add-to-receiver" type="button" data-receiver-key="${escapeHtml(group.key)}" aria-label="Add offload" title="Add offload">+</button>
+        <button class="mini-btn danger-outline delete-receiver" type="button" data-receiver-key="${escapeHtml(group.key)}" aria-label="Delete receiver" title="Delete receiver">&times;</button>
       </div>
     </article>
   `;
@@ -544,7 +544,9 @@ function openFilterAfterTap() {
   window.setTimeout(openFilter, 140);
 }
 
-function applyFilter() {
+function applyFilter(event) {
+  event?.preventDefault();
+  event?.stopPropagation();
   const from = els.filterFrom.value;
   const to = els.filterTo.value;
   if (from && to && entryTimestamp(from) > entryTimestamp(to)) {
@@ -556,8 +558,11 @@ function applyFilter() {
     from,
     to
   };
-  closeModal("filterModal");
-  render();
+  suppressClicksUntil = Date.now() + 1000;
+  window.setTimeout(() => {
+    closeModal("filterModal");
+    render();
+  }, 120);
 }
 
 function clearFilter() {
