@@ -517,6 +517,8 @@ p {
 }
 
 .modal-card {
+  position: relative;
+  z-index: 1;
   width: min(720px, 100%);
   max-height: min(840px, calc(100dvh - 28px));
   overflow: auto;
@@ -527,6 +529,15 @@ p {
   border: 1px solid var(--stroke-strong);
   border-radius: 8px;
   box-shadow: 0 24px 70px rgba(0, 0, 0, .55);
+}
+
+.modal.tap-shield::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  background: transparent;
+  pointer-events: auto;
 }
 
 .confirm-card {

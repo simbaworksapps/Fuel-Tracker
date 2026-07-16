@@ -433,9 +433,19 @@ function openModal(idName) {
   document.body.classList.add("modal-open");
 }
 
+function shieldOpeningTap(idName, ms = 220) {
+  const modal = els[idName];
+  if (!modal) return;
+  modal.classList.add("tap-shield");
+  window.setTimeout(() => modal.classList.remove("tap-shield"), ms);
+}
+
 function closeModal(idName) {
   const modal = els[idName];
-  if (modal) modal.hidden = true;
+  if (modal) {
+    modal.classList.remove("tap-shield");
+    modal.hidden = true;
+  }
   if (idName === "offloadModal") {
     editingEntryId = null;
     addToReceiver = null;
@@ -485,6 +495,7 @@ function openNewEntry(receiver = null) {
     els.receiverType.value = entryType(receiver.entries[0]) === "UNKNOWN" ? "" : entryType(receiver.entries[0]);
   }
   openModal("offloadModal");
+  shieldOpeningTap("offloadModal");
   const focusTarget = receiver ? els.fuelStart : els.callsign;
   focusAndSelect(focusTarget);
   if (!receiver) window.setTimeout(() => focusAndSelect(els.callsign), 120);
