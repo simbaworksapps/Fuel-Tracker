@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Fuel Tracker</title>
+  <meta name="theme-color" content="#0f172a">
+  <meta name="description" content="Offline KC-135 receiver fuel offload tracker.">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Fuel Tracker">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <a class="brand-logo-link" href="https://www.linkedin.com/in/james-m-rumpsa/" target="_blank" rel="noopener noreferrer" aria-label="James Rumpsa LinkedIn">
+        <img src="assets/simba.jpg" alt="" class="brand-logo">
+      </a>
+      <div>
+        <h1>Fuel Tracker</h1>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="cao-line" id="caoLine">CAO --</div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="totals-grid" aria-label="Mission totals">
+      <div class="metric" role="button" tabindex="0" data-summary="offload" aria-label="Show total offload by receiver type">
+        <span>TOT OFF</span>
+        <strong id="totalOffload">0</strong>
+      </div>
+      <div class="metric" role="button" tabindex="0" data-summary="receivers" aria-label="Show receiver count by type">
+        <span>RCVR'S</span>
+        <strong id="receiverCount">0</strong>
+      </div>
+      <div class="metric" role="button" tabindex="0" data-summary="contacts" aria-label="Show contacts by receiver type">
+        <span>CONT</span>
+        <strong id="contactCount">--</strong>
+      </div>
+    </section>
+
+    <section id="messageCenterPanel" class="message-center-panel" hidden>
+      <div id="installMessage" class="message-card">
+        <div>
+          <b>Install App</b>
+          <span>Use offline.</span>
+        </div>
+        <button id="installBtn" type="button">Install</button>
+      </div>
+      <div id="updateMessage" class="message-card" hidden>
+        <div>
+          <b>Update Available</b>
+          <span>Refresh app.</span>
+        </div>
+        <button id="updateBtn" type="button">Update</button>
+      </div>
+    </section>
+
+    <section class="panel receivers-panel">
+      <div class="section-row">
+        <h2>Receivers</h2>
+        <div class="receiver-tools">
+          <button id="addReceiverBtn" class="add-btn" type="button" aria-label="Add receiver" title="Add receiver">
+            <span aria-hidden="true">+</span>
+          </button>
+          <button id="exportBtn" class="mini-btn" type="button">Export</button>
+          <label class="mini-btn import-btn" for="importFile">Import</label>
+          <input id="importFile" type="file" accept="application/json,.json" hidden>
+          <button id="resetBtn" class="mini-btn danger-outline" type="button">Reset</button>
+        </div>
+      </div>
+      <div id="receiverList" class="receiver-list"></div>
+      <div id="emptyState" class="empty-state">
+        <strong>No receivers yet</strong>
+        <span>Tap the plus button to log the first offload.</span>
+      </div>
+    </section>
+  </main>
+
+  <div id="offloadModal" class="modal" hidden>
+    <form id="offloadForm" class="modal-card">
+      <div class="section-row">
+        <h2 id="modalTitle">Add Receiver</h2>
+        <button class="mini-btn modal-close" type="button" data-close="offloadModal" aria-label="Close">&times;</button>
+      </div>
+
+      <div class="form-grid">
+        <div class="field wide-field">
+          <label for="entryDate">Date (Zulu)</label>
+          <input id="entryDate" type="datetime-local" required>
+        </div>
+        <div class="field">
+          <label for="callsign">Callsign</label>
+          <input id="callsign" type="text" autocomplete="off" spellcheck="false" placeholder="RCH123" required>
+        </div>
+        <div class="field">
+          <label for="tail">Tail</label>
+          <input id="tail" type="text" autocomplete="off" spellcheck="false" placeholder="58-0123" required>
+        </div>
+        <div class="field">
+          <label for="receiverType">Type</label>
+          <input id="receiverType" type="text" autocomplete="off" spellcheck="false" placeholder="F-15">
+        </div>
+        <div class="field">
+          <label for="burnRate">Burn Rate</label>
+          <div class="unit-input">
+            <input id="burnRate" type="number" min="0" step="0.1" inputmode="decimal" value="10.0" required>
+            <span>K/hr</span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="fuelStart">Fuel Start</label>
+          <div class="unit-input">
+            <input id="fuelStart" type="number" min="0" step="0.1" inputmode="decimal" required>
+            <span>K</span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="fuelEnd">Fuel End</label>
+          <div class="unit-input">
+            <input id="fuelEnd" type="number" min="0" step="0.1" inputmode="decimal" required>
+            <span>K</span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="boomTime">Time on Boom</label>
+          <div class="unit-input">
+            <input id="boomTime" type="text" inputmode="decimal" placeholder="12 or 00:12" required>
+            <span>min</span>
+          </div>
+        </div>
+        <div class="field contacts-field">
+          <label for="contacts">Contacts</label>
+          <div class="unit-input">
+            <input id="contacts" type="number" min="1" step="1" inputmode="numeric" value="1">
+            <span>ct</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-card">
+        <div>
+          <span>Fuel Offloaded</span>
+          <strong id="previewOffload">0.0 K</strong>
+        </div>
+        <small id="formulaText">Start - End - (Boom Time x Burn Rate)</small>
+      </div>
+
+      <div class="form-actions">
+        <button id="deleteEntryBtn" class="primary-btn danger-btn" type="button" hidden>Delete</button>
+        <button class="primary-btn" type="submit">Save</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="installModal" class="modal" hidden>
+    <div class="modal-card confirm-card">
+      <div class="section-row">
+        <h2>Install App</h2>
+        <button class="mini-btn modal-close" data-close="installModal" type="button" aria-label="Close">&times;</button>
+      </div>
+      <div class="callout">iPhone and iPad: tap Share, then Add to Home Screen. Android and desktop browsers may show an install confirmation after tapping Install App.</div>
+    </div>
+  </div>
+
+  <div id="confirmModal" class="modal" hidden>
+    <div class="modal-card confirm-card">
+      <div class="section-row">
+        <h2 id="confirmTitle">Confirm</h2>
+        <button class="mini-btn modal-close" data-close="confirmModal" type="button" aria-label="Close">&times;</button>
+      </div>
+      <div id="confirmBody" class="callout"></div>
+      <div class="confirm-actions">
+        <button id="confirmCancelBtn" class="primary-btn" type="button">Cancel</button>
+        <button id="confirmOkBtn" class="primary-btn danger-btn" type="button">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

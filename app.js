@@ -1,0 +1,704 @@
+const $ = (id) => document.getElementById(id);
+
+const els = {
+  caoLine: $("caoLine"),
+  addReceiverBtn: $("addReceiverBtn"),
+  totalOffload: $("totalOffload"),
+  receiverCount: $("receiverCount"),
+  contactCount: $("contactCount"),
+  receiverList: $("receiverList"),
+  emptyState: $("emptyState"),
+  exportBtn: $("exportBtn"),
+  importBtn: $("importBtn"),
+  importFile: $("importFile"),
+  resetBtn: $("resetBtn"),
+  messageCenterPanel: $("messageCenterPanel"),
+  installMessage: $("installMessage"),
+  installBtn: $("installBtn"),
+  updateMessage: $("updateMessage"),
+  updateBtn: $("updateBtn"),
+  offloadModal: $("offloadModal"),
+  offloadForm: $("offloadForm"),
+  modalTitle: $("modalTitle"),
+  entryDate: $("entryDate"),
+  callsign: $("callsign"),
+  tail: $("tail"),
+  receiverType: $("receiverType"),
+  burnRate: $("burnRate"),
+  fuelStart: $("fuelStart"),
+  fuelEnd: $("fuelEnd"),
+  boomTime: $("boomTime"),
+  contacts: $("contacts"),
+  previewOffload: $("previewOffload"),
+  formulaText: $("formulaText"),
+  deleteEntryBtn: $("deleteEntryBtn"),
+  installModal: $("installModal"),
+  confirmModal: $("confirmModal"),
+  confirmTitle: $("confirmTitle"),
+  confirmBody: $("confirmBody"),
+  confirmCancelBtn: $("confirmCancelBtn"),
+  confirmOkBtn: $("confirmOkBtn")
+};
+
+const STORAGE_KEY = "simba-fuel-tracker-v1";
+const DEFAULT_BURN_RATE = 10.0;
+
+let state = {
+  entries: [],
+  lastUpdated: null
+};
+let editingEntryId = null;
+let addToReceiver = null;
+let confirmAction = null;
+let deferredInstallPrompt = null;
+let waitingWorker = null;
+
+function id() {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function loadState() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+    if (parsed && Array.isArray(parsed.entries)) {
+      state = {
+        entries: parsed.entries.map(normalizeEntryUnits),
+        lastUpdated: parsed.lastUpdated || null
+      };
+    }
+  } catch {
+    state = { entries: [], lastUpdated: null };
+  }
+}
+
+function saveState() {
+  state.lastUpdated = new Date().toISOString();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function formatNumber(value) {
+  return Math.round(Number(value) || 0).toLocaleString();
+}
+
+function formatK(value, digits = 1) {
+  const number = Number(value) || 0;
+  return number.toLocaleString(undefined, {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits
+  });
+}
+
+function formatSignedK(value, digits = 1) {
+  const number = Number(value) || 0;
+  const sign = number < 0 ? "-" : "";
+  return `${sign}${formatK(Math.abs(number), digits)}`;
+}
+
+function fuelDisplay(valueK) {
+  const abs = Math.abs(Number(valueK) || 0);
+  if (abs >= 1000000) {
+    return { value: formatSignedK(Number(valueK) / 1000000), unit: "B lbs" };
+  }
+  if (abs >= 1000) {
+    return { value: formatSignedK(Number(valueK) / 1000), unit: "M lbs" };
+  }
+  return { value: formatSignedK(valueK), unit: "K lbs" };
+}
+
+function formatFuel(valueK) {
+  const display = fuelDisplay(valueK);
+  return `${display.value} ${display.unit}`;
+}
+
+function normalizeEntryUnits(entry) {
+  const normalized = { ...entry };
+  const looksLikeRawLbs = [normalized.fuelStart, normalized.fuelEnd, normalized.burnRate, normalized.offload]
+    .some((value) => Math.abs(Number(value) || 0) > 1000);
+  if (!looksLikeRawLbs) return normalized;
+  ["fuelStart", "fuelEnd", "burnRate", "boomBurn", "offload"].forEach((key) => {
+    if (Number.isFinite(Number(normalized[key]))) normalized[key] = Number(normalized[key]) / 1000;
+  });
+  return normalized;
+}
+
+function entryImportKey(entry) {
+  return [
+    String(entry.date || ""),
+    String(entry.callsign || "").trim().toUpperCase(),
+    String(entryTail(entry)).trim().toUpperCase(),
+    Number(entry.fuelStart) || 0,
+    Number(entry.fuelEnd) || 0,
+    Number(entry.burnRate) || 0,
+    String(entry.boomTime || ""),
+    Number(entry.contacts) || 0,
+    Number(entry.offload) || 0
+  ].join("|");
+}
+
+function pad(value) {
+  return String(value).padStart(2, "0");
+}
+
+function zuluDatetimeValue(date = new Date()) {
+  return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}T${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}`;
+}
+
+function formatCao(iso) {
+  if (!iso) return "CAO --";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "CAO --";
+  const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+  return `CAO ${pad(date.getDate())}${months[date.getMonth()]}${String(date.getFullYear()).slice(-2)}`;
+}
+
+function formatEntryDate(value) {
+  const text = String(value || "");
+  const localInputMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  if (localInputMatch) {
+    const [, year, month, day, hour, minute] = localInputMatch;
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return `${pad(day)} ${months[Number(month) - 1]} ${hour}${minute}Z`;
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value || "--";
+  return `${pad(date.getUTCDate())} ${date.toLocaleString(undefined, { month: "short", timeZone: "UTC" })} ${pad(date.getUTCHours())}${pad(date.getUTCMinutes())}Z`;
+}
+
+function entryTimestamp(value) {
+  const text = String(value || "");
+  const localInputMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  if (localInputMatch && !/[zZ]|[+-]\d{2}:?\d{2}$/.test(text)) {
+    const [, year, month, day, hour, minute] = localInputMatch.map(Number);
+    return Date.UTC(year, month - 1, day, hour, minute);
+  }
+  return new Date(value).getTime();
+}
+
+function receiverKey(entry) {
+  return `${String(entry.callsign || "").trim().toUpperCase()}|${String(entryTail(entry)).trim().toUpperCase()}`;
+}
+
+function entryTail(entry) {
+  return entry.tail || entry.aircraft || "";
+}
+
+function entryType(entry) {
+  return String(entry.receiverType || entry.type || "").trim().toUpperCase() || "UNKNOWN";
+}
+
+function summarizeByType() {
+  const summary = new Map();
+  groupEntries(state.entries).forEach((receiver) => {
+    const type = entryType(receiver.entries[0]);
+    if (!summary.has(type)) {
+      summary.set(type, { type, receivers: 0, contacts: 0, offload: 0 });
+    }
+    const item = summary.get(type);
+    item.receivers += 1;
+    item.contacts += receiver.contacts;
+    item.offload += receiver.totalOffload;
+  });
+  return [...summary.values()].sort((a, b) => b.offload - a.offload || a.type.localeCompare(b.type));
+}
+
+function groupEntries(entries) {
+  const groups = new Map();
+  entries.forEach((entry) => {
+    const key = receiverKey(entry);
+    if (!groups.has(key)) {
+      groups.set(key, {
+        key,
+        callsign: entry.callsign,
+        tail: entryTail(entry),
+        entries: []
+      });
+    }
+    groups.get(key).entries.push(entry);
+  });
+  return [...groups.values()].map((group) => {
+    group.entries.sort((a, b) => entryTimestamp(b.date) - entryTimestamp(a.date));
+    group.totalOffload = group.entries.reduce((sum, entry) => sum + entry.offload, 0);
+    group.contacts = group.entries.reduce((sum, entry) => sum + (Number(entry.contacts) || 0), 0);
+    group.lastDate = group.entries.reduce((latest, entry) => {
+      const time = entryTimestamp(entry.date);
+      return Number.isFinite(time) && time > latest ? time : latest;
+    }, 0);
+    return group;
+  }).sort((a, b) => b.lastDate - a.lastDate);
+}
+
+function parseBoomMinutes(value) {
+  const text = String(value || "").trim();
+  if (!text) return NaN;
+  if (text.includes(":")) {
+    const parts = text.split(":").map((part) => Number(part));
+    if (parts.some((part) => !Number.isFinite(part) || part < 0)) return NaN;
+    if (parts.length === 2) return (parts[0] * 60) + parts[1];
+    if (parts.length === 3) return (parts[0] * 60) + parts[1] + (parts[2] / 60);
+    return NaN;
+  }
+  const numeric = Number(text);
+  return Number.isFinite(numeric) ? numeric : NaN;
+}
+
+function calculateOffload(values) {
+  const start = Number(values.fuelStart);
+  const end = Number(values.fuelEnd);
+  const burnRate = Number(values.burnRate);
+  const boomMinutes = parseBoomMinutes(values.boomTime);
+  if (![start, end, burnRate, boomMinutes].every(Number.isFinite)) return null;
+  const boomBurn = (boomMinutes / 60) * burnRate;
+  const offload = start - end - boomBurn;
+  return { offload, boomMinutes, boomBurn };
+}
+
+function currentFormValues() {
+  return {
+    date: els.entryDate.value,
+    callsign: els.callsign.value.trim().toUpperCase(),
+    tail: els.tail.value.trim().toUpperCase(),
+    receiverType: els.receiverType.value.trim().toUpperCase(),
+    fuelStart: Number(els.fuelStart.value),
+    fuelEnd: Number(els.fuelEnd.value),
+    burnRate: Number(els.burnRate.value || DEFAULT_BURN_RATE),
+    boomTime: els.boomTime.value.trim(),
+    contacts: Math.max(1, Math.round(Number(els.contacts.value) || 1))
+  };
+}
+
+function updatePreview() {
+  const values = currentFormValues();
+  const result = calculateOffload(values);
+  const card = document.querySelector(".formula-card");
+  card.classList.remove("warn", "bad");
+  if (!result) {
+    els.previewOffload.textContent = "0.0 K lbs";
+    els.formulaText.textContent = "Start - End - (Boom Time x Burn Rate)";
+    return;
+  }
+  els.previewOffload.textContent = formatFuel(result.offload);
+  els.formulaText.textContent = `${formatK(values.fuelStart)} - ${formatK(values.fuelEnd)} - (${formatNumber(result.boomMinutes)} min x ${formatK(values.burnRate)} K/hr)`;
+  if (result.offload < 0) card.classList.add("bad");
+  else if (result.offload === 0) card.classList.add("warn");
+}
+
+function render() {
+  const groups = groupEntries(state.entries);
+  const totalOffload = state.entries.reduce((sum, entry) => sum + entry.offload, 0);
+  const contacts = state.entries.reduce((sum, entry) => sum + (Number(entry.contacts) || 0), 0);
+  const trackedContacts = state.entries.some((entry) => Number(entry.contacts) > 0);
+
+  els.totalOffload.textContent = formatFuel(totalOffload);
+  els.receiverCount.textContent = String(groups.length);
+  els.contactCount.textContent = trackedContacts ? String(contacts) : "--";
+  els.caoLine.textContent = formatCao(state.lastUpdated);
+  els.emptyState.hidden = state.entries.length > 0;
+  els.receiverList.innerHTML = groups.map(renderReceiverCard).join("");
+}
+
+function renderReceiverCard(group) {
+  const contactText = group.contacts ? group.contacts : 0;
+  return `
+    <article class="receiver-card" data-receiver-key="${escapeHtml(group.key)}">
+      <div class="receiver-head">
+        <div class="receiver-title">
+          <strong>${escapeHtml(group.callsign)}</strong>
+          <span>Tail ${escapeHtml(group.tail)} - ${escapeHtml(entryType(group.entries[0]))}</span>
+        </div>
+        <div class="receiver-total">${formatFuel(group.totalOffload)} / ${contactText} ct</div>
+      </div>
+      <div class="entry-list">
+        ${group.entries.map(renderEntryRow).join("")}
+      </div>
+      <div class="card-actions">
+        <button class="mini-btn add-to-receiver" type="button" data-receiver-key="${escapeHtml(group.key)}">Add Offload</button>
+        <button class="mini-btn danger-outline delete-receiver" type="button" data-receiver-key="${escapeHtml(group.key)}">Delete</button>
+      </div>
+    </article>
+  `;
+}
+
+function renderEntryRow(entry) {
+  const contacts = entry.contacts ? ` - ${entry.contacts} ct` : "";
+  return `
+    <button class="entry-row" type="button" data-entry-id="${entry.id}">
+      <span>
+        <strong>${formatEntryDate(entry.date)}</strong>
+        <span>${formatK(entry.fuelStart)} to ${formatK(entry.fuelEnd)} K - ${formatNumber(entry.boomMinutes)} min${contacts}</span>
+      </span>
+      <b>${formatFuel(entry.offload)}</b>
+    </button>
+  `;
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function openModal(idName) {
+  const modal = els[idName];
+  if (!modal) return;
+  modal.hidden = false;
+  document.body.classList.add("modal-open");
+}
+
+function closeModal(idName) {
+  const modal = els[idName];
+  if (modal) modal.hidden = true;
+  if (idName === "offloadModal") {
+    editingEntryId = null;
+    addToReceiver = null;
+  }
+  if (idName === "confirmModal") confirmAction = null;
+  if (!document.querySelector(".modal:not([hidden])")) document.body.classList.remove("modal-open");
+}
+
+function resetForm() {
+  els.offloadForm.reset();
+  els.entryDate.value = zuluDatetimeValue();
+  els.burnRate.value = DEFAULT_BURN_RATE;
+  els.contacts.value = 1;
+  els.deleteEntryBtn.hidden = true;
+  editingEntryId = null;
+  addToReceiver = null;
+  updatePreview();
+}
+
+function openNewEntry(receiver = null) {
+  resetForm();
+  els.modalTitle.textContent = receiver ? "Add Offload" : "Add Receiver";
+  if (receiver) {
+    addToReceiver = receiver;
+    els.callsign.value = receiver.callsign;
+    els.tail.value = receiver.tail;
+    els.receiverType.value = entryType(receiver.entries[0]) === "UNKNOWN" ? "" : entryType(receiver.entries[0]);
+  }
+  openModal("offloadModal");
+  requestAnimationFrame(() => {
+    if (receiver) els.fuelStart.focus();
+    else els.callsign.focus();
+  });
+}
+
+function openEditEntry(entryId) {
+  const entry = state.entries.find((item) => item.id === entryId);
+  if (!entry) return;
+  resetForm();
+  editingEntryId = entry.id;
+  els.modalTitle.textContent = "Edit Offload";
+  els.entryDate.value = entry.date || zuluDatetimeValue();
+  els.callsign.value = entry.callsign || "";
+  els.tail.value = entryTail(entry);
+  els.receiverType.value = entryType(entry) === "UNKNOWN" ? "" : entryType(entry);
+  els.burnRate.value = entry.burnRate ?? DEFAULT_BURN_RATE;
+  els.fuelStart.value = entry.fuelStart ?? "";
+  els.fuelEnd.value = entry.fuelEnd ?? "";
+  els.boomTime.value = entry.boomTime || String(entry.boomMinutes || "");
+  els.contacts.value = entry.contacts || 1;
+  els.deleteEntryBtn.hidden = false;
+  updatePreview();
+  openModal("offloadModal");
+}
+
+function saveEntry(event) {
+  event.preventDefault();
+  const values = currentFormValues();
+  const result = calculateOffload(values);
+  if (!result || !values.callsign || !values.tail || !values.date) return;
+
+  const entry = {
+    id: editingEntryId || id(),
+    date: values.date,
+    callsign: values.callsign,
+    tail: values.tail,
+    receiverType: values.receiverType,
+    fuelStart: values.fuelStart,
+    fuelEnd: values.fuelEnd,
+    burnRate: values.burnRate,
+    boomTime: values.boomTime,
+    boomMinutes: result.boomMinutes,
+    boomBurn: result.boomBurn,
+    contacts: values.contacts,
+    offload: result.offload
+  };
+
+  if (editingEntryId) {
+    state.entries = state.entries.map((item) => item.id === editingEntryId ? entry : item);
+  } else {
+    state.entries.push(entry);
+  }
+
+  saveState();
+  render();
+  closeModal("offloadModal");
+}
+
+function openSummary(type) {
+  const rows = summarizeByType();
+  if (!rows.length) {
+    openConfirm("Summary", "No receiver fuel logged yet.", null, { okText: "OK", hideCancel: true, danger: false });
+    return;
+  }
+  const titleByType = {
+    offload: "TOT OFF",
+    receivers: "RCVR'S",
+    contacts: "CONT"
+  };
+  const body = rows.map((row) => {
+    if (type === "offload") return `${row.type}: ${formatFuel(row.offload)}`;
+    if (type === "receivers") return `${row.type} x${row.receivers}`;
+    return `${row.type}: ${row.contacts} ct`;
+  }).join("\n");
+  openConfirm(titleByType[type] || "Summary", body, null, { okText: "OK", hideCancel: true, danger: false });
+}
+
+function openConfirm(title, body, action, options = {}) {
+  els.confirmTitle.textContent = title;
+  els.confirmBody.textContent = body;
+  els.confirmCancelBtn.hidden = Boolean(options.hideCancel);
+  els.confirmCancelBtn.textContent = options.cancelText || "Cancel";
+  els.confirmOkBtn.textContent = options.okText || "Confirm";
+  els.confirmOkBtn.classList.toggle("danger-btn", options.danger !== false);
+  confirmAction = action;
+  openModal("confirmModal");
+}
+
+function deleteCurrentEntry() {
+  if (!editingEntryId) return;
+  const entry = state.entries.find((item) => item.id === editingEntryId);
+  openConfirm("Delete Offload", `Delete ${entry?.callsign || "this"} offload entry?`, () => {
+    state.entries = state.entries.filter((item) => item.id !== editingEntryId);
+    saveState();
+    render();
+    closeModal("offloadModal");
+  });
+}
+
+function deleteReceiver(key) {
+  const entries = state.entries.filter((entry) => receiverKey(entry) === key);
+  const label = entries[0] ? `${entries[0].callsign} ${entryTail(entries[0])}` : "this receiver";
+  openConfirm("Delete Receiver", `Delete all ${entries.length} offload entr${entries.length === 1 ? "y" : "ies"} for ${label}?`, () => {
+    state.entries = state.entries.filter((entry) => receiverKey(entry) !== key);
+    saveState();
+    render();
+  });
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const stamp = zuluDatetimeValue().replaceAll(":", "").replace("T", "-");
+  const filename = `kc135-fuel-tracker-${stamp}.json`;
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  openConfirm(
+    "Export Started",
+    `A backup file named ${filename} was sent to your browser's downloads. If you do not see it, check the browser downloads or files area.`,
+    null,
+    { okText: "OK", hideCancel: true, danger: false }
+  );
+}
+
+function importData(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.addEventListener("load", () => {
+    try {
+      const parsed = JSON.parse(String(reader.result || ""));
+      if (!parsed || !Array.isArray(parsed.entries)) throw new Error("Invalid file");
+      const existingKeys = new Set(state.entries.map(entryImportKey));
+      const importedEntries = parsed.entries.map(normalizeEntryUnits);
+      const newEntries = importedEntries.filter((entry) => {
+        const key = entryImportKey(entry);
+        if (existingKeys.has(key)) return false;
+        existingKeys.add(key);
+        return true;
+      });
+      const duplicateCount = importedEntries.length - newEntries.length;
+      openConfirm(
+        "Import Mission",
+        `Importing this file will add ${newEntries.length} new offload entr${newEntries.length === 1 ? "y" : "ies"} to the current mission. ${duplicateCount} duplicate entr${duplicateCount === 1 ? "y" : "ies"} will be skipped. Continue?`,
+        () => {
+          state.entries = [...state.entries, ...newEntries];
+          saveState();
+          render();
+        },
+        { danger: false }
+      );
+    } catch {
+      openConfirm("Import Failed", "That file did not look like a Fuel Tracker export.", () => {});
+    } finally {
+      els.importFile.value = "";
+    }
+  });
+  reader.readAsText(file);
+}
+
+function displayModeMatches(mode) {
+  return Boolean(window.matchMedia?.(`(display-mode: ${mode})`)?.matches);
+}
+
+function isInstalledApp() {
+  return window.navigator.standalone === true
+    || displayModeMatches("standalone")
+    || displayModeMatches("fullscreen")
+    || displayModeMatches("minimal-ui")
+    || document.referrer.startsWith("android-app://");
+}
+
+function refreshMessageCenter() {
+  const showInstall = !isInstalledApp();
+  const showUpdatePrompt = Boolean(waitingWorker);
+  els.installMessage.hidden = !showInstall;
+  els.updateMessage.hidden = !showUpdatePrompt;
+  els.messageCenterPanel.hidden = !(showInstall || showUpdatePrompt);
+}
+
+function registerServiceWorker() {
+  if (!("serviceWorker" in navigator)) {
+    refreshMessageCenter();
+    return;
+  }
+  navigator.serviceWorker.register("service-worker.js").then((reg) => {
+    if (reg.waiting) showUpdate(reg.waiting);
+    reg.addEventListener("updatefound", () => {
+      const worker = reg.installing;
+      if (!worker) return;
+      worker.addEventListener("statechange", () => {
+        if (worker.state === "installed" && navigator.serviceWorker.controller) showUpdate(worker);
+      });
+    });
+  }).catch(refreshMessageCenter);
+
+  navigator.serviceWorker.addEventListener("controllerchange", () => window.location.reload());
+}
+
+function showUpdate(worker) {
+  waitingWorker = worker;
+  refreshMessageCenter();
+}
+
+function initInstall() {
+  ["standalone", "fullscreen", "minimal-ui"].forEach((mode) => {
+    const query = window.matchMedia?.(`(display-mode: ${mode})`);
+    query?.addEventListener?.("change", refreshMessageCenter);
+  });
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    refreshMessageCenter();
+  });
+  window.addEventListener("appinstalled", () => {
+    deferredInstallPrompt = null;
+    refreshMessageCenter();
+  });
+  els.installBtn.addEventListener("click", async () => {
+    if (!deferredInstallPrompt) {
+      openModal("installModal");
+      return;
+    }
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    refreshMessageCenter();
+  });
+  refreshMessageCenter();
+}
+
+function initEvents() {
+  document.querySelectorAll(".metric[data-summary]").forEach((tile) => {
+    tile.addEventListener("click", () => openSummary(tile.dataset.summary));
+    tile.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      openSummary(tile.dataset.summary);
+    });
+  });
+  els.addReceiverBtn.addEventListener("click", () => openNewEntry());
+  els.offloadForm.addEventListener("submit", saveEntry);
+  els.deleteEntryBtn.addEventListener("click", deleteCurrentEntry);
+  [
+    els.fuelStart,
+    els.fuelEnd,
+    els.burnRate,
+    els.boomTime,
+    els.contacts
+  ].forEach((el) => el.addEventListener("input", updatePreview));
+
+  [els.fuelStart, els.fuelEnd, els.burnRate, els.contacts].forEach((el) => {
+    el.addEventListener("focus", () => requestAnimationFrame(() => el.select()));
+  });
+
+  els.receiverList.addEventListener("click", (event) => {
+    const entryButton = event.target.closest(".entry-row");
+    if (entryButton) {
+      openEditEntry(entryButton.dataset.entryId);
+      return;
+    }
+    const addButton = event.target.closest(".add-to-receiver");
+    if (addButton) {
+      const group = groupEntries(state.entries).find((item) => item.key === addButton.dataset.receiverKey);
+      if (group) openNewEntry(group);
+      return;
+    }
+    const deleteButton = event.target.closest(".delete-receiver");
+    if (deleteButton) deleteReceiver(deleteButton.dataset.receiverKey);
+  });
+
+  els.exportBtn.addEventListener("click", exportData);
+  els.importFile.addEventListener("change", () => importData(els.importFile.files?.[0]));
+  els.resetBtn.addEventListener("click", () => {
+    if (!state.entries.length) return;
+    openConfirm("Reset Mission", "Clear all receivers and offload entries from this device?", () => {
+      state = { entries: [], lastUpdated: new Date().toISOString() };
+      saveState();
+      render();
+    });
+  });
+
+  els.confirmCancelBtn.addEventListener("click", () => closeModal("confirmModal"));
+  els.confirmOkBtn.addEventListener("click", () => {
+    const action = confirmAction;
+    closeModal("confirmModal");
+    if (typeof action === "function") action();
+  });
+
+  document.querySelectorAll(".modal-close").forEach((button) => {
+    button.addEventListener("click", () => closeModal(button.dataset.close));
+  });
+  document.querySelectorAll(".modal").forEach((modal) => {
+    modal.addEventListener("click", (event) => {
+      if (event.target === modal) closeModal(modal.id);
+    });
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    const open = [...document.querySelectorAll(".modal:not([hidden])")].pop();
+    if (open) closeModal(open.id);
+  });
+
+  els.updateBtn.addEventListener("click", () => {
+    if (waitingWorker) waitingWorker.postMessage({ type: "SKIP_WAITING" });
+    else window.location.reload();
+  });
+}
+
+function boot() {
+  loadState();
+  initEvents();
+  render();
+  initInstall();
+  registerServiceWorker();
+}
+
+boot();
