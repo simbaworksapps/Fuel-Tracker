@@ -309,6 +309,31 @@ p {
   gap: 8px;
 }
 
+.receiver-tools .mini-btn,
+.receiver-tools .add-btn {
+  width: 52px;
+}
+
+.mini-btn.active {
+  color: var(--gold);
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px rgba(245, 200, 76, .18);
+}
+
+.filter-status {
+  padding: 7px 10px;
+  color: var(--gold);
+  background: rgba(245, 200, 76, .08);
+  border: 1px solid rgba(245, 200, 76, .22);
+  border-radius: 8px;
+  font-size: .76rem;
+  font-weight: 850;
+}
+
+.filter-status[hidden] {
+  display: none;
+}
+
 .import-btn {
   cursor: pointer;
 }
@@ -784,7 +809,12 @@ input:focus-visible,
   .receiver-tools {
     width: 100%;
     display: grid;
-    grid-template-columns: 52px repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .receiver-tools .mini-btn,
+  .receiver-tools .add-btn {
+    width: 100%;
   }
 
   .section-row {
@@ -843,5 +873,9 @@ input:focus-visible,
   .confirm-actions .primary-btn {
     min-height: 44px;
     min-width: 0;
+  }
+
+  #filterModal .form-grid {
+    grid-template-columns: 1fr;
   }
 }

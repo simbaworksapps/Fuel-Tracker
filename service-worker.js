@@ -1,4 +1,4 @@
-const CACHE_NAME = "simba-fuel-tracker-v0.1.37";
+const CACHE_NAME = "simba-fuel-tracker-v0.1.50";
 const ASSETS = [
   "/",
   "/index.html",

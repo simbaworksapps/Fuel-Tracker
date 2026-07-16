@@ -11,6 +11,14 @@ const els = {
   exportBtn: $("exportBtn"),
   importBtn: $("importBtn"),
   importFile: $("importFile"),
+  filterBtn: $("filterBtn"),
+  filterStatus: $("filterStatus"),
+  filterModal: $("filterModal"),
+  filterQuery: $("filterQuery"),
+  filterFrom: $("filterFrom"),
+  filterTo: $("filterTo"),
+  clearFilterBtn: $("clearFilterBtn"),
+  applyFilterBtn: $("applyFilterBtn"),
   resetBtn: $("resetBtn"),
   messageCenterPanel: $("messageCenterPanel"),
   installMessage: $("installMessage"),
@@ -53,6 +61,7 @@ let addToReceiver = null;
 let confirmAction = null;
 let deferredInstallPrompt = null;
 let waitingWorker = null;
+let activeFilter = { query: "", from: "", to: "" };
 
 function id() {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -179,9 +188,52 @@ function entryType(entry) {
   return String(entry.receiverType || entry.type || "").trim().toUpperCase() || "UNKNOWN";
 }
 
-function summarizeByType() {
+function filterLabel() {
+  const parts = [];
+  if (activeFilter.query) parts.push(`SEARCH ${activeFilter.query}`);
+  if (activeFilter.from || activeFilter.to) {
+    const from = activeFilter.from ? formatEntryDate(activeFilter.from) : "START";
+    const to = activeFilter.to ? formatEntryDate(activeFilter.to) : "NOW";
+    parts.push(`${from} - ${to}`);
+  }
+  return parts.join(" | ");
+}
+
+function entrySearchText(entry) {
+  return [
+    entry.date,
+    formatEntryDate(entry.date),
+    entry.callsign,
+    entryTail(entry),
+    entryType(entry),
+    entry.fuelStart,
+    entry.fuelEnd,
+    entry.burnRate,
+    entry.boomTime,
+    entry.boomMinutes,
+    entry.contacts,
+    entry.offload,
+    formatFuel(entry.offload)
+  ].filter((value) => value !== null && value !== undefined).join(" ").toUpperCase();
+}
+
+function entryInActiveFilter(entry) {
+  const time = entryTimestamp(entry.date);
+  if (!Number.isFinite(time)) return false;
+  if (activeFilter.from && time < entryTimestamp(activeFilter.from)) return false;
+  if (activeFilter.to && time > entryTimestamp(activeFilter.to)) return false;
+  if (activeFilter.query && !entrySearchText(entry).includes(activeFilter.query.toUpperCase())) return false;
+  return true;
+}
+
+function currentEntries() {
+  if (!activeFilter.query && !activeFilter.from && !activeFilter.to) return state.entries;
+  return state.entries.filter(entryInActiveFilter);
+}
+
+function summarizeByType(entries = currentEntries()) {
   const summary = new Map();
-  groupEntries(state.entries).forEach((receiver) => {
+  groupEntries(entries).forEach((receiver) => {
     const type = entryType(receiver.entries[0]);
     if (!summary.has(type)) {
       summary.set(type, { type, receivers: 0, contacts: 0, offload: 0 });
@@ -276,16 +328,28 @@ function updatePreview() {
 }
 
 function render() {
-  const groups = groupEntries(state.entries);
-  const totalOffload = state.entries.reduce((sum, entry) => sum + entry.offload, 0);
-  const contacts = state.entries.reduce((sum, entry) => sum + (Number(entry.contacts) || 0), 0);
-  const trackedContacts = state.entries.some((entry) => Number(entry.contacts) > 0);
+  const entries = currentEntries();
+  const groups = groupEntries(entries);
+  const totalOffload = entries.reduce((sum, entry) => sum + entry.offload, 0);
+  const contacts = entries.reduce((sum, entry) => sum + (Number(entry.contacts) || 0), 0);
+  const trackedContacts = entries.some((entry) => Number(entry.contacts) > 0);
 
   els.totalOffload.textContent = formatFuel(totalOffload);
   els.receiverCount.textContent = String(groups.length);
   els.contactCount.textContent = trackedContacts ? String(contacts) : "--";
   els.caoLine.textContent = APP_CAO;
-  els.emptyState.hidden = state.entries.length > 0;
+  const label = filterLabel();
+  els.filterStatus.hidden = !label;
+  els.filterStatus.textContent = label ? `FILTER ${label}` : "";
+  els.filterBtn.classList.toggle("active", Boolean(label));
+  els.emptyState.hidden = entries.length > 0;
+  if (!entries.length && state.entries.length && label) {
+    els.emptyState.querySelector("strong").textContent = "No entries in filter";
+    els.emptyState.querySelector("span").textContent = "Clear or adjust the time filter.";
+  } else {
+    els.emptyState.querySelector("strong").textContent = "No receivers yet";
+    els.emptyState.querySelector("span").textContent = "Tap the plus button to log the first offload.";
+  }
   els.receiverList.innerHTML = groups.map(renderReceiverCard).join("");
 }
 
@@ -402,7 +466,7 @@ function saveEntry(event) {
   event.preventDefault();
   const values = currentFormValues();
   const result = calculateOffload(values);
-  if (!result || !values.callsign || !values.tail || !values.date) return;
+  if (!result || !values.callsign || !values.tail || !values.receiverType || !values.date) return;
 
   const entry = {
     id: editingEntryId || id(),
@@ -448,6 +512,37 @@ function openSummary(type) {
     return `${row.type}: ${row.contacts} ct`;
   }).join("\n");
   openConfirm(titleByType[type] || "Summary", body, null, { okText: "OK", hideCancel: true, danger: false });
+}
+
+function openFilter() {
+  els.filterQuery.value = activeFilter.query;
+  els.filterFrom.value = activeFilter.from;
+  els.filterTo.value = activeFilter.to;
+  openModal("filterModal");
+}
+
+function applyFilter() {
+  const from = els.filterFrom.value;
+  const to = els.filterTo.value;
+  if (from && to && entryTimestamp(from) > entryTimestamp(to)) {
+    openConfirm("Time Filter", "From must be earlier than To.", null, { okText: "OK", hideCancel: true, danger: false });
+    return;
+  }
+  activeFilter = {
+    query: els.filterQuery.value.trim(),
+    from,
+    to
+  };
+  closeModal("filterModal");
+  render();
+}
+
+function clearFilter() {
+  activeFilter = { query: "", from: "", to: "" };
+  els.filterQuery.value = "";
+  els.filterFrom.value = "";
+  els.filterTo.value = "";
+  render();
 }
 
 function openConfirm(title, body, action, options = {}) {
@@ -609,6 +704,24 @@ function initInstall() {
 }
 
 function initEvents() {
+  const onPress = (el, handler) => {
+    let lastPointerAt = 0;
+    el.addEventListener("pointerup", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      lastPointerAt = Date.now();
+      handler(event);
+    });
+    el.addEventListener("click", (event) => {
+      if (Date.now() - lastPointerAt < 500) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+      handler(event);
+    });
+  };
+
   document.querySelectorAll(".metric[data-summary]").forEach((tile) => {
     tile.addEventListener("click", () => openSummary(tile.dataset.summary));
     tile.addEventListener("keydown", (event) => {
@@ -650,6 +763,22 @@ function initEvents() {
 
   els.exportBtn.addEventListener("click", exportData);
   els.importFile.addEventListener("change", () => importData(els.importFile.files?.[0]));
+  onPress(els.filterBtn, openFilter);
+  onPress(els.applyFilterBtn, applyFilter);
+  onPress(els.clearFilterBtn, clearFilter);
+  els.filterQuery.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    applyFilter();
+  });
+  [els.filterFrom, els.filterTo].forEach((el) => {
+    el.addEventListener("focus", () => {
+      if (!el.value) el.value = zuluDatetimeValue();
+    });
+    el.addEventListener("pointerdown", () => {
+      if (!el.value) el.value = zuluDatetimeValue();
+    });
+  });
   els.resetBtn.addEventListener("click", () => {
     if (!state.entries.length) return;
     openConfirm("Reset Mission", "Clear all receivers and offload entries from this device?", () => {
@@ -671,7 +800,7 @@ function initEvents() {
   });
   document.querySelectorAll(".modal").forEach((modal) => {
     modal.addEventListener("click", (event) => {
-      if (event.target === modal) closeModal(modal.id);
+      if (event.target === modal) event.preventDefault();
     });
   });
   document.addEventListener("keydown", (event) => {

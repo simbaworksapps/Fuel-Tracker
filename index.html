@@ -70,12 +70,14 @@
           <button id="addReceiverBtn" class="add-btn" type="button" aria-label="Add receiver" title="Add receiver">
             <span aria-hidden="true">+</span>
           </button>
-          <button id="exportBtn" class="mini-btn" type="button">Export</button>
-          <label class="mini-btn import-btn" for="importFile">Import</label>
+          <button id="exportBtn" class="mini-btn" type="button" aria-label="Export" title="Export">&darr;</button>
+          <label class="mini-btn import-btn" for="importFile" aria-label="Import" title="Import">&uarr;</label>
           <input id="importFile" type="file" accept="application/json,.json" hidden>
-          <button id="resetBtn" class="mini-btn danger-outline" type="button">Reset</button>
+          <button id="filterBtn" class="mini-btn" type="button" aria-label="Filter" title="Filter">&#9776;</button>
+          <button id="resetBtn" class="mini-btn danger-outline" type="button" aria-label="Reset mission" title="Reset mission">&#8634;</button>
         </div>
       </div>
+      <div id="filterStatus" class="filter-status" hidden></div>
       <div id="receiverList" class="receiver-list"></div>
       <div id="emptyState" class="empty-state">
         <strong>No receivers yet</strong>
@@ -106,7 +108,7 @@
         </div>
         <div class="field">
           <label for="receiverType">Type</label>
-          <input id="receiverType" type="text" autocomplete="off" spellcheck="false" placeholder="F-15">
+          <input id="receiverType" type="text" autocomplete="off" spellcheck="false" placeholder="F-15" required>
         </div>
         <div class="field">
           <label for="burnRate">Burn Rate</label>
@@ -139,7 +141,7 @@
         <div class="field contacts-field">
           <label for="contacts">Contacts</label>
           <div class="unit-input">
-            <input id="contacts" type="number" min="1" step="1" inputmode="numeric" value="1">
+            <input id="contacts" type="number" min="1" step="1" inputmode="numeric" value="1" required>
             <span>ct</span>
           </div>
         </div>
@@ -167,6 +169,34 @@
         <button class="mini-btn modal-close" data-close="installModal" type="button" aria-label="Close">&times;</button>
       </div>
       <div class="callout">iPhone and iPad: tap Share, then Add to Home Screen. Android and desktop browsers may show an install confirmation after tapping Install App.</div>
+    </div>
+  </div>
+
+  <div id="filterModal" class="modal" hidden>
+    <div class="modal-card confirm-card">
+      <div class="section-row">
+        <h2>Filter</h2>
+        <button class="mini-btn modal-close" data-close="filterModal" type="button" aria-label="Close">&times;</button>
+      </div>
+      <div class="form-grid">
+        <div class="field wide-field">
+          <label for="filterQuery">Search</label>
+          <input id="filterQuery" type="search" autocomplete="off" spellcheck="false" placeholder="Callsign, tail, type, fuel, contacts">
+        </div>
+        <div class="field">
+          <label for="filterFrom">From (Zulu)</label>
+          <input id="filterFrom" type="datetime-local">
+        </div>
+        <div class="field">
+          <label for="filterTo">To (Zulu)</label>
+          <input id="filterTo" type="datetime-local">
+        </div>
+      </div>
+      <div class="callout">Totals, receiver cards, and summary popups will only use entries that match the search and Zulu time window.</div>
+      <div class="confirm-actions">
+        <button id="clearFilterBtn" class="primary-btn" type="button">Clear</button>
+        <button id="applyFilterBtn" class="primary-btn" type="button">Apply</button>
+      </div>
     </div>
   </div>
 
