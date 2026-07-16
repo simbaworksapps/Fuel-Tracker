@@ -18,7 +18,10 @@
   --caution: #f5c84c;
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
 
 html,
 body {
@@ -41,6 +44,14 @@ button,
 input,
 textarea {
   font: inherit;
+}
+
+button,
+.import-btn,
+.entry-row,
+.metric {
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .app-header {
