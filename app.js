@@ -429,21 +429,16 @@ function openAddForReceiverKey(key) {
 function openModal(idName) {
   const modal = els[idName];
   if (!modal) return;
+  if (document.activeElement && !modal.contains(document.activeElement)) {
+    document.activeElement.blur();
+  }
   modal.hidden = false;
   document.body.classList.add("modal-open");
-}
-
-function shieldOpeningTap(idName, ms = 120) {
-  const modal = els[idName];
-  if (!modal) return;
-  modal.classList.add("tap-shield");
-  window.setTimeout(() => modal.classList.remove("tap-shield"), ms);
 }
 
 function closeModal(idName) {
   const modal = els[idName];
   if (modal) {
-    modal.classList.remove("tap-shield");
     modal.hidden = true;
   }
   if (idName === "offloadModal") {
@@ -495,7 +490,6 @@ function openNewEntry(receiver = null) {
     els.receiverType.value = entryType(receiver.entries[0]) === "UNKNOWN" ? "" : entryType(receiver.entries[0]);
   }
   openModal("offloadModal");
-  shieldOpeningTap("offloadModal");
   const focusTarget = receiver ? els.fuelStart : els.callsign;
   focusAndSelect(focusTarget);
 }
@@ -526,7 +520,6 @@ function openEditEntry(entryId) {
   els.deleteEntryBtn.hidden = false;
   updatePreview();
   openModal("offloadModal");
-  shieldOpeningTap("offloadModal");
 }
 
 function saveEntry(event) {

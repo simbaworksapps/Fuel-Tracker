@@ -531,15 +531,6 @@ p {
   box-shadow: 0 24px 70px rgba(0, 0, 0, .55);
 }
 
-.modal.tap-shield::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 2;
-  background: transparent;
-  pointer-events: auto;
-}
-
 .confirm-card {
   width: min(480px, 100%);
 }
@@ -827,6 +818,19 @@ button:active,
 .entry-row:active,
 .metric:active {
   transform: translateY(1px) scale(.99);
+}
+
+body.modal-open .entry-row,
+body.modal-open .metric,
+body.modal-open .receiver-tools .mini-btn,
+body.modal-open .receiver-tools .add-btn,
+body.modal-open .import-btn {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+body.modal-open .entry-row {
+  border-color: var(--stroke) !important;
 }
 
 button:focus-visible,
