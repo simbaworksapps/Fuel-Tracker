@@ -249,7 +249,7 @@ function summarizeByType(entries = currentEntries()) {
     item.contacts += receiver.contacts;
     item.offload += receiver.totalOffload;
   });
-  return [...summary.values()].sort((a, b) => b.offload - a.offload || a.type.localeCompare(b.type));
+  return [...summary.values()];
 }
 
 function groupEntries(entries) {
@@ -556,7 +556,13 @@ function saveEntry(event) {
 }
 
 function openSummary(type) {
-  const rows = summarizeByType();
+  const rankKeyByType = {
+    offload: "offload",
+    receivers: "receivers",
+    contacts: "contacts"
+  };
+  const rankKey = rankKeyByType[type] || "offload";
+  const rows = summarizeByType().sort((a, b) => (b[rankKey] - a[rankKey]) || a.type.localeCompare(b.type));
   if (!rows.length) {
     openConfirm("Summary", "No receiver fuel logged yet.", null, { okText: "OK", hideCancel: true, danger: false });
     return;
