@@ -122,6 +122,10 @@ function formatFuel(valueK) {
   return `${display.value} ${display.unit}`;
 }
 
+function negativeClass(value) {
+  return Number(value) < 0 ? " is-negative" : "";
+}
+
 function normalizeEntryUnits(entry) {
   const normalized = { ...entry };
   const looksLikeRawLbs = [normalized.fuelStart, normalized.fuelEnd, normalized.burnRate, normalized.offload]
@@ -340,6 +344,7 @@ function render() {
   const trackedContacts = entries.some((entry) => Number(entry.contacts) > 0);
 
   els.totalOffload.textContent = formatFuel(totalOffload);
+  els.totalOffload.classList.toggle("is-negative", totalOffload < 0);
   els.receiverCount.textContent = String(groups.length);
   els.contactCount.textContent = trackedContacts ? String(contacts) : "--";
   els.caoLine.textContent = APP_CAO;
@@ -381,7 +386,7 @@ function renderReceiverCard(group) {
           <strong>${escapeHtml(group.callsign)}</strong>
           <span>Tail ${escapeHtml(group.tail)} - ${escapeHtml(entryType(group.entries[0]))}</span>
         </div>
-        <div class="receiver-total">${formatFuel(group.totalOffload)} / ${contactText} ct</div>
+        <div class="receiver-total${negativeClass(group.totalOffload)}">${formatFuel(group.totalOffload)} / ${contactText} ct</div>
       </div>
       <div class="entry-list">
         ${group.entries.map(renderEntryRow).join("")}
@@ -402,7 +407,7 @@ function renderEntryRow(entry) {
         <strong>${formatEntryDate(entry.date)}</strong>
         <span>${formatK(entry.fuelStart)} to ${formatK(entry.fuelEnd)} K - ${formatNumber(entry.boomMinutes)} min${contacts}</span>
       </span>
-      <b>${formatFuel(entry.offload)}</b>
+      <b class="${negativeClass(entry.offload).trim()}">${formatFuel(entry.offload)}</b>
     </button>
   `;
 }
@@ -414,6 +419,11 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function openAddForReceiverKey(key) {
+  const group = groupEntries(state.entries).find((item) => item.key === key);
+  if (group) openNewEntry(group);
 }
 
 function openModal(idName) {
@@ -445,6 +455,11 @@ function resetForm() {
   updatePreview();
 }
 
+function focusForKeyboard(el) {
+  if (!el) return;
+  el.focus({ preventScroll: true });
+}
+
 function openNewEntry(receiver = null) {
   resetForm();
   els.modalTitle.textContent = receiver ? "Add Offload" : "Add Receiver";
@@ -455,10 +470,15 @@ function openNewEntry(receiver = null) {
     els.receiverType.value = entryType(receiver.entries[0]) === "UNKNOWN" ? "" : entryType(receiver.entries[0]);
   }
   openModal("offloadModal");
-  requestAnimationFrame(() => {
-    if (receiver) els.fuelStart.focus();
-    else els.callsign.focus();
-  });
+  focusForKeyboard(receiver ? els.fuelStart : els.callsign);
+}
+
+function submitOffloadForm() {
+  if (typeof els.offloadForm.requestSubmit === "function") {
+    els.offloadForm.requestSubmit();
+    return;
+  }
+  els.offloadForm.querySelector('button[type="submit"]')?.click();
 }
 
 function openEditEntry(entryId) {
@@ -521,16 +541,20 @@ function openSummary(type) {
     return;
   }
   const titleByType = {
-    offload: "TOT OFF",
-    receivers: "RCVR'S",
-    contacts: "CONT"
+    offload: "Total Offload",
+    receivers: "Receivers",
+    contacts: "Contacts"
   };
-  const body = rows.map((row) => {
-    if (type === "offload") return `${row.type}: ${formatFuel(row.offload)}`;
-    if (type === "receivers") return `${row.type} x${row.receivers}`;
-    return `${row.type}: ${row.contacts} ct`;
-  }).join("\n");
-  openConfirm(titleByType[type] || "Summary", body, null, { okText: "OK", hideCancel: true, danger: false });
+  const summaryRows = rows.map((row) => ({
+    label: row.type,
+    value: type === "offload" ? formatFuel(row.offload) : String(type === "receivers" ? row.receivers : row.contacts)
+  }));
+  openConfirm(titleByType[type] || "Summary", "", null, {
+    okText: "OK",
+    hideCancel: true,
+    danger: false,
+    summaryRows
+  });
 }
 
 function openFilter() {
@@ -576,6 +600,15 @@ function clearFilter() {
 function openConfirm(title, body, action, options = {}) {
   els.confirmTitle.textContent = title;
   els.confirmBody.textContent = body;
+  els.confirmBody.classList.toggle("summary-table", Boolean(options.summaryRows));
+  if (options.summaryRows) {
+    els.confirmBody.innerHTML = options.summaryRows.map((row) => `
+      <span>${escapeHtml(row.label)}</span>
+      <strong>${escapeHtml(row.value)}</strong>
+    `).join("");
+  } else {
+    els.confirmBody.textContent = body;
+  }
   els.confirmCancelBtn.hidden = Boolean(options.hideCancel);
   els.confirmCancelBtn.textContent = options.cancelText || "Cancel";
   els.confirmOkBtn.textContent = options.okText || "Confirm";
@@ -766,7 +799,7 @@ function initEvents() {
       openSummary(tile.dataset.summary);
     });
   });
-  els.addReceiverBtn.addEventListener("click", () => openNewEntry());
+  onPress(els.addReceiverBtn, () => openNewEntry());
   els.offloadForm.addEventListener("submit", saveEntry);
   els.deleteEntryBtn.addEventListener("click", deleteCurrentEntry);
   [
@@ -777,8 +810,35 @@ function initEvents() {
     els.contacts
   ].forEach((el) => el.addEventListener("input", updatePreview));
 
+  els.callsign.addEventListener("input", () => {
+    const cursor = els.callsign.selectionStart;
+    els.callsign.value = els.callsign.value.toUpperCase();
+    if (cursor !== null) els.callsign.setSelectionRange(cursor, cursor);
+  });
+
   [els.fuelStart, els.fuelEnd, els.burnRate, els.contacts].forEach((el) => {
     el.addEventListener("focus", () => requestAnimationFrame(() => el.select()));
+  });
+
+  els.boomTime.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    els.contacts.focus();
+  });
+
+  els.contacts.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    submitOffloadForm();
+  });
+
+  els.receiverList.addEventListener("pointerup", (event) => {
+    const addButton = event.target.closest(".add-to-receiver");
+    if (!addButton) return;
+    event.preventDefault();
+    event.stopPropagation();
+    suppressClicksUntil = Date.now() + 700;
+    openAddForReceiverKey(addButton.dataset.receiverKey);
   });
 
   els.receiverList.addEventListener("click", (event) => {
@@ -789,8 +849,7 @@ function initEvents() {
     }
     const addButton = event.target.closest(".add-to-receiver");
     if (addButton) {
-      const group = groupEntries(state.entries).find((item) => item.key === addButton.dataset.receiverKey);
-      if (group) openNewEntry(group);
+      openAddForReceiverKey(addButton.dataset.receiverKey);
       return;
     }
     const deleteButton = event.target.closest(".delete-receiver");

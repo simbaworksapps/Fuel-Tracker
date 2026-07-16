@@ -206,6 +206,10 @@ p {
   line-height: 1.1;
 }
 
+.metric strong.is-negative {
+  color: var(--red);
+}
+
 .message-center-panel {
   grid-column: 1 / -1;
   display: grid;
@@ -393,6 +397,10 @@ p {
   white-space: nowrap;
 }
 
+.receiver-total.is-negative {
+  color: var(--red);
+}
+
 .entry-list {
   display: grid;
   gap: 8px;
@@ -433,6 +441,10 @@ p {
   font-weight: 850;
   line-height: 1.1;
   white-space: nowrap;
+}
+
+.entry-row b.is-negative {
+  color: var(--red);
 }
 
 .card-actions {
@@ -608,6 +620,7 @@ p {
 }
 
 .field {
+  min-width: 0;
   display: grid;
   gap: 6px;
 }
@@ -624,6 +637,7 @@ label {
 
 input {
   width: 100%;
+  min-width: 0;
   min-height: 48px;
   padding: 10px 12px;
   color: var(--text);
@@ -631,6 +645,14 @@ input {
   border: 1px solid var(--stroke-strong);
   border-radius: 8px;
   outline: none;
+}
+
+input[type="datetime-local"] {
+  max-width: 100%;
+}
+
+#callsign {
+  text-transform: uppercase;
 }
 
 input:focus {
@@ -727,6 +749,28 @@ input:disabled {
 
 #confirmBody {
   white-space: pre-line;
+}
+
+#confirmBody.summary-table {
+  width: fit-content;
+  max-width: 100%;
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 7px 16px;
+  white-space: normal;
+}
+
+#confirmBody.summary-table span {
+  min-width: 0;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+#confirmBody.summary-table strong {
+  color: var(--text);
+  font-weight: 400;
+  text-align: left;
+  white-space: nowrap;
 }
 
 .formula-card.warn strong {
@@ -910,6 +954,10 @@ input:focus-visible,
 
   #filterModal .form-grid {
     grid-template-columns: 1fr;
+  }
+
+  #filterModal input[type="datetime-local"] {
+    font-size: .86rem;
   }
 
   #filterModal {
