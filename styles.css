@@ -503,11 +503,11 @@ p {
 .modal {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: 100;
   display: grid;
   place-items: center;
   padding: 14px;
-  background: rgba(2, 6, 12, .74);
+  background: rgba(2, 6, 12, .9);
   backdrop-filter: blur(10px);
 }
 
