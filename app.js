@@ -586,7 +586,7 @@ function openFilter() {
 }
 
 function openFilterAfterTap() {
-  window.setTimeout(openFilter, 140);
+  window.setTimeout(openFilter, 90);
 }
 
 function applyFilter(event) {
@@ -880,7 +880,7 @@ function initEvents() {
   els.exportBtn.addEventListener("click", exportData);
   els.backToTopBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
   els.importFile.addEventListener("change", () => importData(els.importFile.files?.[0]));
-  onPress(els.filterBtn, openFilterAfterTap);
+  els.filterBtn.addEventListener("click", openFilterAfterTap);
   onPress(els.applyFilterBtn, applyFilter);
   onPress(els.clearFilterBtn, clearFilter);
   els.filterQuery.addEventListener("keydown", (event) => {
