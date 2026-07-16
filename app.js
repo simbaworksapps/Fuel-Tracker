@@ -662,7 +662,7 @@ function exportData() {
   URL.revokeObjectURL(url);
   openConfirm(
     "Export Started",
-    `A backup file named ${filename} was sent to your browser's downloads. If you do not see it, check the browser downloads or files area.`,
+    `A backup file named ${filename} was sent to your browser's downloads. You can import this file later on this device or any other device running Fuel Tracker. If you do not see it, check the browser downloads or files area.`,
     null,
     { okText: "OK", hideCancel: true, danger: false }
   );
