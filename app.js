@@ -42,6 +42,7 @@ const els = {
 
 const STORAGE_KEY = "simba-fuel-tracker-v1";
 const DEFAULT_BURN_RATE = 10.0;
+const APP_CAO = "CAO 16JUL26";
 
 let state = {
   entries: [],
@@ -141,14 +142,6 @@ function pad(value) {
 
 function zuluDatetimeValue(date = new Date()) {
   return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}T${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}`;
-}
-
-function formatCao(iso) {
-  if (!iso) return "CAO --";
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return "CAO --";
-  const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-  return `CAO ${pad(date.getDate())}${months[date.getMonth()]}${String(date.getFullYear()).slice(-2)}`;
 }
 
 function formatEntryDate(value) {
@@ -291,7 +284,7 @@ function render() {
   els.totalOffload.textContent = formatFuel(totalOffload);
   els.receiverCount.textContent = String(groups.length);
   els.contactCount.textContent = trackedContacts ? String(contacts) : "--";
-  els.caoLine.textContent = formatCao(state.lastUpdated);
+  els.caoLine.textContent = APP_CAO;
   els.emptyState.hidden = state.entries.length > 0;
   els.receiverList.innerHTML = groups.map(renderReceiverCard).join("");
 }
