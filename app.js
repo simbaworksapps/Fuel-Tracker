@@ -433,7 +433,7 @@ function openModal(idName) {
   document.body.classList.add("modal-open");
 }
 
-function shieldOpeningTap(idName, ms = 220) {
+function shieldOpeningTap(idName, ms = 120) {
   const modal = els[idName];
   if (!modal) return;
   modal.classList.add("tap-shield");
@@ -467,7 +467,7 @@ function resetForm() {
 
 function focusForKeyboard(el) {
   if (!el) return;
-  el.focus({ preventScroll: true });
+  el.focus();
 }
 
 function focusAndSelect(el) {
@@ -498,7 +498,6 @@ function openNewEntry(receiver = null) {
   shieldOpeningTap("offloadModal");
   const focusTarget = receiver ? els.fuelStart : els.callsign;
   focusAndSelect(focusTarget);
-  if (!receiver) window.setTimeout(() => focusAndSelect(els.callsign), 120);
 }
 
 function submitOffloadForm() {
@@ -527,6 +526,7 @@ function openEditEntry(entryId) {
   els.deleteEntryBtn.hidden = false;
   updatePreview();
   openModal("offloadModal");
+  shieldOpeningTap("offloadModal");
 }
 
 function saveEntry(event) {
@@ -827,7 +827,10 @@ function initEvents() {
       openSummary(tile.dataset.summary);
     });
   });
-  onPress(els.addReceiverBtn, () => openNewEntry());
+  els.addReceiverBtn.addEventListener("click", (event) => {
+    event.stopPropagation();
+    openNewEntry();
+  });
   els.offloadForm.addEventListener("submit", saveEntry);
   els.deleteEntryBtn.addEventListener("click", deleteCurrentEntry);
   [
@@ -846,7 +849,9 @@ function initEvents() {
 
   els.offloadForm.querySelectorAll("input").forEach((el) => {
     el.addEventListener("focus", () => selectInputValue(el));
-    el.addEventListener("click", () => selectInputValue(el));
+    el.addEventListener("click", () => {
+      if (window.matchMedia?.("(hover: hover) and (pointer: fine)")?.matches) selectInputValue(el);
+    });
   });
 
   els.boomTime.addEventListener("keydown", (event) => {
@@ -861,23 +866,19 @@ function initEvents() {
     submitOffloadForm();
   });
 
-  els.receiverList.addEventListener("pointerup", (event) => {
-    const addButton = event.target.closest(".add-to-receiver");
-    if (!addButton) return;
-    event.preventDefault();
-    event.stopPropagation();
-    suppressClicksUntil = Date.now() + 700;
-    openAddForReceiverKey(addButton.dataset.receiverKey);
-  });
-
   els.receiverList.addEventListener("click", (event) => {
     const entryButton = event.target.closest(".entry-row");
     if (entryButton) {
+      event.preventDefault();
+      event.stopPropagation();
+      entryButton.blur();
       openEditEntry(entryButton.dataset.entryId);
       return;
     }
     const addButton = event.target.closest(".add-to-receiver");
     if (addButton) {
+      event.stopPropagation();
+      addButton.blur();
       openAddForReceiverKey(addButton.dataset.receiverKey);
       return;
     }
