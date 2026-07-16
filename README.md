@@ -18,7 +18,7 @@ Fuel offloaded is calculated as:
 fuel start K - fuel end K - (time on boom hours x burn rate K/hr)
 ```
 
-Time on boom accepts minutes, such as `12`, or `HH:MM`, such as `00:12`.
+Time on boom accepts minutes, such as `12`, compact `HHMM`, such as `0012`, or `HH:MM`, such as `00:12`.
 Receiver entry date/time is tracked and displayed in Zulu.
 
 Receivers are grouped by callsign plus tail number.

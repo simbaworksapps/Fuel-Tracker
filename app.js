@@ -282,6 +282,9 @@ function parseBoomMinutes(value) {
     if (parts.length === 3) return (parts[0] * 60) + parts[1] + (parts[2] / 60);
     return NaN;
   }
+  if (/^\d{4}$/.test(text)) {
+    return (Number(text.slice(0, 2)) * 60) + Number(text.slice(2));
+  }
   const numeric = Number(text);
   return Number.isFinite(numeric) ? numeric : NaN;
 }
