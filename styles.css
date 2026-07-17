@@ -1013,6 +1013,10 @@ input:focus-visible {
     justify-content: space-between;
   }
 
+  .receiver-heading .mini-btn {
+    width: 68px;
+  }
+
   .receiver-tools {
     width: 100%;
     display: grid;
