@@ -321,6 +321,16 @@ p {
   gap: 12px;
 }
 
+.receiver-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.receiver-heading .mini-btn {
+  width: 52px;
+}
+
 .receiver-tools {
   display: flex;
   flex-wrap: wrap;
@@ -802,24 +812,43 @@ input:disabled {
 }
 
 #confirmBody.summary-table {
-  width: fit-content;
+  width: 100%;
   max-width: 100%;
-  display: grid;
-  grid-template-columns: auto auto;
-  gap: 7px 16px;
   white-space: normal;
 }
 
-#confirmBody.summary-table span {
-  min-width: 0;
+.summary-table-inner {
+  width: auto;
+  max-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 7px;
+}
+
+.summary-table-inner td {
+  padding: 0;
+  vertical-align: baseline;
+}
+
+.summary-table-inner .summary-label {
+  max-width: min(22ch, 46vw);
+  padding-right: 18px;
   color: var(--muted);
   overflow-wrap: anywhere;
 }
 
-#confirmBody.summary-table strong {
+.summary-table-inner .summary-value {
+  min-width: 6ch;
+  padding-right: 6px;
   color: var(--text);
   font-weight: 400;
-  text-align: left;
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.summary-table-inner .summary-unit {
+  color: var(--text);
   white-space: nowrap;
 }
 
@@ -977,6 +1006,11 @@ input:focus-visible {
 
   .receiver-list {
     grid-template-columns: 1fr;
+  }
+
+  .receiver-heading {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .receiver-tools {

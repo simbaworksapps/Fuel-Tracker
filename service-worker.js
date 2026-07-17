@@ -1,9 +1,9 @@
-const CACHE_NAME = "simba-fuel-tracker-v0.1.107";
+const CACHE_NAME = "simba-fuel-tracker-v0.1.130";
 const ASSETS = [
   "/",
   "/index.html",
-  "/styles.css",
-  "/app.js",
+  "/styles.css?v=0.1.130",
+  "/app.js?v=0.1.130",
   "/manifest.json",
   "/assets/simba.jpg",
   "/icons/icon-192.png",
@@ -44,27 +44,18 @@ self.addEventListener("fetch", (event) => {
 
   if (event.request.mode === "navigate") {
     event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put("/", copy));
-          return response;
-        })
-        .catch(() => cachedAppShell(event.request))
+      cachedAppShell(event.request)
+        .then((response) => response || fetch(event.request))
     );
     return;
   }
 
   event.respondWith(
-    caches.match(event.request, { ignoreSearch: true }).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request)
-        .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-          return response;
-        })
-        .catch(() => caches.match(event.request, { ignoreSearch: true }));
-    })
+    caches.match(event.request, { ignoreSearch: true })
+      .then((response) => response || fetch(event.request).then((networkResponse) => {
+        const copy = networkResponse.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        return networkResponse;
+      }))
   );
 });

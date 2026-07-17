@@ -13,7 +13,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
   <link rel="icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=0.1.130">
 </head>
 <body>
   <header class="app-header">
@@ -65,7 +65,10 @@
 
     <section class="panel receivers-panel">
       <div class="section-row">
-        <h2>Receivers</h2>
+        <div class="receiver-heading">
+          <h2>Receivers</h2>
+          <button id="copyTimelineBtn" class="mini-btn" type="button" aria-label="Copy timeline" title="Copy timeline">&#10697;</button>
+        </div>
         <div class="receiver-tools">
           <button id="addReceiverBtn" class="add-btn" type="button" aria-label="Add receiver" title="Add receiver">
             <span aria-hidden="true">+</span>
@@ -226,6 +229,6 @@
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=0.1.130"></script>
 </body>
 </html>

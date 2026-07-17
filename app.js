@@ -9,6 +9,7 @@ const els = {
   receiverList: $("receiverList"),
   emptyState: $("emptyState"),
   backToTopBtn: $("backToTopBtn"),
+  copyTimelineBtn: $("copyTimelineBtn"),
   exportBtn: $("exportBtn"),
   importBtn: $("importBtn"),
   importFile: $("importFile"),
@@ -464,6 +465,62 @@ function renderEntryRow(entry) {
   `;
 }
 
+function timelineEntryDetails(entry) {
+  const contacts = `${Number(entry.contacts) || 0} ct`;
+  return `${formatFuel(entry.offload)} | ${contacts}`;
+}
+
+function timelineEntryLine(entry) {
+  const receiver = `${String(entry.callsign || "").trim().toUpperCase()} ${entryTail(entry)} ${entryType(entry)}`.trim();
+  return `${formatEntryDate(entry.date)} ${receiver}: ${timelineEntryDetails(entry)}`;
+}
+
+function buildTimelineText(entries = currentEntries()) {
+  const sorted = [...entries].sort((a, b) => entryTimestamp(a.date) - entryTimestamp(b.date));
+  const totalOffload = entries.reduce((sum, entry) => sum + entry.offload, 0);
+  const receiverCount = groupEntries(entries).length;
+  const contacts = entries.reduce((sum, entry) => sum + (Number(entry.contacts) || 0), 0);
+  const timeline = sorted.map(timelineEntryLine).join("\n");
+  return `${timeline}\n\nTOTAL: ${formatFuel(totalOffload)} | ${receiverCount} RCVR | ${contacts} ct`;
+}
+
+async function copyText(text) {
+  if (navigator.clipboard?.writeText && window.isSecureContext) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.top = "-1000px";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.select();
+  const copied = document.execCommand("copy");
+  textarea.remove();
+  if (!copied) throw new Error("Copy failed");
+}
+
+async function copyTimeline() {
+  const entries = currentEntries();
+  if (!entries.length) {
+    openConfirm("Timeline", "No offloads to copy.", null, { okText: "OK", hideCancel: true, danger: false });
+    return;
+  }
+  try {
+    await copyText(buildTimelineText(entries));
+    openConfirm(
+      "Timeline Copied",
+      `Copied ${entries.length} offload entr${entries.length === 1 ? "y" : "ies"} for paste into a text message.`,
+      null,
+      { hideCancel: true, hideOk: true, danger: false }
+    );
+  } catch {
+    openConfirm("Copy Failed", "Could not copy the timeline. Try again from the browser.", null, { okText: "OK", hideCancel: true, danger: false });
+  }
+}
+
 function escapeHtml(value) {
   return String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -651,13 +708,19 @@ function openSummary(type) {
     receivers: "Receivers",
     contacts: "Contacts"
   };
+  const totalByType = {
+    offload: formatFuel(rows.reduce((sum, row) => sum + row.offload, 0)),
+    receivers: String(rows.reduce((sum, row) => sum + row.receivers, 0)),
+    contacts: String(rows.reduce((sum, row) => sum + row.contacts, 0))
+  };
   const summaryRows = rows.map((row) => ({
     label: row.type,
-    value: type === "offload" ? formatFuel(row.offload) : String(type === "receivers" ? row.receivers : row.contacts)
+    value: type === "offload" ? fuelDisplay(row.offload).value : String(type === "receivers" ? row.receivers : row.contacts),
+    unit: type === "offload" ? fuelDisplay(row.offload).unit : ""
   }));
-  openConfirm(titleByType[type] || "Summary", "", null, {
-    okText: "OK",
+  openConfirm(`${titleByType[type] || "Summary"} ${totalByType[type] || ""}`.trim(), "", null, {
     hideCancel: true,
+    hideOk: true,
     danger: false,
     summaryRows
   });
@@ -708,15 +771,25 @@ function openConfirm(title, body, action, options = {}) {
   els.confirmBody.textContent = body;
   els.confirmBody.classList.toggle("summary-table", Boolean(options.summaryRows));
   if (options.summaryRows) {
-    els.confirmBody.innerHTML = options.summaryRows.map((row) => `
-      <span>${escapeHtml(row.label)}</span>
-      <strong>${escapeHtml(row.value)}</strong>
-    `).join("");
+    els.confirmBody.innerHTML = `
+      <table class="summary-table-inner">
+        <tbody>
+          ${options.summaryRows.map((row) => `
+            <tr>
+              <td class="summary-label">${escapeHtml(row.label)}</td>
+              <td class="summary-value">${escapeHtml(row.value)}</td>
+              <td class="summary-unit">${escapeHtml(row.unit || "")}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    `;
   } else {
     els.confirmBody.textContent = body;
   }
   els.confirmCancelBtn.hidden = Boolean(options.hideCancel);
   els.confirmCancelBtn.textContent = options.cancelText || "Cancel";
+  els.confirmOkBtn.hidden = Boolean(options.hideOk);
   els.confirmOkBtn.textContent = options.okText || "Confirm";
   els.confirmOkBtn.classList.toggle("danger-btn", options.danger !== false);
   confirmAction = action;
@@ -940,6 +1013,12 @@ function initEvents() {
     if (cursor !== null) els.callsign.setSelectionRange(cursor, cursor);
   });
 
+  els.receiverType.addEventListener("input", () => {
+    const cursor = els.receiverType.selectionStart;
+    els.receiverType.value = els.receiverType.value.toUpperCase();
+    if (cursor !== null) els.receiverType.setSelectionRange(cursor, cursor);
+  });
+
   els.offloadForm.querySelectorAll("input").forEach((el) => {
     el.addEventListener("focus", () => selectInputValue(el));
     el.addEventListener("click", () => selectInputValue(el));
@@ -984,6 +1063,7 @@ function initEvents() {
   });
 
   els.exportBtn.addEventListener("click", confirmExport);
+  els.copyTimelineBtn.addEventListener("click", copyTimeline);
   els.backToTopBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
   els.importBtn.addEventListener("click", confirmImport);
   els.importFile.addEventListener("change", () => importData(els.importFile.files?.[0]));
@@ -1005,11 +1085,19 @@ function initEvents() {
   });
   els.resetBtn.addEventListener("click", () => {
     if (!state.entries.length) return;
-    openConfirm("Reset Mission", "Clear all receivers and offload entries from this device?", () => {
-      state = { entries: [], lastUpdated: new Date().toISOString() };
-      saveState();
-      render();
-    });
+    openConfirm(
+      "Reset Mission",
+      "Clear all receivers and offload entries from this device?\n\nIf you want to save this mission for later or import it on another device, export it before resetting.",
+      () => {
+        state = {
+          entries: [],
+          lastUpdated: new Date().toISOString(),
+          lastBlockMode: state.lastBlockMode || "B40"
+        };
+        saveState();
+        render();
+      }
+    );
   });
 
   els.confirmCancelBtn.addEventListener("click", () => closeModal("confirmModal"));
