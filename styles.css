@@ -1014,7 +1014,7 @@ input:focus-visible {
   }
 
   .receiver-heading .mini-btn {
-    width: 68px;
+    width: calc((100% - 32px) / 5);
   }
 
   .receiver-tools {
