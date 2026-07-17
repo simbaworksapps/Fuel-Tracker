@@ -58,7 +58,8 @@ const APP_CAO = "CAO 17JUL26";
 
 let state = {
   entries: [],
-  lastUpdated: null
+  lastUpdated: null,
+  lastBlockMode: "B40"
 };
 let editingEntryId = null;
 let addToReceiver = null;
@@ -77,13 +78,15 @@ function loadState() {
   try {
     const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
     if (parsed && Array.isArray(parsed.entries)) {
+      const entries = parsed.entries.map(normalizeEntryUnits);
       state = {
-        entries: parsed.entries.map(normalizeEntryUnits),
-        lastUpdated: parsed.lastUpdated || null
+        entries,
+        lastUpdated: parsed.lastUpdated || null,
+        lastBlockMode: validBlockMode(parsed.lastBlockMode) || latestEntryBlockMode(entries) || "B40"
       };
     }
   } catch {
-    state = { entries: [], lastUpdated: null };
+    state = { entries: [], lastUpdated: null, lastBlockMode: "B40" };
   }
 }
 
@@ -128,6 +131,17 @@ function formatFuel(valueK) {
 
 function negativeClass(value) {
   return Number(value) < 0 ? " is-negative" : "";
+}
+
+function validBlockMode(mode) {
+  return mode === "B45" || mode === "B40" ? mode : "";
+}
+
+function latestEntryBlockMode(entries) {
+  return [...entries]
+    .sort((a, b) => entryTimestamp(b.date) - entryTimestamp(a.date))
+    .map((entry) => validBlockMode(entry.blockMode))
+    .find(Boolean) || "";
 }
 
 function normalizeEntryUnits(entry) {
@@ -495,7 +509,7 @@ function resetForm() {
   els.deleteEntryBtn.hidden = true;
   editingEntryId = null;
   addToReceiver = null;
-  setBlockMode("B40");
+  setBlockMode(state.lastBlockMode || "B40");
   updatePreview();
 }
 
@@ -614,6 +628,7 @@ function saveEntry(event) {
     state.entries.push(entry);
   }
 
+  state.lastBlockMode = values.blockMode;
   saveState();
   render();
   closeModal("offloadModal");
