@@ -665,6 +665,15 @@ function deleteReceiver(key) {
   });
 }
 
+function confirmExport() {
+  openConfirm(
+    "Export Backup",
+    "This will download a Fuel Tracker backup file from the current mission. You can import that file later on this device or any other device running Fuel Tracker.",
+    exportData,
+    { okText: "Export", danger: false }
+  );
+}
+
 function exportData() {
   const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -677,11 +686,14 @@ function exportData() {
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
+}
+
+function confirmImport() {
   openConfirm(
-    "Export Started",
-    `A backup file named ${filename} was sent to your browser's downloads. You can import this file later on this device or any other device running Fuel Tracker. If you do not see it, check the browser downloads or files area.`,
-    null,
-    { okText: "OK", hideCancel: true, danger: false }
+    "Import Backup",
+    "This will let you choose a Fuel Tracker backup file and incorporate it with the current mission. Matching duplicate entries will be skipped.",
+    () => els.importFile.click(),
+    { okText: "Import", danger: false }
   );
 }
 
@@ -701,15 +713,14 @@ function importData(file) {
         return true;
       });
       const duplicateCount = importedEntries.length - newEntries.length;
+      state.entries = [...state.entries, ...newEntries];
+      saveState();
+      render();
       openConfirm(
-        "Import Mission",
-        `Importing this file will add ${newEntries.length} new offload entr${newEntries.length === 1 ? "y" : "ies"} to the current mission. ${duplicateCount} duplicate entr${duplicateCount === 1 ? "y" : "ies"} will be skipped. Continue?`,
-        () => {
-          state.entries = [...state.entries, ...newEntries];
-          saveState();
-          render();
-        },
-        { danger: false }
+        "Import Complete",
+        `Added ${newEntries.length} new offload entr${newEntries.length === 1 ? "y" : "ies"}. Skipped ${duplicateCount} duplicate entr${duplicateCount === 1 ? "y" : "ies"}.`,
+        null,
+        { okText: "OK", hideCancel: true, danger: false }
       );
     } catch {
       openConfirm("Import Failed", "That file did not look like a Fuel Tracker export.", () => {});
@@ -883,8 +894,9 @@ function initEvents() {
     if (deleteButton) deleteReceiver(deleteButton.dataset.receiverKey);
   });
 
-  els.exportBtn.addEventListener("click", exportData);
+  els.exportBtn.addEventListener("click", confirmExport);
   els.backToTopBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+  els.importBtn.addEventListener("click", confirmImport);
   els.importFile.addEventListener("change", () => importData(els.importFile.files?.[0]));
   els.filterBtn.addEventListener("click", openFilterAfterTap);
   onPress(els.applyFilterBtn, applyFilter);
