@@ -435,7 +435,7 @@ function renderReceiverCard(group) {
           <strong>${escapeHtml(group.callsign)}</strong>
           <span>Tail ${escapeHtml(group.tail)} - ${escapeHtml(entryType(group.entries[0]))}</span>
         </div>
-        <div class="receiver-total${negativeClass(group.totalOffload)}">${formatFuel(group.totalOffload)} / ${contactText} ct</div>
+        <div class="receiver-total${negativeClass(group.totalOffload)}">${formatFuel(group.totalOffload)} | ${contactText} ct</div>
       </div>
       <div class="entry-list">
         ${group.entries.map(renderEntryRow).join("")}
