@@ -26,7 +26,7 @@
       </div>
     </div>
     <div class="header-actions">
-      <div class="cao-line" id="caoLine">CAO 16JUL26</div>
+      <div class="cao-line" id="caoLine">CAO 17JUL26</div>
     </div>
   </header>
 
@@ -91,6 +91,10 @@
     <form id="offloadForm" class="modal-card">
       <div class="section-row">
         <h2 id="modalTitle">Add Receiver</h2>
+        <div class="block-toggle modal-block-toggle" role="group" aria-label="KC-135 block">
+          <button id="blockB40" class="block-option active" type="button" aria-pressed="true">B40</button>
+          <button id="blockB45" class="block-option" type="button" aria-pressed="false">B45</button>
+        </div>
         <button class="mini-btn modal-close" type="button" data-close="offloadModal" aria-label="Close">&times;</button>
       </div>
 
@@ -111,32 +115,39 @@
           <label for="receiverType">Type</label>
           <input id="receiverType" type="text" autocomplete="off" spellcheck="false" placeholder="F-15" required>
         </div>
-        <div class="field">
+        <div class="field b40-field">
           <label for="burnRate">Burn Rate</label>
           <div class="unit-input">
             <input id="burnRate" type="number" min="0" step="0.1" inputmode="decimal" value="10.0" required>
             <span>K/hr</span>
           </div>
         </div>
-        <div class="field">
+        <div class="field b40-field">
           <label for="fuelStart">Fuel Start</label>
           <div class="unit-input">
             <input id="fuelStart" type="number" min="0" step="0.1" inputmode="decimal" required>
             <span>K</span>
           </div>
         </div>
-        <div class="field">
+        <div class="field b40-field">
           <label for="fuelEnd">Fuel End</label>
           <div class="unit-input">
             <input id="fuelEnd" type="number" min="0" step="0.1" inputmode="decimal" required>
             <span>K</span>
           </div>
         </div>
-        <div class="field">
+        <div class="field b40-field">
           <label for="boomTime">Time on Boom</label>
           <div class="unit-input">
             <input id="boomTime" type="text" inputmode="numeric" enterkeyhint="next" placeholder="12 or 0012" required>
             <span>min</span>
+          </div>
+        </div>
+        <div class="field b45-field" hidden>
+          <label for="fuelOffload">Fuel Offloaded</label>
+          <div class="unit-input">
+            <input id="fuelOffload" type="number" min="0" step="0.1" inputmode="decimal">
+            <span>K</span>
           </div>
         </div>
         <div class="field contacts-field">

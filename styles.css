@@ -567,6 +567,11 @@ p {
   flex-wrap: nowrap;
 }
 
+#offloadModal h2 {
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
 #offloadModal .modal-close {
   width: 38px;
   min-height: 38px;
@@ -640,6 +645,38 @@ p {
 
 .wide-field {
   grid-column: 1 / -1;
+}
+
+.block-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.modal-block-toggle {
+  width: min(170px, 42vw);
+  margin-left: auto;
+}
+
+.block-option {
+  min-height: 38px;
+  padding: 7px 10px;
+  color: var(--text);
+  background: var(--button);
+  border: 1px solid var(--stroke-strong);
+  border-radius: 8px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.block-option.active {
+  color: var(--gold);
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px rgba(245, 200, 76, .18);
+}
+
+[hidden] {
+  display: none !important;
 }
 
 label {

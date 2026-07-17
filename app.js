@@ -33,10 +33,13 @@ const els = {
   callsign: $("callsign"),
   tail: $("tail"),
   receiverType: $("receiverType"),
+  blockB40: $("blockB40"),
+  blockB45: $("blockB45"),
   burnRate: $("burnRate"),
   fuelStart: $("fuelStart"),
   fuelEnd: $("fuelEnd"),
   boomTime: $("boomTime"),
+  fuelOffload: $("fuelOffload"),
   contacts: $("contacts"),
   previewOffload: $("previewOffload"),
   formulaText: $("formulaText"),
@@ -51,7 +54,7 @@ const els = {
 
 const STORAGE_KEY = "simba-fuel-tracker-v1";
 const DEFAULT_BURN_RATE = 10.0;
-const APP_CAO = "CAO 16JUL26";
+const APP_CAO = "CAO 17JUL26";
 
 let state = {
   entries: [],
@@ -64,6 +67,7 @@ let deferredInstallPrompt = null;
 let waitingWorker = null;
 let activeFilter = { query: "", from: "", to: "" };
 let suppressClicksUntil = 0;
+let activeBlockMode = "B40";
 
 function id() {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -128,10 +132,11 @@ function negativeClass(value) {
 
 function normalizeEntryUnits(entry) {
   const normalized = { ...entry };
-  const looksLikeRawLbs = [normalized.fuelStart, normalized.fuelEnd, normalized.burnRate, normalized.offload]
+  normalized.blockMode = normalized.blockMode || "B40";
+  const looksLikeRawLbs = [normalized.fuelStart, normalized.fuelEnd, normalized.burnRate, normalized.fuelOffload, normalized.offload]
     .some((value) => Math.abs(Number(value) || 0) > 1000);
   if (!looksLikeRawLbs) return normalized;
-  ["fuelStart", "fuelEnd", "burnRate", "boomBurn", "offload"].forEach((key) => {
+  ["fuelStart", "fuelEnd", "burnRate", "boomBurn", "fuelOffload", "offload"].forEach((key) => {
     if (Number.isFinite(Number(normalized[key]))) normalized[key] = Number(normalized[key]) / 1000;
   });
   return normalized;
@@ -142,9 +147,11 @@ function entryImportKey(entry) {
     String(entry.date || ""),
     String(entry.callsign || "").trim().toUpperCase(),
     String(entryTail(entry)).trim().toUpperCase(),
+    String(entry.blockMode || "B40"),
     Number(entry.fuelStart) || 0,
     Number(entry.fuelEnd) || 0,
     Number(entry.burnRate) || 0,
+    Number(entry.fuelOffload) || 0,
     String(entry.boomTime || ""),
     Number(entry.contacts) || 0,
     Number(entry.offload) || 0
@@ -209,12 +216,14 @@ function entrySearchText(entry) {
   return [
     entry.date,
     formatEntryDate(entry.date),
+    entry.blockMode,
     entry.callsign,
     entryTail(entry),
     entryType(entry),
     entry.fuelStart,
     entry.fuelEnd,
     entry.burnRate,
+    entry.fuelOffload,
     entry.boomTime,
     entry.boomMinutes,
     entry.contacts,
@@ -296,12 +305,33 @@ function parseBoomMinutes(value) {
 }
 
 function calculateOffload(values) {
-  const start = Number(values.fuelStart);
-  const end = Number(values.fuelEnd);
+  if (values.blockMode === "B45") {
+    const offload = Number(values.fuelOffload);
+    if (!Number.isFinite(offload)) return null;
+    const boomMinutes = parseBoomMinutes(values.boomTime);
+    const boomBurn = calculateBoomBurn(values);
+    return {
+      offload,
+      boomMinutes: Number.isFinite(boomMinutes) ? boomMinutes : null,
+      boomBurn: Number.isFinite(boomBurn) ? boomBurn : null
+    };
+  }
+  return calculateB40Offload(values);
+}
+
+function calculateBoomBurn(values) {
   const burnRate = Number(values.burnRate);
   const boomMinutes = parseBoomMinutes(values.boomTime);
-  if (![start, end, burnRate, boomMinutes].every(Number.isFinite)) return null;
-  const boomBurn = (boomMinutes / 60) * burnRate;
+  if (![burnRate, boomMinutes].every(Number.isFinite)) return NaN;
+  return (boomMinutes / 60) * burnRate;
+}
+
+function calculateB40Offload(values) {
+  const start = Number(values.fuelStart);
+  const end = Number(values.fuelEnd);
+  const boomMinutes = parseBoomMinutes(values.boomTime);
+  const boomBurn = calculateBoomBurn(values);
+  if (![start, end, boomMinutes, boomBurn].every(Number.isFinite)) return null;
   const offload = start - end - boomBurn;
   return { offload, boomMinutes, boomBurn };
 }
@@ -312,9 +342,11 @@ function currentFormValues() {
     callsign: els.callsign.value.trim().toUpperCase(),
     tail: els.tail.value.trim().toUpperCase(),
     receiverType: els.receiverType.value.trim().toUpperCase(),
+    blockMode: activeBlockMode,
     fuelStart: Number(els.fuelStart.value),
     fuelEnd: Number(els.fuelEnd.value),
     burnRate: Number(els.burnRate.value || DEFAULT_BURN_RATE),
+    fuelOffload: els.fuelOffload.value === "" ? NaN : Number(els.fuelOffload.value),
     boomTime: els.boomTime.value.trim(),
     contacts: Math.max(1, Math.round(Number(els.contacts.value) || 1))
   };
@@ -327,11 +359,13 @@ function updatePreview() {
   card.classList.remove("warn", "bad");
   if (!result) {
     els.previewOffload.textContent = "0.0 K lbs";
-    els.formulaText.textContent = "Start - End - (Boom Time x Burn Rate)";
+    els.formulaText.textContent = values.blockMode === "B45" ? "Direct fuel entry" : "Start - End - (Boom Time x Burn Rate)";
     return;
   }
   els.previewOffload.textContent = formatFuel(result.offload);
-  els.formulaText.textContent = `${formatK(values.fuelStart)} - ${formatK(values.fuelEnd)} - (${formatNumber(result.boomMinutes)} min x ${formatK(values.burnRate)} K/hr)`;
+  els.formulaText.textContent = values.blockMode === "B45"
+    ? "Direct fuel entry"
+    : `${formatK(values.fuelStart)} - ${formatK(values.fuelEnd)} - (${formatNumber(result.boomMinutes)} min x ${formatK(values.burnRate)} K/hr)`;
   if (result.offload < 0) card.classList.add("bad");
   else if (result.offload === 0) card.classList.add("warn");
 }
@@ -401,11 +435,15 @@ function renderReceiverCard(group) {
 
 function renderEntryRow(entry) {
   const contacts = entry.contacts ? ` - ${entry.contacts} ct` : "";
+  const blockMode = entry.blockMode || "B40";
+  const details = blockMode === "B45"
+    ? `${blockMode} - direct${contacts}`
+    : `${formatK(entry.fuelStart)} to ${formatK(entry.fuelEnd)} K - ${formatNumber(entry.boomMinutes)} min${contacts}`;
   return `
     <button class="entry-row" type="button" data-entry-id="${entry.id}">
       <span>
         <strong>${formatEntryDate(entry.date)}</strong>
-        <span>${formatK(entry.fuelStart)} to ${formatK(entry.fuelEnd)} K - ${formatNumber(entry.boomMinutes)} min${contacts}</span>
+        <span>${details}</span>
       </span>
       <b class="${negativeClass(entry.offload).trim()}">${formatFuel(entry.offload)}</b>
     </button>
@@ -457,6 +495,21 @@ function resetForm() {
   els.deleteEntryBtn.hidden = true;
   editingEntryId = null;
   addToReceiver = null;
+  setBlockMode("B40");
+  updatePreview();
+}
+
+function setBlockMode(mode) {
+  activeBlockMode = mode === "B45" ? "B45" : "B40";
+  const isB45 = activeBlockMode === "B45";
+  els.blockB40.classList.toggle("active", !isB45);
+  els.blockB45.classList.toggle("active", isB45);
+  els.blockB40.setAttribute("aria-pressed", String(!isB45));
+  els.blockB45.setAttribute("aria-pressed", String(isB45));
+  document.querySelectorAll(".b40-field").forEach((field) => { field.hidden = isB45; });
+  document.querySelectorAll(".b45-field").forEach((field) => { field.hidden = !isB45; });
+  [els.burnRate, els.fuelStart, els.fuelEnd, els.boomTime].forEach((input) => { input.required = !isB45; });
+  els.fuelOffload.required = isB45;
   updatePreview();
 }
 
@@ -488,9 +541,10 @@ function openNewEntry(receiver = null) {
     els.callsign.value = receiver.callsign;
     els.tail.value = receiver.tail;
     els.receiverType.value = entryType(receiver.entries[0]) === "UNKNOWN" ? "" : entryType(receiver.entries[0]);
+    setBlockMode(receiver.entries[0]?.blockMode || "B40");
   }
   openModal("offloadModal");
-  const focusTarget = receiver ? els.fuelStart : els.callsign;
+  const focusTarget = receiver ? (activeBlockMode === "B45" ? els.fuelOffload : els.fuelStart) : els.callsign;
   focusAndSelect(focusTarget);
 }
 
@@ -509,6 +563,7 @@ function openEditEntry(entryId) {
   editingEntryId = entry.id;
   els.modalTitle.textContent = "Edit Offload";
   els.entryDate.value = entry.date || zuluDatetimeValue();
+  setBlockMode(entry.blockMode || "B40");
   els.callsign.value = entry.callsign || "";
   els.tail.value = entryTail(entry);
   els.receiverType.value = entryType(entry) === "UNKNOWN" ? "" : entryType(entry);
@@ -516,6 +571,7 @@ function openEditEntry(entryId) {
   els.fuelStart.value = entry.fuelStart ?? "";
   els.fuelEnd.value = entry.fuelEnd ?? "";
   els.boomTime.value = entry.boomTime || String(entry.boomMinutes || "");
+  els.fuelOffload.value = entry.fuelOffload ?? entry.offload ?? "";
   els.contacts.value = entry.contacts || 1;
   els.deleteEntryBtn.hidden = false;
   updatePreview();
@@ -527,6 +583,9 @@ function saveEntry(event) {
   const values = currentFormValues();
   const result = calculateOffload(values);
   if (!result || !values.callsign || !values.tail || !values.receiverType || !values.date) return;
+  const b40Result = calculateB40Offload(values);
+  const b40BoomMinutes = parseBoomMinutes(values.boomTime);
+  const b40BoomBurn = calculateBoomBurn(values);
 
   const entry = {
     id: editingEntryId || id(),
@@ -534,12 +593,17 @@ function saveEntry(event) {
     callsign: values.callsign,
     tail: values.tail,
     receiverType: values.receiverType,
-    fuelStart: values.fuelStart,
-    fuelEnd: values.fuelEnd,
-    burnRate: values.burnRate,
+    blockMode: values.blockMode,
+    fuelStart: Number.isFinite(values.fuelStart) ? values.fuelStart : null,
+    fuelEnd: Number.isFinite(values.fuelEnd) ? values.fuelEnd : null,
+    burnRate: Number.isFinite(values.burnRate) ? values.burnRate : null,
+    fuelOffload: Number.isFinite(values.fuelOffload) ? values.fuelOffload : null,
     boomTime: values.boomTime,
     boomMinutes: result.boomMinutes,
     boomBurn: result.boomBurn,
+    b40Offload: b40Result?.offload ?? null,
+    b40BoomMinutes: Number.isFinite(b40BoomMinutes) ? b40BoomMinutes : null,
+    b40BoomBurn: Number.isFinite(b40BoomBurn) ? b40BoomBurn : null,
     contacts: values.contacts,
     offload: result.offload
   };
@@ -848,8 +912,12 @@ function initEvents() {
     els.fuelEnd,
     els.burnRate,
     els.boomTime,
+    els.fuelOffload,
     els.contacts
   ].forEach((el) => el.addEventListener("input", updatePreview));
+
+  els.blockB40.addEventListener("click", () => setBlockMode("B40"));
+  els.blockB45.addEventListener("click", () => setBlockMode("B45"));
 
   els.callsign.addEventListener("input", () => {
     const cursor = els.callsign.selectionStart;
@@ -863,6 +931,12 @@ function initEvents() {
   });
 
   els.boomTime.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    els.contacts.focus();
+  });
+
+  els.fuelOffload.addEventListener("keydown", (event) => {
     if (event.key !== "Enter") return;
     event.preventDefault();
     els.contacts.focus();
