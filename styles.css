@@ -748,7 +748,7 @@ p {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 3px;
+  gap: 0;
   color: var(--text);
   font-size: .78rem;
   font-weight: 500;
@@ -759,6 +759,9 @@ p {
 }
 
 .cg-formula-text {
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
   min-width: 0;
 }
 
