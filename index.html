@@ -13,7 +13,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
   <link rel="icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=0.1.184">
+  <link rel="stylesheet" href="styles.css?v=0.1.193">
 </head>
 <body>
   <header class="app-header">
@@ -231,24 +231,28 @@
       </div>
       <div class="form-grid">
         <div class="field">
-          <label for="cgFb">FB</label>
+          <label for="cgFb">FB <span class="label-note">MAX 38.9K</span></label>
           <input id="cgFb" type="number" step="0.1" inputmode="decimal">
         </div>
         <div class="field">
-          <label for="cgCw">CW</label>
+          <label for="cgCw">CW <span class="label-note">MAX 48.7K</span></label>
           <input id="cgCw" type="number" step="0.1" inputmode="decimal">
         </div>
         <div class="field">
-          <label for="cgAb">AB</label>
+          <label for="cgAb">AB <span class="label-note">MAX 42.7K</span></label>
           <input id="cgAb" type="number" step="0.1" inputmode="decimal">
         </div>
         <div class="field">
-          <label for="cgRes">RES</label>
+          <label for="cgRes">RES <span class="label-note">MAX 3.0K</span></label>
           <input id="cgRes" type="number" step="0.1" inputmode="decimal">
         </div>
         <div class="field">
-          <label for="cgUd">UD</label>
+          <label for="cgUd">UD <span class="label-note">MAX 14.6K</span></label>
           <input id="cgUd" type="number" step="0.1" inputmode="decimal">
+        </div>
+        <div class="field cg-main-max">
+          <span>Main 1/4 MAX 14.2K</span>
+          <span>Main 2/3 MAX 15.3K</span>
         </div>
       </div>
       <div class="formula-card cg-result-card">
@@ -309,7 +313,7 @@
         <h3>Limitations</h3>
         <div>
           <span>Any Main &lt; 10.5K</span>
-          <b>Open all 4 tank to eng (T/O, APP, LND)</b>
+          <b>Open all 4 tank to eng (TO/APP/LND)</b>
         </div>
         <div>
           <span>Any Main &lt; 20% (~3K)</span>
@@ -341,6 +345,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=0.1.184"></script>
+  <script src="app.js?v=0.1.193"></script>
 </body>
 </html>

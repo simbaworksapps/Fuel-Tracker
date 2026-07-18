@@ -450,8 +450,11 @@ function calculateCg() {
 
 function updateCgPreview() {
   const cg = calculateCg();
+  const isCgExceeded = cg !== null && (cg < 16 || cg > 35);
+  const isCgNearLimit = cg !== null && !isCgExceeded && (cg <= 18 || cg >= 34);
   els.cgResult.textContent = cg === null ? "--" : formatK(cg, 1);
-  els.cgResult.classList.toggle("is-negative", cg !== null && (cg < 18 || cg > 35));
+  els.cgResult.classList.toggle("is-negative", isCgExceeded);
+  els.cgResult.classList.toggle("is-warning", isCgNearLimit);
 }
 
 function openCgCalculator() {

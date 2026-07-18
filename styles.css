@@ -698,8 +698,21 @@ p {
   color: var(--green);
 }
 
+.cg-result-card strong.is-warning {
+  color: var(--gold);
+}
+
 .cg-result-card strong.is-negative {
   color: var(--red);
+}
+
+.cg-main-max {
+  align-self: end;
+  min-height: 40px;
+  justify-content: center;
+  color: var(--muted);
+  font-size: .76rem;
+  font-weight: 400;
 }
 
 .cg-formula {
@@ -856,6 +869,10 @@ label {
   color: var(--muted);
   font-size: .83rem;
   font-weight: 760;
+}
+
+.label-note {
+  font-weight: 400;
 }
 
 input {
