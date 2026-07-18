@@ -30,6 +30,8 @@ const els = {
   cgResult: $("cgResult"),
   cgAltResult: $("cgAltResult"),
   cgInfoBtn: $("cgInfoBtn"),
+  cgMaxBtn: $("cgMaxBtn"),
+  cgClearBtn: $("cgClearBtn"),
   clearFilterBtn: $("clearFilterBtn"),
   applyFilterBtn: $("applyFilterBtn"),
   resetBtn: $("resetBtn"),
@@ -68,12 +70,19 @@ const els = {
 const STORAGE_KEY = "simba-fuel-tracker-v1";
 const DEFAULT_BURN_RATE = 10.0;
 const APP_CAO = "CAO 18JUL26";
+const CG_FILL_VALUES = {
+  cgFb: "38.860",
+  cgCw: "48.716",
+  cgAb: "42.733",
+  cgRes: "2.908",
+  cgUd: "14.566"
+};
 const CG_MAX_VALUES = {
-  cgFb: 38.9,
-  cgCw: 48.7,
-  cgAb: 42.7,
+  cgFb: 38.860,
+  cgCw: 48.716,
+  cgAb: 42.733,
   cgRes: 3.0,
-  cgUd: 14.6
+  cgUd: 14.566
 };
 
 let state = {
@@ -497,6 +506,21 @@ function updateCgPreview() {
 function openCgCalculator() {
   updateCgPreview();
   openModal("cgModal");
+  focusAndSelect(els.cgFb);
+}
+
+function setCgMaxValues() {
+  Object.entries(CG_FILL_VALUES).forEach(([id, value]) => {
+    els[id].value = value;
+  });
+  updateCgPreview();
+}
+
+function clearCgInputs() {
+  [els.cgFb, els.cgCw, els.cgAb, els.cgRes, els.cgUd].forEach((input) => {
+    input.value = "";
+  });
+  updateCgPreview();
   focusAndSelect(els.cgFb);
 }
 
@@ -1193,6 +1217,14 @@ function initEvents() {
   els.cgInfoBtn.addEventListener("click", (event) => {
     event.stopPropagation();
     openCgInfo();
+  });
+  els.cgMaxBtn.addEventListener("click", (event) => {
+    event.stopPropagation();
+    setCgMaxValues();
+  });
+  els.cgClearBtn.addEventListener("click", (event) => {
+    event.stopPropagation();
+    clearCgInputs();
   });
   els.offloadForm.addEventListener("submit", saveEntry);
   els.deleteEntryBtn.addEventListener("click", deleteCurrentEntry);

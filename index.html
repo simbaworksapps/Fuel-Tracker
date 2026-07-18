@@ -13,7 +13,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
   <link rel="icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=0.1.210">
+  <link rel="stylesheet" href="styles.css?v=0.1.213">
 </head>
 <body>
   <header class="app-header">
@@ -227,28 +227,30 @@
     <div class="modal-card cg-card">
       <div class="section-row">
         <h2>CG Calculator</h2>
+        <button id="cgMaxBtn" class="mini-btn cg-header-btn" type="button" aria-label="Fill CG max values" title="Fill CG max values">M</button>
+        <button id="cgClearBtn" class="mini-btn cg-header-btn" type="button" aria-label="Clear CG inputs" title="Clear CG inputs">C</button>
         <button class="mini-btn modal-close" data-close="cgModal" type="button" aria-label="Close">&times;</button>
       </div>
       <div class="form-grid">
         <div class="field">
-          <label for="cgFb">FB <span class="label-note">MAX 38.9K</span></label>
-          <input id="cgFb" type="number" step="0.1" inputmode="decimal">
+          <label for="cgFb">FB <span class="label-note">MAX 38.860K</span></label>
+          <input id="cgFb" type="number" step="0.001" inputmode="decimal">
         </div>
         <div class="field">
-          <label for="cgCw">CW <span class="label-note">MAX 48.7K</span></label>
-          <input id="cgCw" type="number" step="0.1" inputmode="decimal">
+          <label for="cgCw">CW <span class="label-note">MAX 48.716K</span></label>
+          <input id="cgCw" type="number" step="0.001" inputmode="decimal">
         </div>
         <div class="field">
-          <label for="cgAb">AB <span class="label-note">MAX 42.7K</span></label>
-          <input id="cgAb" type="number" step="0.1" inputmode="decimal">
+          <label for="cgAb">AB <span class="label-note">MAX 42.733K</span></label>
+          <input id="cgAb" type="number" step="0.001" inputmode="decimal">
         </div>
         <div class="field">
           <label for="cgRes">RES <span class="label-note">MAX 3.0K</span></label>
-          <input id="cgRes" type="number" step="0.1" inputmode="decimal">
+          <input id="cgRes" type="number" step="0.001" inputmode="decimal">
         </div>
         <div class="field">
-          <label for="cgUd">UD <span class="label-note">MAX 14.6K</span></label>
-          <input id="cgUd" type="number" step="0.1" inputmode="decimal">
+          <label for="cgUd">UD <span class="label-note">MAX 14.566K</span></label>
+          <input id="cgUd" type="number" step="0.001" inputmode="decimal">
         </div>
         <div class="field cg-main-max">
           <span>Main 1/4 MAX 14.2K</span>
@@ -355,6 +357,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=0.1.210"></script>
+  <script src="app.js?v=0.1.213"></script>
 </body>
 </html>

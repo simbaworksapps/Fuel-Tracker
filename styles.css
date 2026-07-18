@@ -636,7 +636,9 @@ p {
 #offloadModal .section-row,
 #cgModal .section-row {
   align-items: center;
+  justify-content: flex-start;
   flex-wrap: nowrap;
+  gap: 6px;
 }
 
 #offloadModal h2,
@@ -651,6 +653,19 @@ p {
   min-height: 38px;
   flex: 0 0 38px;
   font-size: 1rem;
+}
+
+#cgModal .cg-header-btn {
+  width: 38px;
+  min-width: 38px;
+  min-height: 38px;
+  padding: 0;
+  flex: 0 0 38px;
+  font-size: .8rem;
+}
+
+#cgModal h2 + .cg-header-btn {
+  margin-left: auto;
 }
 
 #offloadModal h2,
