@@ -13,7 +13,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
   <link rel="icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=0.1.193">
+  <link rel="stylesheet" href="styles.css?v=0.1.209">
 </head>
 <body>
   <header class="app-header">
@@ -257,14 +257,24 @@
       </div>
       <div class="formula-card cg-result-card">
         <div>
-          <span>CG (%MAC)</span>
+          <span>CG (%MAC) <button id="cgInfoBtn" class="mini-btn cg-info-btn" type="button" aria-label="CG formula info" title="CG formula info">i</button></span>
           <strong id="cgResult">--</strong>
         </div>
         <small class="cg-formula">
-          33 - FB -
-          <span class="stack-frac"><span>1</span><span>3</span></span>(CW) +
-          <span class="stack-frac"><span>2</span><span>3</span></span>(AB + RES) +
-          <span class="stack-frac"><span>3</span><span>2</span></span>(UD)
+          33 - <span class="cg-formula-token" data-cg-input="cgFb">FB</span> -
+          <span class="stack-frac"><span>1</span><span>3</span></span>(<span class="cg-formula-token" data-cg-input="cgCw">CW</span>) +
+          <span class="stack-frac"><span>2</span><span>3</span></span>(<span class="cg-formula-token" data-cg-input="cgAb">AB</span> + <span class="cg-formula-token" data-cg-input="cgRes">RES</span>) +
+          <span class="stack-frac"><span>3</span><span>2</span></span>(<span class="cg-formula-token" data-cg-input="cgUd">UD</span>)
+        </small>
+        <div>
+          <span>ALT CG (%MAC)</span>
+          <strong id="cgAltResult">--</strong>
+        </div>
+        <small class="cg-formula">
+          33 - <span class="cg-formula-token" data-cg-input="cgFb">FB</span> -
+          <span class="stack-frac"><span>1</span><span>3</span></span>(<span class="cg-formula-token" data-cg-input="cgCw">CW</span>) +
+          <span class="stack-frac"><span>2</span><span>3</span></span>(<span class="cg-formula-token" data-cg-input="cgAb">AB</span>) +
+          <span class="stack-frac"><span>4</span><span>3</span></span>(<span class="cg-formula-token" data-cg-input="cgRes">RES</span>)
         </small>
       </div>
       <div class="cg-reference">
@@ -345,6 +355,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=0.1.193"></script>
+  <script src="app.js?v=0.1.209"></script>
 </body>
 </html>

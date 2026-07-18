@@ -28,6 +28,8 @@ const els = {
   cgRes: $("cgRes"),
   cgUd: $("cgUd"),
   cgResult: $("cgResult"),
+  cgAltResult: $("cgAltResult"),
+  cgInfoBtn: $("cgInfoBtn"),
   clearFilterBtn: $("clearFilterBtn"),
   applyFilterBtn: $("applyFilterBtn"),
   resetBtn: $("resetBtn"),
@@ -66,6 +68,13 @@ const els = {
 const STORAGE_KEY = "simba-fuel-tracker-v1";
 const DEFAULT_BURN_RATE = 10.0;
 const APP_CAO = "CAO 18JUL26";
+const CG_MAX_VALUES = {
+  cgFb: 38.9,
+  cgCw: 48.7,
+  cgAb: 42.7,
+  cgRes: 3.0,
+  cgUd: 14.6
+};
 
 let state = {
   entries: [],
@@ -448,19 +457,68 @@ function calculateCg() {
   return 33 - fb - (cw / 3) + ((2 / 3) * (ab + res)) + ((3 / 2) * ud);
 }
 
-function updateCgPreview() {
-  const cg = calculateCg();
+function calculateAlternateCg() {
+  const inputs = [els.cgFb, els.cgCw, els.cgAb, els.cgRes];
+  if (inputs.some((input) => input.value === "")) return null;
+  const values = inputs.map((input) => Number(input.value));
+  if (values.some((value) => !Number.isFinite(value))) return null;
+  const [fb, cw, ab, res] = values;
+  return 33 - fb - (cw / 3) + ((2 / 3) * ab) + ((4 / 3) * res);
+}
+
+function updateCgResultColor(el, cg) {
   const isCgExceeded = cg !== null && (cg < 16 || cg > 35);
   const isCgNearLimit = cg !== null && !isCgExceeded && (cg <= 18 || cg >= 34);
+  el.classList.toggle("is-negative", isCgExceeded);
+  el.classList.toggle("is-warning", isCgNearLimit);
+}
+
+function updateCgPreview() {
+  const cg = calculateCg();
+  const altCg = calculateAlternateCg();
+  Object.entries(CG_MAX_VALUES).forEach(([id, max]) => {
+    const input = els[id];
+    const labelNote = document.querySelector(`label[for="${id}"] .label-note`);
+    const value = Number(input.value);
+    const isOverMax = input.value !== "" && Number.isFinite(value) && value > max;
+    input.classList.toggle("is-over-max", isOverMax);
+    input.setAttribute("aria-invalid", isOverMax ? "true" : "false");
+    labelNote?.classList.toggle("is-over-max", isOverMax);
+    document.querySelectorAll(`[data-cg-input="${id}"]`).forEach((token) => {
+      token.classList.toggle("is-over-max", isOverMax);
+    });
+  });
   els.cgResult.textContent = cg === null ? "--" : formatK(cg, 1);
-  els.cgResult.classList.toggle("is-negative", isCgExceeded);
-  els.cgResult.classList.toggle("is-warning", isCgNearLimit);
+  updateCgResultColor(els.cgResult, cg);
+  els.cgAltResult.textContent = altCg === null ? "--" : formatK(altCg, 1);
+  updateCgResultColor(els.cgAltResult, altCg);
 }
 
 function openCgCalculator() {
   updateCgPreview();
   openModal("cgModal");
   focusAndSelect(els.cgFb);
+}
+
+function openCgInfo() {
+  openConfirm(
+    "CG Formula Info",
+    `
+      <p>There are two commonly accepted CG methods, so the app shows both outputs.</p>
+      <p>CG (%MAC) uses the tank-by-tank method with RES and UD included.</p>
+      <p>ALT CG (%MAC) uses the RES full/empty method:</p>
+      <table class="cg-info-table">
+        <tbody>
+          <tr><td>RES full:</td><td>37 - FB - 1/3(CW) + 2/3(AB)</td></tr>
+          <tr><td>RES empty:</td><td>33 - FB - 1/3(CW) + 2/3(AB)</td></tr>
+        </tbody>
+      </table>
+      <p>For in-between RES, ALT CG scales 0.0K to 3.0K RES across the 33 to 37 base.</p>
+      <p>That becomes:<br>33 - FB - 1/3(CW) + 2/3(AB) + 4/3(RES).</p>
+    `,
+    null,
+    { hideCancel: true, hideOk: true, danger: false, html: true }
+  );
 }
 
 function render() {
@@ -916,6 +974,8 @@ function openConfirm(title, body, action, options = {}) {
         </tbody>
       </table>
     `;
+  } else if (options.html) {
+    els.confirmBody.innerHTML = body;
   } else {
     els.confirmBody.textContent = body;
   }
@@ -1128,6 +1188,10 @@ function initEvents() {
   els.cgBtn.addEventListener("click", (event) => {
     event.stopPropagation();
     openCgCalculator();
+  });
+  els.cgInfoBtn.addEventListener("click", (event) => {
+    event.stopPropagation();
+    openCgInfo();
   });
   els.offloadForm.addEventListener("submit", saveEntry);
   els.deleteEntryBtn.addEventListener("click", deleteCurrentEntry);
