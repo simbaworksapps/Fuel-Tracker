@@ -334,12 +334,41 @@ p {
 .receiver-heading {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
+}
+
+.receiver-heading-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .receiver-heading .mini-btn,
 .receiver-heading .add-btn {
+  flex: 0 0 52px;
   width: 52px;
+  height: 52px;
+  min-height: 52px;
+  padding: 0;
+}
+
+.paw-icon-btn {
+  color: var(--gold);
+}
+
+.paw-icon-btn::before {
+  content: "";
+  width: 23px;
+  height: 23px;
+  display: block;
+  background: currentColor;
+  filter: drop-shadow(0 0 5px rgba(245, 200, 76, .28));
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cellipse cx='14' cy='24' rx='6.5' ry='8.5' transform='rotate(-24 14 24)'/%3E%3Cellipse cx='28' cy='15' rx='6.8' ry='9.5' transform='rotate(-8 28 15)'/%3E%3Cellipse cx='42' cy='16' rx='6.8' ry='9.5' transform='rotate(12 42 16)'/%3E%3Cellipse cx='54' cy='26' rx='6.2' ry='8.2' transform='rotate(26 54 26)'/%3E%3Cpath d='M17 49c0-9 6.5-18 17-18 10.8 0 18 9.2 18 18.6 0 6.5-4.8 9-10.8 6.4-3.3-1.5-5.5-2.4-8.2-2.4-2.6 0-4.8.9-8.1 2.4-5.2 2.2-7.9-1-7.9-7z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cellipse cx='14' cy='24' rx='6.5' ry='8.5' transform='rotate(-24 14 24)'/%3E%3Cellipse cx='28' cy='15' rx='6.8' ry='9.5' transform='rotate(-8 28 15)'/%3E%3Cellipse cx='42' cy='16' rx='6.8' ry='9.5' transform='rotate(12 42 16)'/%3E%3Cellipse cx='54' cy='26' rx='6.2' ry='8.2' transform='rotate(26 54 26)'/%3E%3Cpath d='M17 49c0-9 6.5-18 17-18 10.8 0 18 9.2 18 18.6 0 6.5-4.8 9-10.8 6.4-3.3-1.5-5.5-2.4-8.2-2.4-2.6 0-4.8.9-8.1 2.4-5.2 2.2-7.9-1-7.9-7z'/%3E%3C/svg%3E") center / contain no-repeat;
+  transform: translate(-2px, -1px) rotate(-7deg);
+  transform-origin: 50% 50%;
 }
 
 .receiver-tools {
@@ -583,6 +612,10 @@ p {
   width: min(480px, 100%);
 }
 
+.cg-card {
+  width: min(720px, 100%);
+}
+
 .modal-close {
   width: 44px;
   min-height: 44px;
@@ -593,38 +626,45 @@ p {
   line-height: 1;
 }
 
-#offloadModal .modal-card {
+#offloadModal .modal-card,
+#cgModal .modal-card {
   gap: 10px;
   padding: 10px;
   align-content: start;
 }
 
-#offloadModal .section-row {
+#offloadModal .section-row,
+#cgModal .section-row {
   align-items: center;
   flex-wrap: nowrap;
 }
 
-#offloadModal h2 {
+#offloadModal h2,
+#cgModal h2 {
   min-width: 0;
   flex: 0 1 auto;
 }
 
-#offloadModal .modal-close {
+#offloadModal .modal-close,
+#cgModal .modal-close {
   width: 38px;
   min-height: 38px;
   flex: 0 0 38px;
   font-size: 1rem;
 }
 
-#offloadModal h2 {
+#offloadModal h2,
+#cgModal h2 {
   font-size: .95rem;
 }
 
-#offloadModal label {
+#offloadModal label,
+#cgModal label {
   font-size: .76rem;
 }
 
-#offloadModal input {
+#offloadModal input,
+#cgModal input {
   min-height: 40px;
   padding: 8px 10px;
   font-size: .86rem;
@@ -639,16 +679,112 @@ p {
   font-size: .76rem;
 }
 
-#offloadModal .formula-card {
+#offloadModal .formula-card,
+#cgModal .formula-card {
   padding: 10px;
 }
 
-#offloadModal .formula-card strong {
+#offloadModal .formula-card strong,
+#cgModal .formula-card strong {
   font-size: .95rem;
 }
 
-#offloadModal .formula-card small {
+#offloadModal .formula-card small,
+#cgModal .formula-card small {
   font-size: .78rem;
+}
+
+.cg-result-card strong {
+  color: var(--green);
+}
+
+.cg-result-card strong.is-negative {
+  color: var(--red);
+}
+
+.cg-formula {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px;
+  color: var(--text);
+  font-size: .78rem;
+  font-weight: 500;
+}
+
+.stack-frac {
+  display: inline-grid;
+  grid-template-rows: auto auto;
+  align-items: center;
+  justify-items: center;
+  margin: 0 1px;
+  font-size: .72em;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.stack-frac span:first-child {
+  width: 100%;
+  padding-bottom: 1px;
+  border-bottom: 1px solid currentColor;
+}
+
+.stack-frac span:last-child {
+  padding-top: 1px;
+}
+
+.cg-formula .stack-frac {
+  color: inherit;
+  font-size: .72em;
+  font-weight: inherit;
+}
+
+.cg-formula .stack-frac span {
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.cg-reference {
+  display: grid;
+  gap: 7px;
+  padding: 10px;
+  background: rgba(8, 14, 24, .72);
+  border: 1px solid var(--stroke);
+  border-radius: 8px;
+}
+
+.cg-reference div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.cg-reference h3 {
+  margin: 0;
+  color: var(--muted);
+  font-size: .78rem;
+  font-weight: 850;
+}
+
+.cg-reference span {
+  min-width: 0;
+  color: var(--text);
+  font-size: .78rem;
+  font-weight: 500;
+}
+
+.cg-reference b {
+  color: var(--text);
+  font-size: .78rem;
+  font-weight: 500;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.cg-reference b .stack-frac {
+  display: inline-grid;
 }
 
 #offloadModal .form-actions {
@@ -1042,7 +1178,13 @@ input:focus-visible {
 
   .receiver-heading .mini-btn,
   .receiver-heading .add-btn {
-    width: calc((100% - 32px) / 5);
+    width: 100%;
+  }
+
+  .receiver-heading-actions {
+    width: calc((((100% - 32px) / 5) * 2) + 8px);
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .receiver-tools {
@@ -1072,12 +1214,14 @@ input:focus-visible {
     place-items: center;
   }
 
-  #offloadModal {
+  #offloadModal,
+  #cgModal {
     padding: 0;
     place-items: stretch;
   }
 
-  #offloadModal .modal-card {
+  #offloadModal .modal-card,
+  #cgModal .modal-card {
     width: 100%;
     max-width: 100vw;
     min-height: 100dvh;

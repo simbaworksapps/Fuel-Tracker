@@ -11,6 +11,7 @@ const els = {
   emptyState: $("emptyState"),
   backToTopBtn: $("backToTopBtn"),
   copyTimelineBtn: $("copyTimelineBtn"),
+  cgBtn: $("cgBtn"),
   exportBtn: $("exportBtn"),
   importBtn: $("importBtn"),
   importFile: $("importFile"),
@@ -20,6 +21,13 @@ const els = {
   filterQuery: $("filterQuery"),
   filterFrom: $("filterFrom"),
   filterTo: $("filterTo"),
+  cgModal: $("cgModal"),
+  cgFb: $("cgFb"),
+  cgCw: $("cgCw"),
+  cgAb: $("cgAb"),
+  cgRes: $("cgRes"),
+  cgUd: $("cgUd"),
+  cgResult: $("cgResult"),
   clearFilterBtn: $("clearFilterBtn"),
   applyFilterBtn: $("applyFilterBtn"),
   resetBtn: $("resetBtn"),
@@ -355,7 +363,10 @@ function parseBoomMinutes(value) {
     return NaN;
   }
   if (/^\d{4}$/.test(text)) {
-    return (Number(text.slice(0, 2)) * 60) + Number(text.slice(2));
+    const minutes = Number(text.slice(0, 2));
+    const seconds = Number(text.slice(2));
+    if (seconds >= 60) return NaN;
+    return minutes + (seconds / 60);
   }
   const numeric = Number(text);
   return Number.isFinite(numeric) ? numeric : NaN;
@@ -426,6 +437,27 @@ function updatePreview() {
     : `${formatK(values.fuelStart)} - ${formatK(values.fuelEnd)} - (${formatNumber(result.boomMinutes)} min x ${formatK(values.burnRate)} K/hr)`;
   if (result.offload < 0) card.classList.add("bad");
   else if (result.offload === 0) card.classList.add("warn");
+}
+
+function calculateCg() {
+  const inputs = [els.cgFb, els.cgCw, els.cgAb, els.cgRes, els.cgUd];
+  if (inputs.some((input) => input.value === "")) return null;
+  const values = inputs.map((input) => Number(input.value));
+  if (values.some((value) => !Number.isFinite(value))) return null;
+  const [fb, cw, ab, res, ud] = values;
+  return 33 - fb - (cw / 3) + ((2 / 3) * (ab + res)) + ((3 / 2) * ud);
+}
+
+function updateCgPreview() {
+  const cg = calculateCg();
+  els.cgResult.textContent = cg === null ? "--" : formatK(cg, 1);
+  els.cgResult.classList.toggle("is-negative", cg !== null && (cg < 18 || cg > 35));
+}
+
+function openCgCalculator() {
+  updateCgPreview();
+  openModal("cgModal");
+  focusAndSelect(els.cgFb);
 }
 
 function render() {
@@ -661,6 +693,36 @@ function selectInputValue(el) {
     } catch {
       // Some native date/time controls do not expose selectable text.
     }
+  });
+}
+
+function sanitizeNumberText(value, allowDecimal = true) {
+  let text = String(value || "").replace(/[^\d.]/g, "");
+  if (!allowDecimal) return text.replace(/\./g, "");
+  const firstDot = text.indexOf(".");
+  if (firstDot === -1) return text;
+  return `${text.slice(0, firstDot + 1)}${text.slice(firstDot + 1).replace(/\./g, "")}`;
+}
+
+function bindNumberOnlyInput(el, onInput, { allowDecimal = true } = {}) {
+  el.addEventListener("keydown", (event) => {
+    if (event.ctrlKey || event.metaKey || event.altKey || event.key.length !== 1) return;
+    if (/\d/.test(event.key)) return;
+    if (allowDecimal && event.key === ".") {
+      let selected = "";
+      try {
+        selected = el.value.slice(el.selectionStart || 0, el.selectionEnd || 0);
+      } catch {
+        selected = "";
+      }
+      if (!el.value.includes(".") || selected.includes(".")) return;
+    }
+    event.preventDefault();
+  });
+  el.addEventListener("input", () => {
+    const cleaned = sanitizeNumberText(el.value, allowDecimal);
+    if (el.value !== cleaned) el.value = cleaned;
+    onInput();
   });
 }
 
@@ -1060,16 +1122,32 @@ function initEvents() {
     event.stopPropagation();
     openNewEntry();
   });
+  els.cgBtn.addEventListener("click", (event) => {
+    event.stopPropagation();
+    openCgCalculator();
+  });
   els.offloadForm.addEventListener("submit", saveEntry);
   els.deleteEntryBtn.addEventListener("click", deleteCurrentEntry);
-  [
-    els.fuelStart,
-    els.fuelEnd,
-    els.burnRate,
-    els.boomTime,
-    els.fuelOffload,
-    els.contacts
-  ].forEach((el) => el.addEventListener("input", updatePreview));
+  [els.fuelStart, els.fuelEnd, els.burnRate, els.fuelOffload].forEach((el) => {
+    bindNumberOnlyInput(el, updatePreview, { allowDecimal: true });
+  });
+  [els.boomTime, els.contacts].forEach((el) => {
+    bindNumberOnlyInput(el, updatePreview, { allowDecimal: false });
+  });
+
+  const cgInputs = [els.cgFb, els.cgCw, els.cgAb, els.cgRes, els.cgUd];
+  cgInputs.forEach((el, index) => {
+    bindNumberOnlyInput(el, updateCgPreview, { allowDecimal: true });
+    el.addEventListener("focus", () => selectInputValue(el));
+    el.addEventListener("click", () => selectInputValue(el));
+    el.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      const next = cgInputs[index + 1];
+      if (next) focusAndSelect(next);
+      else el.blur();
+    });
+  });
 
   els.blockB40.addEventListener("click", () => setBlockMode("B40"));
   els.blockB45.addEventListener("click", () => setBlockMode("B45"));

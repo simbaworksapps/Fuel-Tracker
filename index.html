@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -13,7 +13,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
   <link rel="icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=0.1.153">
+  <link rel="stylesheet" href="styles.css?v=0.1.184">
 </head>
 <body>
   <header class="app-header">
@@ -68,9 +68,12 @@
       <div class="section-row">
         <div class="receiver-heading">
           <h2>Receivers</h2>
-          <button id="addReceiverBtn" class="add-btn" type="button" aria-label="Add receiver" title="Add receiver">
-            <span aria-hidden="true">+</span>
-          </button>
+          <div class="receiver-heading-actions">
+            <button id="cgBtn" class="mini-btn paw-icon-btn" type="button" aria-label="CG calculator" title="CG calculator"></button>
+            <button id="addReceiverBtn" class="add-btn" type="button" aria-label="Add receiver" title="Add receiver">
+              <span aria-hidden="true">+</span>
+            </button>
+          </div>
         </div>
         <div class="receiver-tools">
           <button id="copyTimelineBtn" class="mini-btn" type="button" aria-label="Copy timeline" title="Copy timeline">&#10697;</button>
@@ -143,7 +146,7 @@
         <div class="field b40-field">
           <label for="boomTime">Time on Boom</label>
           <div class="unit-input">
-            <input id="boomTime" type="text" inputmode="numeric" enterkeyhint="next" placeholder="12 or 0012" required>
+            <input id="boomTime" type="text" inputmode="numeric" enterkeyhint="next" placeholder="12 or 1230" required>
             <span>min</span>
           </div>
         </div>
@@ -220,6 +223,110 @@
     </div>
   </div>
 
+  <div id="cgModal" class="modal" hidden>
+    <div class="modal-card cg-card">
+      <div class="section-row">
+        <h2>CG Calculator</h2>
+        <button class="mini-btn modal-close" data-close="cgModal" type="button" aria-label="Close">&times;</button>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label for="cgFb">FB</label>
+          <input id="cgFb" type="number" step="0.1" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label for="cgCw">CW</label>
+          <input id="cgCw" type="number" step="0.1" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label for="cgAb">AB</label>
+          <input id="cgAb" type="number" step="0.1" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label for="cgRes">RES</label>
+          <input id="cgRes" type="number" step="0.1" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label for="cgUd">UD</label>
+          <input id="cgUd" type="number" step="0.1" inputmode="decimal">
+        </div>
+      </div>
+      <div class="formula-card cg-result-card">
+        <div>
+          <span>CG (%MAC)</span>
+          <strong id="cgResult">--</strong>
+        </div>
+        <small class="cg-formula">
+          33 - FB -
+          <span class="stack-frac"><span>1</span><span>3</span></span>(CW) +
+          <span class="stack-frac"><span>2</span><span>3</span></span>(AB + RES) +
+          <span class="stack-frac"><span>3</span><span>2</span></span>(UD)
+        </small>
+      </div>
+      <div class="cg-reference">
+        <div>
+          <span>Boost Pumps</span>
+          <b>12-15 PSI</b>
+        </div>
+        <div>
+          <span>CWT Pumps</span>
+          <b>30-45 PSI</b>
+        </div>
+        <div>
+          <span>AR Pumps</span>
+          <b>50 PSI</b>
+        </div>
+        <div>
+          <span>Mains &rarr; AB</span>
+          <b>1300 PPM</b>
+        </div>
+        <div>
+          <span>1 Main &rarr; AB</span>
+          <b>650-975 PPM</b>
+        </div>
+        <div>
+          <span>CW &rarr; FB</span>
+          <b>2270 PPM</b>
+        </div>
+        <div>
+          <span>UD &rarr; AB</span>
+          <b>1400 PPM</b>
+        </div>
+        <div>
+          <span>Moving Fuel</span>
+          <b><span class="stack-frac"><span>2</span><span>3</span></span> CG Shift</b>
+        </div>
+        <div>
+          <span>AFT CG</span>
+          <b>Fuel Efficient (&plusmn;32% MAC)</b>
+        </div>
+        <div>
+          <span>FWD CG</span>
+          <b>More Stable</b>
+        </div>
+      </div>
+      <div class="cg-reference">
+        <h3>Limitations</h3>
+        <div>
+          <span>Any Main &lt; 10.5K</span>
+          <b>Open all 4 tank to eng (T/O, APP, LND)</b>
+        </div>
+        <div>
+          <span>Any Main &lt; 20% (~3K)</span>
+          <b>Open all 4 tank to eng</b>
+        </div>
+        <div>
+          <span>Drain RES</span>
+          <b>Limited to &lt; 10K in mains</b>
+        </div>
+        <div>
+          <span>Main &rarr; AB</span>
+          <b>&lt; 34K req / &lt; 28K pref</b>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="confirmModal" class="modal" hidden>
     <div class="modal-card confirm-card">
       <div class="section-row">
@@ -234,6 +341,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=0.1.153"></script>
+  <script src="app.js?v=0.1.184"></script>
 </body>
 </html>
