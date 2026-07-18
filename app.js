@@ -29,6 +29,7 @@ const els = {
   cgUd: $("cgUd"),
   cgResult: $("cgResult"),
   cgAltResult: $("cgAltResult"),
+  cgAltUdWarning: $("cgAltUdWarning"),
   cgInfoBtn: $("cgInfoBtn"),
   cgMaxBtn: $("cgMaxBtn"),
   cgClearBtn: $("cgClearBtn"),
@@ -501,6 +502,7 @@ function updateCgPreview() {
   updateCgResultColor(els.cgResult, cg);
   els.cgAltResult.textContent = altCg === null ? "--" : formatK(altCg, 1);
   updateCgResultColor(els.cgAltResult, altCg);
+  els.cgAltUdWarning.hidden = !(Number(els.cgUd.value) > 1);
 }
 
 function openCgCalculator() {

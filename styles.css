@@ -758,6 +758,18 @@ p {
   color: var(--red);
 }
 
+.cg-formula-text {
+  min-width: 0;
+}
+
+.cg-formula .cg-alt-warning {
+  margin-left: auto;
+  color: var(--gold);
+  font-size: .78rem;
+  font-weight: 850;
+  line-height: 1;
+}
+
 .stack-frac {
   display: inline-grid;
   grid-template-rows: auto auto;
