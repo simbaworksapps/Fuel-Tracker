@@ -13,7 +13,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
   <link rel="icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=0.1.133">
+  <link rel="stylesheet" href="styles.css?v=0.1.153">
 </head>
 <body>
   <header class="app-header">
@@ -23,10 +23,11 @@
       </a>
       <div>
         <h1>Fuel Tracker</h1>
+        <div class="now-line" id="nowLine">-- ----Z ----L | JD---</div>
       </div>
     </div>
     <div class="header-actions">
-      <div class="cao-line" id="caoLine">CAO 17JUL26</div>
+      <div class="cao-line" id="caoLine">CAO 18JUL26</div>
     </div>
   </header>
 
@@ -67,17 +68,17 @@
       <div class="section-row">
         <div class="receiver-heading">
           <h2>Receivers</h2>
-          <button id="copyTimelineBtn" class="mini-btn" type="button" aria-label="Copy timeline" title="Copy timeline">&#10697;</button>
-        </div>
-        <div class="receiver-tools">
           <button id="addReceiverBtn" class="add-btn" type="button" aria-label="Add receiver" title="Add receiver">
             <span aria-hidden="true">+</span>
           </button>
+        </div>
+        <div class="receiver-tools">
+          <button id="copyTimelineBtn" class="mini-btn" type="button" aria-label="Copy timeline" title="Copy timeline">&#10697;</button>
           <button id="exportBtn" class="mini-btn" type="button" aria-label="Export" title="Export">&darr;</button>
           <button id="importBtn" class="mini-btn import-btn" type="button" aria-label="Import" title="Import">&uarr;</button>
           <input id="importFile" type="file" accept="application/json,.json" hidden>
           <button id="filterBtn" class="mini-btn" type="button" aria-label="Filter" title="Filter">&#9776;</button>
-          <button id="resetBtn" class="mini-btn danger-outline" type="button" aria-label="Reset mission" title="Reset mission">&#8634;</button>
+          <button id="resetBtn" class="mini-btn danger-outline" type="button" aria-label="Delete profile" title="Delete profile">&times;</button>
         </div>
       </div>
       <div id="filterStatus" class="filter-status" hidden></div>
@@ -160,6 +161,10 @@
             <span>ct</span>
           </div>
         </div>
+        <div class="field wide-field">
+          <label for="receiverInfo">Notes</label>
+          <input id="receiverInfo" type="text" autocomplete="off" spellcheck="false" placeholder="Optional">
+        </div>
       </div>
 
       <div class="formula-card">
@@ -229,6 +234,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=0.1.133"></script>
+  <script src="app.js?v=0.1.153"></script>
 </body>
 </html>

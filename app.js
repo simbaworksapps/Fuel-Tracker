@@ -2,6 +2,7 @@ const $ = (id) => document.getElementById(id);
 
 const els = {
   caoLine: $("caoLine"),
+  nowLine: $("nowLine"),
   addReceiverBtn: $("addReceiverBtn"),
   totalOffload: $("totalOffload"),
   receiverCount: $("receiverCount"),
@@ -34,6 +35,7 @@ const els = {
   callsign: $("callsign"),
   tail: $("tail"),
   receiverType: $("receiverType"),
+  receiverInfo: $("receiverInfo"),
   blockB40: $("blockB40"),
   blockB45: $("blockB45"),
   burnRate: $("burnRate"),
@@ -55,7 +57,7 @@ const els = {
 
 const STORAGE_KEY = "simba-fuel-tracker-v1";
 const DEFAULT_BURN_RATE = 10.0;
-const APP_CAO = "CAO 17JUL26";
+const APP_CAO = "CAO 18JUL26";
 
 let state = {
   entries: [],
@@ -181,6 +183,27 @@ function zuluDatetimeValue(date = new Date()) {
   return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}T${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}`;
 }
 
+function formatNowDate(date = new Date()) {
+  const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+  return `${pad(date.getUTCDate())}${months[date.getUTCMonth()]}${String(date.getUTCFullYear()).slice(-2)}`;
+}
+
+function formatClockTime(date, useZulu = true) {
+  const hours = useZulu ? date.getUTCHours() : date.getHours();
+  const minutes = useZulu ? date.getUTCMinutes() : date.getMinutes();
+  return `${pad(hours)}${pad(minutes)}${useZulu ? "Z" : "L"}`;
+}
+
+function updateNowLine() {
+  const now = new Date();
+  els.nowLine.textContent = `${formatNowDate(now)} ${formatClockTime(now, true)} ${formatClockTime(now, false)} | JD${julianDay(now.toISOString())}`;
+}
+
+function startNowClock() {
+  updateNowLine();
+  window.setInterval(updateNowLine, 1000);
+}
+
 function formatEntryDate(value) {
   const text = String(value || "");
   const localInputMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
@@ -192,6 +215,19 @@ function formatEntryDate(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value || "--";
   return `${pad(date.getUTCDate())}${date.toLocaleString(undefined, { month: "short", timeZone: "UTC" }).toUpperCase()}${String(date.getUTCFullYear()).slice(-2)} ${pad(date.getUTCHours())}${pad(date.getUTCMinutes())}Z`;
+}
+
+function julianDay(value) {
+  const time = entryTimestamp(value);
+  if (!Number.isFinite(time)) return "";
+  const date = new Date(time);
+  const start = Date.UTC(date.getUTCFullYear(), 0, 1);
+  return pad(Math.floor((Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) - start) / 86400000) + 1).padStart(3, "0");
+}
+
+function formatEntryTileDate(value) {
+  const jd = julianDay(value);
+  return jd ? `${formatEntryDate(value)} | JD${jd}` : formatEntryDate(value);
 }
 
 function entryTimestamp(value) {
@@ -216,6 +252,10 @@ function entryType(entry) {
   return String(entry.receiverType || entry.type || "").trim().toUpperCase() || "UNKNOWN";
 }
 
+function entryInfo(entry) {
+  return String(entry.receiverInfo || entry.info || "").trim();
+}
+
 function filterLabel() {
   const parts = [];
   if (activeFilter.query) parts.push(`SEARCH ${activeFilter.query}`);
@@ -235,6 +275,7 @@ function entrySearchText(entry) {
     entry.callsign,
     entryTail(entry),
     entryType(entry),
+    entryInfo(entry),
     entry.fuelStart,
     entry.fuelEnd,
     entry.burnRate,
@@ -294,6 +335,7 @@ function groupEntries(entries) {
     group.entries.sort((a, b) => entryTimestamp(b.date) - entryTimestamp(a.date));
     group.totalOffload = group.entries.reduce((sum, entry) => sum + entry.offload, 0);
     group.contacts = group.entries.reduce((sum, entry) => sum + (Number(entry.contacts) || 0), 0);
+    group.receiverInfo = entryInfo(group.entries.find((entry) => entryInfo(entry)) || {});
     group.lastDate = group.entries.reduce((latest, entry) => {
       const time = entryTimestamp(entry.date);
       return Number.isFinite(time) && time > latest ? time : latest;
@@ -357,6 +399,7 @@ function currentFormValues() {
     callsign: els.callsign.value.trim().toUpperCase(),
     tail: els.tail.value.trim().toUpperCase(),
     receiverType: els.receiverType.value.trim().toUpperCase(),
+    receiverInfo: els.receiverInfo.value.trim(),
     blockMode: activeBlockMode,
     fuelStart: Number(els.fuelStart.value),
     fuelEnd: Number(els.fuelEnd.value),
@@ -441,6 +484,7 @@ function renderReceiverCard(group) {
         ${group.entries.map(renderEntryRow).join("")}
       </div>
       <div class="card-actions">
+        ${group.receiverInfo ? `<span class="receiver-info">${escapeHtml(group.receiverInfo)}</span>` : ""}
         <button class="mini-btn add-to-receiver" type="button" data-receiver-key="${escapeHtml(group.key)}" aria-label="Add offload" title="Add offload">+</button>
         <button class="mini-btn danger-outline delete-receiver" type="button" data-receiver-key="${escapeHtml(group.key)}" aria-label="Delete receiver" title="Delete receiver">&times;</button>
       </div>
@@ -457,7 +501,7 @@ function renderEntryRow(entry) {
   return `
     <button class="entry-row" type="button" data-entry-id="${entry.id}">
       <span>
-        <strong>${formatEntryDate(entry.date)}</strong>
+        <strong>${formatEntryTileDate(entry.date)}</strong>
         <span>${details}</span>
       </span>
       <b class="${negativeClass(entry.offload).trim()}">${formatFuel(entry.offload)}</b>
@@ -465,14 +509,29 @@ function renderEntryRow(entry) {
   `;
 }
 
-function timelineEntryDetails(entry) {
-  const contacts = `${Number(entry.contacts) || 0} ct`;
-  return `${formatFuel(entry.offload)} | ${contacts}`;
+function timelineFuel(value, width = 0) {
+  const display = fuelDisplay(value);
+  return `${display.value.padStart(width, " ")} ${display.unit}`;
 }
 
-function timelineEntryLine(entry) {
+function timelineEntryDetails(entry, fuelWidth = 0) {
+  const contacts = `${Number(entry.contacts) || 0} ct`;
+  return `${timelineFuel(entry.offload, fuelWidth)} | ${contacts}`;
+}
+
+function timelineEntryLine(entry, fuelWidth = 0) {
   const receiver = `${String(entry.callsign || "").trim().toUpperCase()} ${entryTail(entry)} ${entryType(entry)}`.trim();
-  return `${formatEntryDate(entry.date)} ${receiver}: ${timelineEntryDetails(entry)}`;
+  return `${formatEntryDate(entry.date)} ${receiver}: ${timelineEntryDetails(entry, fuelWidth)}`;
+}
+
+function timelineHeader(entries) {
+  const first = entries[0];
+  const last = entries[entries.length - 1];
+  const firstDate = formatNowDate(new Date(entryTimestamp(first.date)));
+  const lastDate = formatNowDate(new Date(entryTimestamp(last.date)));
+  const firstLabel = `${firstDate} JD${julianDay(first.date)}`;
+  const lastLabel = `${lastDate} JD${julianDay(last.date)}`;
+  return firstLabel === lastLabel ? `Receivers ${firstLabel}` : `Receivers ${firstLabel} - ${lastLabel}`;
 }
 
 function buildTimelineText(entries = currentEntries()) {
@@ -480,8 +539,9 @@ function buildTimelineText(entries = currentEntries()) {
   const totalOffload = entries.reduce((sum, entry) => sum + entry.offload, 0);
   const receiverCount = groupEntries(entries).length;
   const contacts = entries.reduce((sum, entry) => sum + (Number(entry.contacts) || 0), 0);
-  const timeline = sorted.map(timelineEntryLine).join("\n");
-  return `${timeline}\n\nTOTAL: ${formatFuel(totalOffload)} | ${receiverCount} RCVR | ${contacts} ct`;
+  const fuelWidth = Math.max(...entries.map((entry) => fuelDisplay(entry.offload).value.length), fuelDisplay(totalOffload).value.length);
+  const timeline = sorted.map((entry) => timelineEntryLine(entry, fuelWidth)).join("\n");
+  return `${timelineHeader(sorted)}\n${timeline}\n\nTOTAL: ${timelineFuel(totalOffload, fuelWidth)} | ${receiverCount} RCVR | ${contacts} ct`;
 }
 
 async function copyText(text) {
@@ -505,7 +565,7 @@ async function copyText(text) {
 async function copyTimeline() {
   const entries = currentEntries();
   if (!entries.length) {
-    openConfirm("Timeline", "No offloads to copy.", null, { okText: "OK", hideCancel: true, danger: false });
+    openConfirm("Timeline", "No offloads to copy.", null, { hideCancel: true, hideOk: true, danger: false });
     return;
   }
   try {
@@ -612,6 +672,7 @@ function openNewEntry(receiver = null) {
     els.callsign.value = receiver.callsign;
     els.tail.value = receiver.tail;
     els.receiverType.value = entryType(receiver.entries[0]) === "UNKNOWN" ? "" : entryType(receiver.entries[0]);
+    els.receiverInfo.value = receiver.receiverInfo || entryInfo(receiver.entries[0]);
     setBlockMode(receiver.entries[0]?.blockMode || "B40");
   }
   openModal("offloadModal");
@@ -638,6 +699,7 @@ function openEditEntry(entryId) {
   els.callsign.value = entry.callsign || "";
   els.tail.value = entryTail(entry);
   els.receiverType.value = entryType(entry) === "UNKNOWN" ? "" : entryType(entry);
+  els.receiverInfo.value = entryInfo(entry);
   els.burnRate.value = entry.burnRate ?? DEFAULT_BURN_RATE;
   els.fuelStart.value = entry.fuelStart ?? "";
   els.fuelEnd.value = entry.fuelEnd ?? "";
@@ -649,8 +711,12 @@ function openEditEntry(entryId) {
   openModal("offloadModal");
 }
 
-function saveEntry(event) {
+async function saveEntry(event) {
   event.preventDefault();
+  if (document.activeElement && els.offloadForm.contains(document.activeElement)) {
+    document.activeElement.blur();
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+  }
   const values = currentFormValues();
   const result = calculateOffload(values);
   if (!result || !values.callsign || !values.tail || !values.receiverType || !values.date) return;
@@ -664,6 +730,7 @@ function saveEntry(event) {
     callsign: values.callsign,
     tail: values.tail,
     receiverType: values.receiverType,
+    receiverInfo: values.receiverInfo,
     blockMode: values.blockMode,
     fuelStart: Number.isFinite(values.fuelStart) ? values.fuelStart : null,
     fuelEnd: Number.isFinite(values.fuelEnd) ? values.fuelEnd : null,
@@ -1084,10 +1151,13 @@ function initEvents() {
     });
   });
   els.resetBtn.addEventListener("click", () => {
-    if (!state.entries.length) return;
+    if (!state.entries.length) {
+      openConfirm("Delete Profile", "Nothing to delete.", null, { hideCancel: true, hideOk: true, danger: false });
+      return;
+    }
     openConfirm(
-      "Reset Mission",
-      "Clear all receivers and offload entries from this device?\n\nIf you want to save this mission for later or import it on another device, export it before resetting.",
+      "Delete Profile",
+      "Clear all receivers and offload entries from this device?\n\nIf you want to save this mission for later or import it on another device, export it before deleting.",
       () => {
         state = {
           entries: [],
@@ -1135,6 +1205,7 @@ function initEvents() {
 function boot() {
   loadState();
   initEvents();
+  startNowClock();
   render();
   initInstall();
   registerServiceWorker();
