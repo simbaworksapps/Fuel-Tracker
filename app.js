@@ -515,6 +515,7 @@ function openCgInfo() {
       </table>
       <p>For in-between RES, ALT CG scales 0.0K to 3.0K RES across the 33 to 37 base.</p>
       <p>That becomes:<br>33 - FB - 1/3(CW) + 2/3(AB) + 4/3(RES).</p>
+      <p>This does not account for airplane configuration or cargo loading.</p>
     `,
     null,
     { hideCancel: true, hideOk: true, danger: false, html: true }
