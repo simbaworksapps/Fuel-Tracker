@@ -553,7 +553,7 @@ function openCgInfo() {
 function openFeedback() {
   openConfirm(
     "Feedback",
-    "Send feedback or suggestions to Simba Works Apps?",
+    "Send feedback or suggestions to SIMBA?",
     () => {
       window.location.href = "mailto:simbaworksapps@gmail.com?subject=Fuel%20Tracker%20Feedback";
     },
