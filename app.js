@@ -72,7 +72,7 @@ const els = {
 
 const STORAGE_KEY = "simba-fuel-tracker-v1";
 const DEFAULT_BURN_RATE = 10.0;
-const APP_CAO = "CAO 18JUL26";
+const APP_CAO = "CAO 19JUL26";
 const CG_FILL_VALUES = {
   cgFb: "38.860",
   cgCw: "48.716",
