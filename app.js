@@ -146,6 +146,11 @@ function formatK(value, digits = 1) {
   });
 }
 
+function formatOneDecimalInput(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number.toFixed(1) : "";
+}
+
 function formatSignedK(value, digits = 1) {
   const number = Number(value) || 0;
   const sign = number < 0 ? "-" : "";
@@ -781,8 +786,21 @@ function setBlockMode(mode) {
   els.blockB45.setAttribute("aria-pressed", String(isB45));
   document.querySelectorAll(".b40-field").forEach((field) => { field.hidden = isB45; });
   document.querySelectorAll(".b45-field").forEach((field) => { field.hidden = !isB45; });
-  [els.burnRate, els.fuelStart, els.fuelEnd, els.boomTime].forEach((input) => { input.required = !isB45; });
+  [els.burnRate, els.fuelStart, els.fuelEnd, els.boomTime].forEach((input) => {
+    input.required = !isB45;
+    input.disabled = isB45;
+  });
   els.fuelOffload.required = isB45;
+  els.fuelOffload.disabled = !isB45;
+  if (isB45) {
+    const directOffload = Number(els.fuelOffload.value);
+    if (els.fuelOffload.value !== "" && Number.isFinite(directOffload)) {
+      els.fuelOffload.value = formatOneDecimalInput(directOffload);
+    } else {
+      const b40Result = calculateB40Offload(currentFormValues());
+      if (b40Result) els.fuelOffload.value = formatOneDecimalInput(b40Result.offload);
+    }
+  }
   updatePreview();
 }
 
@@ -885,6 +903,7 @@ function openEditEntry(entryId) {
 
 async function saveEntry(event) {
   event.preventDefault();
+  if (!els.offloadForm.reportValidity()) return;
   if (document.activeElement && els.offloadForm.contains(document.activeElement)) {
     document.activeElement.blur();
     await new Promise((resolve) => requestAnimationFrame(resolve));
