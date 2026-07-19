@@ -637,7 +637,7 @@ p {
 }
 
 .technique-purpose {
-  color: var(--text);
+  color: var(--muted);
 }
 
 .cg-card {
