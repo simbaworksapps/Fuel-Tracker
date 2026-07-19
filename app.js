@@ -74,18 +74,18 @@ const STORAGE_KEY = "simba-fuel-tracker-v1";
 const DEFAULT_BURN_RATE = 10.0;
 const APP_CAO = "CAO 19JUL26";
 const CG_FILL_VALUES = {
-  cgFb: "38.860",
-  cgCw: "48.716",
-  cgAb: "42.733",
-  cgRes: "2.908",
-  cgUd: "14.566"
+  cgFb: "39",
+  cgCw: "49",
+  cgAb: "43",
+  cgRes: "3",
+  cgUd: "15"
 };
 const CG_MAX_VALUES = {
-  cgFb: 38.860,
-  cgCw: 48.716,
-  cgAb: 42.733,
+  cgFb: 39,
+  cgCw: 49,
+  cgAb: 43,
   cgRes: 3.0,
-  cgUd: 14.566
+  cgUd: 15
 };
 
 let state = {
