@@ -63,6 +63,7 @@ const els = {
   deleteEntryBtn: $("deleteEntryBtn"),
   installModal: $("installModal"),
   confirmModal: $("confirmModal"),
+  confirmCard: $("confirmCard"),
   confirmTitle: $("confirmTitle"),
   confirmBody: $("confirmBody"),
   confirmCancelBtn: $("confirmCancelBtn"),
@@ -529,8 +530,9 @@ function clearCgInputs() {
 
 function openCgInfo() {
   openConfirm(
-    "CG Formula Info",
+    `CG Formula <span class="technique-word">technique</span>`,
     `
+      <p class="technique-purpose">Purpose: familiarization of fuel impacts on CG. Real world calculations come from aircraft systems and official guidance.</p>
       <p>There are two commonly accepted CG methods, so the app shows both outputs.</p>
       <p>CG (%MAC) uses the tank-by-tank method with RES and UD included.</p>
       <p>ALT CG (%MAC) uses the RES full/empty method:</p>
@@ -546,7 +548,7 @@ function openCgInfo() {
       <p>This does not account for airplane configuration or cargo loading.</p>
     `,
     null,
-    { hideCancel: true, hideOk: true, danger: false, html: true }
+    { hideCancel: true, hideOk: true, danger: false, html: true, titleHtml: true, technique: true }
   );
 }
 
@@ -997,7 +999,10 @@ function clearFilter() {
 }
 
 function openConfirm(title, body, action, options = {}) {
-  els.confirmTitle.textContent = title;
+  els.confirmModal.classList.toggle("technique-modal", Boolean(options.technique));
+  els.confirmCard.classList.toggle("technique-card", Boolean(options.technique));
+  if (options.titleHtml) els.confirmTitle.innerHTML = title;
+  else els.confirmTitle.textContent = title;
   els.confirmBody.textContent = body;
   els.confirmBody.classList.toggle("summary-table", Boolean(options.summaryRows));
   if (options.summaryRows) {
