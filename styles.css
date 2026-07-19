@@ -732,6 +732,10 @@ p {
   font-size: .95rem;
 }
 
+#cgModal .formula-card span {
+  font-weight: 760;
+}
+
 #offloadModal .formula-card small,
 #cgModal .formula-card small {
   font-size: .78rem;
@@ -779,7 +783,7 @@ p {
   gap: 0;
   color: var(--text);
   font-size: .78rem;
-  font-weight: 500;
+  font-weight: 760;
 }
 
 .cg-formula-token.is-over-max {
@@ -797,7 +801,7 @@ p {
   margin-left: auto;
   color: var(--gold);
   font-size: .78rem;
-  font-weight: 850;
+  font-weight: 760;
   line-height: 1;
 }
 
@@ -854,20 +858,20 @@ p {
   margin: 0;
   color: var(--muted);
   font-size: .78rem;
-  font-weight: 850;
+  font-weight: 760;
 }
 
 .cg-reference span {
   min-width: 0;
   color: var(--text);
   font-size: .78rem;
-  font-weight: 500;
+  font-weight: 760;
 }
 
 .cg-reference b {
   color: var(--text);
   font-size: .78rem;
-  font-weight: 500;
+  font-weight: 760;
   text-align: right;
   white-space: nowrap;
 }
