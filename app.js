@@ -570,9 +570,9 @@ function render() {
   const contacts = entries.reduce((sum, entry) => sum + (Number(entry.contacts) || 0), 0);
   const trackedContacts = entries.some((entry) => Number(entry.contacts) > 0);
 
-  els.totalOffload.textContent = formatFuel(totalOffload);
+  els.totalOffload.textContent = entries.length ? formatFuel(totalOffload) : "--";
   els.totalOffload.classList.toggle("is-negative", totalOffload < 0);
-  els.receiverCount.textContent = String(groups.length);
+  els.receiverCount.textContent = entries.length ? String(groups.length) : "--";
   els.contactCount.textContent = trackedContacts ? String(contacts) : "--";
   els.caoLine.textContent = APP_CAO;
   const label = filterLabel();
