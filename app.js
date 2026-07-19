@@ -958,7 +958,7 @@ function openSummary(type) {
   const rankKey = rankKeyByType[type] || "offload";
   const rows = summarizeByType().sort((a, b) => (b[rankKey] - a[rankKey]) || a.type.localeCompare(b.type));
   if (!rows.length) {
-    openConfirm("Summary", "No receiver fuel logged yet.", null, { okText: "OK", hideCancel: true, danger: false });
+    openConfirm("Summary", "No receiver fuel logged yet.", null, { hideCancel: true, hideOk: true, danger: false });
     return;
   }
   const titleByType = {
@@ -1054,6 +1054,7 @@ function openConfirm(title, body, action, options = {}) {
   els.confirmCancelBtn.textContent = options.cancelText || "Cancel";
   els.confirmOkBtn.hidden = Boolean(options.hideOk);
   els.confirmOkBtn.textContent = options.okText || "Confirm";
+  els.confirmOkBtn.disabled = Boolean(options.okDisabled);
   els.confirmOkBtn.classList.toggle("danger-btn", options.danger !== false);
   confirmAction = action;
   openModal("confirmModal");
@@ -1081,6 +1082,15 @@ function deleteReceiver(key) {
 }
 
 function confirmExport() {
+  if (!currentEntries().length) {
+    openConfirm(
+      "Export Backup",
+      "There are no receivers or offloads to export yet.",
+      null,
+      { okText: "Export", hideCancel: true, okDisabled: true, danger: false }
+    );
+    return;
+  }
   openConfirm(
     "Export Backup",
     "This will download a Fuel Tracker backup file from the current mission. You can import that file later on this device or any other device running Fuel Tracker.",
