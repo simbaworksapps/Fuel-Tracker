@@ -858,20 +858,20 @@ p {
   margin: 0;
   color: var(--muted);
   font-size: .78rem;
-  font-weight: 760;
+  font-weight: 500;
 }
 
 .cg-reference span {
   min-width: 0;
   color: var(--text);
   font-size: .78rem;
-  font-weight: 760;
+  font-weight: 500;
 }
 
 .cg-reference b {
   color: var(--text);
   font-size: .78rem;
-  font-weight: 760;
+  font-weight: 500;
   text-align: right;
   white-space: nowrap;
 }
