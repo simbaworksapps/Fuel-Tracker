@@ -31,6 +31,7 @@ const els = {
   cgAltResult: $("cgAltResult"),
   cgAltUdWarning: $("cgAltUdWarning"),
   cgInfoBtn: $("cgInfoBtn"),
+  feedbackBtn: $("feedbackBtn"),
   cgMaxBtn: $("cgMaxBtn"),
   cgClearBtn: $("cgClearBtn"),
   clearFilterBtn: $("clearFilterBtn"),
@@ -546,6 +547,17 @@ function openCgInfo() {
     `,
     null,
     { hideCancel: true, hideOk: true, danger: false, html: true }
+  );
+}
+
+function openFeedback() {
+  openConfirm(
+    "Feedback",
+    "Send feedback or suggestions to Simba Works Apps?",
+    () => {
+      window.location.href = "mailto:simbaworksapps@gmail.com?subject=Fuel%20Tracker%20Feedback";
+    },
+    { okText: "Email", cancelText: "Cancel", danger: false }
   );
 }
 
@@ -1220,6 +1232,10 @@ function initEvents() {
   els.cgInfoBtn.addEventListener("click", (event) => {
     event.stopPropagation();
     openCgInfo();
+  });
+  els.feedbackBtn.addEventListener("click", (event) => {
+    event.stopPropagation();
+    openFeedback();
   });
   els.cgMaxBtn.addEventListener("click", (event) => {
     event.stopPropagation();
