@@ -990,6 +990,21 @@ input[type="datetime-local"] {
   max-width: 100%;
 }
 
+.date-sync-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 52px;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.date-now-btn {
+  min-height: 48px;
+  width: 52px;
+  padding: 7px;
+  color: var(--gold);
+  font-size: 1rem;
+}
+
 #callsign {
   text-transform: uppercase;
 }

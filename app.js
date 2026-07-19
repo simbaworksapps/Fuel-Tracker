@@ -46,6 +46,7 @@ const els = {
   offloadForm: $("offloadForm"),
   modalTitle: $("modalTitle"),
   entryDate: $("entryDate"),
+  entryDateNowBtn: $("entryDateNowBtn"),
   callsign: $("callsign"),
   tail: $("tail"),
   receiverType: $("receiverType"),
@@ -878,6 +879,11 @@ function submitOffloadForm() {
   els.offloadForm.querySelector('button[type="submit"]')?.click();
 }
 
+function setEntryDateToNow() {
+  els.entryDate.value = zuluDatetimeValue();
+  updatePreview();
+}
+
 function openEditEntry(entryId) {
   const entry = state.entries.find((item) => item.id === entryId);
   if (!entry) return;
@@ -1373,6 +1379,7 @@ function initEvents() {
     if (deleteButton) deleteReceiver(deleteButton.dataset.receiverKey);
   });
 
+  els.entryDateNowBtn.addEventListener("click", setEntryDateToNow);
   els.exportBtn.addEventListener("click", confirmExport);
   els.copyTimelineBtn.addEventListener("click", copyTimeline);
   els.backToTopBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));

@@ -13,7 +13,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
   <link rel="icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=0.1.247">
+  <link rel="stylesheet" href="styles.css?v=0.1.248">
 </head>
 <body>
   <header class="app-header">
@@ -108,7 +108,10 @@
       <div class="form-grid">
         <div class="field wide-field">
           <label for="entryDate">Date (Zulu)</label>
-          <input id="entryDate" type="datetime-local" required>
+          <div class="date-sync-row">
+            <input id="entryDate" type="datetime-local" required>
+            <button id="entryDateNowBtn" class="mini-btn date-now-btn" type="button" aria-label="Set date to current Zulu time" title="Set current Zulu time">&#128336;</button>
+          </div>
         </div>
         <div class="field">
           <label for="callsign">Callsign</label>
@@ -363,6 +366,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=0.1.247"></script>
+  <script src="app.js?v=0.1.248"></script>
 </body>
 </html>
