@@ -1308,6 +1308,12 @@ function initEvents() {
   els.contacts.addEventListener("keydown", (event) => {
     if (event.key !== "Enter") return;
     event.preventDefault();
+    els.receiverInfo.focus();
+  });
+
+  els.receiverInfo.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
     submitOffloadForm();
   });
 
