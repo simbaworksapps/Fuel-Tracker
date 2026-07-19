@@ -997,12 +997,36 @@ input[type="datetime-local"] {
   align-items: stretch;
 }
 
+.date-sync-label {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 52px;
+  gap: 8px;
+  align-items: center;
+}
+
+.date-sync-label > span:first-child {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
+}
+
 .date-now-btn {
   min-height: 48px;
   width: 52px;
   padding: 7px;
   color: var(--gold);
   font-size: 1rem;
+}
+
+.date-sync-status {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: end;
+  color: var(--gold);
+  font-size: .76rem;
+  font-weight: 760;
+  text-align: right;
+  white-space: nowrap;
 }
 
 #callsign {

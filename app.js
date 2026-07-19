@@ -47,6 +47,7 @@ const els = {
   modalTitle: $("modalTitle"),
   entryDate: $("entryDate"),
   entryDateNowBtn: $("entryDateNowBtn"),
+  entryDateSyncStatus: $("entryDateSyncStatus"),
   callsign: $("callsign"),
   tail: $("tail"),
   receiverType: $("receiverType"),
@@ -102,6 +103,7 @@ let waitingWorker = null;
 let activeFilter = { query: "", from: "", to: "" };
 let suppressClicksUntil = 0;
 let activeBlockMode = "B40";
+let entryDateSyncTimer = null;
 
 function id() {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -768,6 +770,8 @@ function closeModal(idName) {
 
 function resetForm() {
   els.offloadForm.reset();
+  els.entryDateSyncStatus.hidden = true;
+  clearTimeout(entryDateSyncTimer);
   els.entryDate.value = zuluDatetimeValue();
   els.burnRate.value = DEFAULT_BURN_RATE;
   els.contacts.value = 1;
@@ -881,6 +885,11 @@ function submitOffloadForm() {
 
 function setEntryDateToNow() {
   els.entryDate.value = zuluDatetimeValue();
+  els.entryDateSyncStatus.hidden = false;
+  clearTimeout(entryDateSyncTimer);
+  entryDateSyncTimer = setTimeout(() => {
+    els.entryDateSyncStatus.hidden = true;
+  }, 1800);
   updatePreview();
 }
 
