@@ -131,6 +131,13 @@ function formatNumber(value) {
   return Math.round(Number(value) || 0).toLocaleString();
 }
 
+function formatBoomTime(value) {
+  const totalSeconds = Math.round((Number(value) || 0) * 60);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return seconds ? `${minutes}m${String(seconds).padStart(2, "0")}s` : `${minutes} min`;
+}
+
 function formatK(value, digits = 1) {
   const number = Number(value) || 0;
   return number.toLocaleString(undefined, {
@@ -455,7 +462,7 @@ function updatePreview() {
   els.previewOffload.textContent = formatFuel(result.offload);
   els.formulaText.textContent = values.blockMode === "B45"
     ? "Direct fuel entry"
-    : `${formatK(values.fuelStart)} - ${formatK(values.fuelEnd)} - (${formatNumber(result.boomMinutes)} min x ${formatK(values.burnRate)} K/hr)`;
+    : `${formatK(values.fuelStart)} - ${formatK(values.fuelEnd)} - (${formatBoomTime(result.boomMinutes)} x ${formatK(values.burnRate)} K/hr)`;
   if (result.offload < 0) card.classList.add("bad");
   else if (result.offload === 0) card.classList.add("warn");
 }
@@ -632,7 +639,7 @@ function renderEntryRow(entry) {
   const blockMode = entry.blockMode || "B40";
   const details = blockMode === "B45"
     ? `${blockMode} - direct${contacts}`
-    : `${formatK(entry.fuelStart)} to ${formatK(entry.fuelEnd)} K - ${formatNumber(entry.boomMinutes)} min${contacts}`;
+    : `${formatK(entry.fuelStart)} to ${formatK(entry.fuelEnd)} K - ${formatBoomTime(entry.boomMinutes)}${contacts}`;
   return `
     <button class="entry-row" type="button" data-entry-id="${entry.id}">
       <span>
