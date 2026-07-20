@@ -842,14 +842,25 @@ function setBlockMode(mode) {
   updatePreview();
 }
 
-function focusForKeyboard(el) {
+function focusForKeyboard(el, options = {}) {
   if (!el) return;
-  el.focus();
+  try {
+    el.focus(options.preventScroll ? { preventScroll: true } : undefined);
+  } catch {
+    el.focus();
+  }
 }
 
-function focusAndSelect(el) {
-  focusForKeyboard(el);
+function focusAndSelect(el, options = {}) {
+  const modalCard = options.keepModalTop ? el?.closest(".modal-card") : null;
+  focusForKeyboard(el, options);
+  if (modalCard) modalCard.scrollTop = 0;
   selectInputValue(el);
+  if (modalCard) {
+    requestAnimationFrame(() => {
+      modalCard.scrollTop = 0;
+    });
+  }
 }
 
 function selectInputValue(el) {
@@ -942,7 +953,7 @@ function openNewEntry(receiver = null) {
   }
   openModal("offloadModal");
   const focusTarget = receiver ? (activeBlockMode === "B45" ? els.fuelOffload : els.fuelStart) : els.callsign;
-  focusAndSelect(focusTarget);
+  focusAndSelect(focusTarget, { preventScroll: true, keepModalTop: true });
 }
 
 function submitOffloadForm() {

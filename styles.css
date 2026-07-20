@@ -996,12 +996,16 @@ input {
 }
 
 input[type="datetime-local"] {
+  appearance: none;
+  -webkit-appearance: none;
+  color-scheme: dark;
   max-width: 100%;
+  min-width: 0;
 }
 
 .date-sync-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 52px;
+  grid-template-columns: minmax(0, calc(100% - 62px)) 52px;
   gap: 10px;
   align-items: stretch;
   overflow: hidden;
@@ -1015,7 +1019,9 @@ input[type="datetime-local"] {
 }
 
 .date-sync-row input {
+  display: block;
   min-width: 0;
+  overflow: hidden;
   width: 100%;
 }
 
@@ -1321,14 +1327,6 @@ input:focus-visible {
   #filterModal input,
   #cgModal input {
     font-size: 16px;
-  }
-
-  .date-sync-row {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .date-now-btn {
-    justify-self: end;
   }
 }
 
