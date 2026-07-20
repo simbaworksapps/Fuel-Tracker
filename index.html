@@ -13,7 +13,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
   <link rel="icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=0.1.252">
+  <link rel="stylesheet" href="styles.css?v=0.1.259">
 </head>
 <body>
   <header class="app-header">
@@ -113,7 +113,7 @@
           </label>
           <div class="date-sync-row">
             <input id="entryDate" type="datetime-local" required>
-            <button id="entryDateNowBtn" class="mini-btn date-now-btn" type="button" aria-label="Set date to current Zulu time" title="Set current Zulu time">&#128336;</button>
+            <button id="entryDateNowBtn" class="mini-btn date-now-btn" type="button" tabindex="-1" aria-label="Set date to current Zulu time" title="Set current Zulu time">&#128336;</button>
           </div>
         </div>
         <div class="field">
@@ -149,13 +149,6 @@
             <span>K</span>
           </div>
         </div>
-        <div class="field b40-field">
-          <label for="boomTime">Time on Boom</label>
-          <div class="unit-input">
-            <input id="boomTime" type="text" inputmode="numeric" enterkeyhint="next" placeholder="12 or 1230" required>
-            <span>min</span>
-          </div>
-        </div>
         <div class="field b45-field" hidden>
           <label for="fuelOffload">Fuel Offloaded</label>
           <div class="unit-input">
@@ -163,11 +156,24 @@
             <span>K</span>
           </div>
         </div>
+        <div class="field">
+          <label for="boomTime">Time on Boom</label>
+          <div class="control-row">
+            <div class="unit-input">
+              <input id="boomTime" type="text" inputmode="numeric" enterkeyhint="next" placeholder="12 or 1230" required>
+              <span>min</span>
+            </div>
+            <button id="boomTimerBtn" class="mini-btn field-tool-btn" type="button" tabindex="-1" aria-label="Start boom timer" title="Start boom timer">&#9201;</button>
+          </div>
+        </div>
         <div class="field contacts-field">
           <label for="contacts">Contacts</label>
-          <div class="unit-input">
-            <input id="contacts" type="number" min="1" step="1" inputmode="numeric" enterkeyhint="done" value="1" required>
-            <span>ct</span>
+          <div class="control-row contacts-control-row">
+            <div class="unit-input">
+              <input id="contacts" type="number" min="1" step="1" inputmode="numeric" enterkeyhint="done" value="1" required>
+              <span>ct</span>
+            </div>
+            <button id="contactsUpBtn" class="mini-btn field-tool-btn" type="button" tabindex="-1" aria-label="Increase contacts" title="Increase contacts">+</button>
           </div>
         </div>
         <div class="field wide-field">
@@ -338,6 +344,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=0.1.252"></script>
+  <script src="app.js?v=0.1.259"></script>
 </body>
 </html>

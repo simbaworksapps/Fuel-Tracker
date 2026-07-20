@@ -1082,6 +1082,29 @@ input:disabled {
   white-space: nowrap;
 }
 
+.control-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.contacts-control-row {
+  grid-template-columns: minmax(0, 1fr) 44px;
+}
+
+.field-tool-btn {
+  width: 44px;
+  min-height: 40px;
+  padding: 7px;
+  color: var(--gold);
+  font-size: .92rem;
+}
+
+.contacts-control-row .field-tool-btn {
+  font-size: .95rem;
+}
+
 .toggle-row {
   min-height: 22px;
   display: inline-flex;

@@ -58,8 +58,10 @@ const els = {
   fuelStart: $("fuelStart"),
   fuelEnd: $("fuelEnd"),
   boomTime: $("boomTime"),
+  boomTimerBtn: $("boomTimerBtn"),
   fuelOffload: $("fuelOffload"),
   contacts: $("contacts"),
+  contactsUpBtn: $("contactsUpBtn"),
   previewOffload: $("previewOffload"),
   formulaText: $("formulaText"),
   deleteEntryBtn: $("deleteEntryBtn"),
@@ -74,7 +76,7 @@ const els = {
 
 const STORAGE_KEY = "simba-fuel-tracker-v1";
 const DEFAULT_BURN_RATE = 10.0;
-const APP_CAO = "CAO 19JUL26";
+const APP_CAO = "CAO 20JUL26";
 const CG_FILL_VALUES = {
   cgFb: "39",
   cgCw: "49",
@@ -104,6 +106,9 @@ let activeFilter = { query: "", from: "", to: "" };
 let suppressClicksUntil = 0;
 let activeBlockMode = "B40";
 let entryDateSyncTimer = null;
+let boomTimerInterval = null;
+let boomTimerStartedAt = 0;
+let boomTimerBaseSeconds = 0;
 
 function id() {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -408,6 +413,19 @@ function parseBoomMinutes(value) {
   return Number.isFinite(numeric) ? numeric : NaN;
 }
 
+function parseBoomSeconds(value) {
+  const minutes = parseBoomMinutes(value);
+  return Number.isFinite(minutes) ? Math.max(0, Math.round(minutes * 60)) : 0;
+}
+
+function formatBoomTimerInput(totalSeconds) {
+  const secondsTotal = Math.max(0, Math.round(Number(totalSeconds) || 0));
+  const minutes = Math.floor(secondsTotal / 60);
+  const seconds = secondsTotal % 60;
+  if (!seconds) return String(minutes);
+  return `${String(minutes).padStart(2, "0")}${String(seconds).padStart(2, "0")}`;
+}
+
 function calculateOffload(values) {
   if (values.blockMode === "B45") {
     const offload = Number(values.fuelOffload);
@@ -645,8 +663,10 @@ function renderReceiverCard(group) {
 function renderEntryRow(entry) {
   const contacts = entry.contacts ? ` - ${entry.contacts} ct` : "";
   const blockMode = entry.blockMode || "B40";
+  const hasBoomTime = entry.boomMinutes !== null && entry.boomMinutes !== undefined && Number.isFinite(Number(entry.boomMinutes));
+  const boomText = hasBoomTime ? ` - ${formatBoomTime(entry.boomMinutes)}` : "";
   const details = blockMode === "B45"
-    ? `${blockMode} - direct${contacts}`
+    ? `${blockMode} - direct${boomText}${contacts}`
     : `${formatK(entry.fuelStart)} to ${formatK(entry.fuelEnd)} K - ${formatBoomTime(entry.boomMinutes)}${contacts}`;
   return `
     <button class="entry-row" type="button" data-entry-id="${entry.id}">
@@ -761,6 +781,7 @@ function closeModal(idName) {
     modal.hidden = true;
   }
   if (idName === "offloadModal") {
+    stopBoomTimer();
     editingEntryId = null;
     addToReceiver = null;
   }
@@ -769,6 +790,7 @@ function closeModal(idName) {
 }
 
 function resetForm() {
+  stopBoomTimer();
   els.offloadForm.reset();
   els.entryDateSyncStatus.hidden = true;
   clearTimeout(entryDateSyncTimer);
@@ -791,10 +813,13 @@ function setBlockMode(mode) {
   els.blockB45.setAttribute("aria-pressed", String(isB45));
   document.querySelectorAll(".b40-field").forEach((field) => { field.hidden = isB45; });
   document.querySelectorAll(".b45-field").forEach((field) => { field.hidden = !isB45; });
-  [els.burnRate, els.fuelStart, els.fuelEnd, els.boomTime].forEach((input) => {
+  [els.burnRate, els.fuelStart, els.fuelEnd].forEach((input) => {
     input.required = !isB45;
     input.disabled = isB45;
   });
+  els.boomTime.required = !isB45;
+  els.boomTime.disabled = false;
+  els.boomTimerBtn.disabled = false;
   els.fuelOffload.required = isB45;
   els.fuelOffload.disabled = !isB45;
   if (isB45) {
@@ -859,6 +884,43 @@ function bindNumberOnlyInput(el, onInput, { allowDecimal = true } = {}) {
   });
 }
 
+function setBoomTimerRunning(isRunning) {
+  els.boomTimerBtn.classList.toggle("active", isRunning);
+  els.boomTimerBtn.setAttribute("aria-label", isRunning ? "Pause boom timer" : "Start boom timer");
+  els.boomTimerBtn.title = isRunning ? "Pause boom timer" : "Start boom timer";
+}
+
+function updateBoomTimerInput() {
+  const elapsedSeconds = Math.floor((Date.now() - boomTimerStartedAt) / 1000);
+  els.boomTime.value = formatBoomTimerInput(boomTimerBaseSeconds + elapsedSeconds);
+  updatePreview();
+}
+
+function stopBoomTimer() {
+  if (boomTimerInterval) clearInterval(boomTimerInterval);
+  boomTimerInterval = null;
+  setBoomTimerRunning(false);
+}
+
+function toggleBoomTimer() {
+  if (boomTimerInterval) {
+    boomTimerBaseSeconds = parseBoomSeconds(els.boomTime.value);
+    stopBoomTimer();
+    return;
+  }
+  boomTimerBaseSeconds = parseBoomSeconds(els.boomTime.value);
+  boomTimerStartedAt = Date.now();
+  updateBoomTimerInput();
+  boomTimerInterval = setInterval(updateBoomTimerInput, 1000);
+  setBoomTimerRunning(true);
+}
+
+function adjustContacts(delta) {
+  const current = Math.max(1, Math.round(Number(els.contacts.value) || 1));
+  els.contacts.value = Math.max(1, current + delta);
+  updatePreview();
+}
+
 function openNewEntry(receiver = null) {
   resetForm();
   els.modalTitle.textContent = receiver ? "Add Offload" : "Add Receiver";
@@ -893,6 +955,31 @@ function setEntryDateToNow() {
   updatePreview();
 }
 
+function offloadEnterTargets() {
+  const blockFields = activeBlockMode === "B45"
+    ? [els.fuelOffload, els.boomTime]
+    : [els.burnRate, els.fuelStart, els.fuelEnd, els.boomTime];
+  return [
+    els.entryDate,
+    els.callsign,
+    els.tail,
+    els.receiverType,
+    ...blockFields,
+    els.contacts,
+    els.receiverInfo
+  ].filter((input) => !input.disabled && !input.closest("[hidden]"));
+}
+
+function handleOffloadEnter(event) {
+  if (event.key !== "Enter") return;
+  event.preventDefault();
+  const targets = offloadEnterTargets();
+  const index = targets.indexOf(event.currentTarget);
+  const next = targets[index + 1];
+  if (next) focusAndSelect(next);
+  else submitOffloadForm();
+}
+
 function openEditEntry(entryId) {
   const entry = state.entries.find((item) => item.id === entryId);
   if (!entry) return;
@@ -918,6 +1005,11 @@ function openEditEntry(entryId) {
 
 async function saveEntry(event) {
   event.preventDefault();
+  if (boomTimerInterval) {
+    updateBoomTimerInput();
+    boomTimerBaseSeconds = parseBoomSeconds(els.boomTime.value);
+    stopBoomTimer();
+  }
   if (!els.offloadForm.reportValidity()) return;
   if (document.activeElement && els.offloadForm.contains(document.activeElement)) {
     document.activeElement.blur();
@@ -1163,7 +1255,7 @@ function importData(file) {
         { okText: "OK", hideCancel: true, danger: false }
       );
     } catch {
-      openConfirm("Import Failed", "That file did not look like a Fuel Tracker export.", () => {});
+      openConfirm("Import Failed", "That file did not look like a Fuel Tracker export.", null, { hideCancel: true, hideOk: true, danger: false });
     } finally {
       els.importFile.value = "";
     }
@@ -1309,6 +1401,9 @@ function initEvents() {
   [els.boomTime, els.contacts].forEach((el) => {
     bindNumberOnlyInput(el, updatePreview, { allowDecimal: false });
   });
+  els.boomTime.addEventListener("input", stopBoomTimer);
+  els.boomTimerBtn.addEventListener("click", toggleBoomTimer);
+  els.contactsUpBtn.addEventListener("click", () => adjustContacts(1));
 
   const cgInputs = [els.cgFb, els.cgCw, els.cgAb, els.cgRes, els.cgUd];
   cgInputs.forEach((el, index) => {
@@ -1342,30 +1437,7 @@ function initEvents() {
   els.offloadForm.querySelectorAll("input").forEach((el) => {
     el.addEventListener("focus", () => selectInputValue(el));
     el.addEventListener("click", () => selectInputValue(el));
-  });
-
-  els.boomTime.addEventListener("keydown", (event) => {
-    if (event.key !== "Enter") return;
-    event.preventDefault();
-    els.contacts.focus();
-  });
-
-  els.fuelOffload.addEventListener("keydown", (event) => {
-    if (event.key !== "Enter") return;
-    event.preventDefault();
-    els.contacts.focus();
-  });
-
-  els.contacts.addEventListener("keydown", (event) => {
-    if (event.key !== "Enter") return;
-    event.preventDefault();
-    els.receiverInfo.focus();
-  });
-
-  els.receiverInfo.addEventListener("keydown", (event) => {
-    if (event.key !== "Enter") return;
-    event.preventDefault();
-    submitOffloadForm();
+    el.addEventListener("keydown", handleOffloadEnter);
   });
 
   els.receiverList.addEventListener("click", (event) => {
