@@ -1,9 +1,9 @@
-﻿const CACHE_NAME = "simba-fuel-tracker-v0.1.261";
+﻿const CACHE_NAME = "simba-fuel-tracker-v0.1.262";
 const ASSETS = [
   "/",
   "/index.html",
-  "/styles.css?v=0.1.261",
-  "/app.js?v=0.1.261",
+  "/styles.css?v=0.1.262",
+  "/app.js?v=0.1.262",
   "/manifest.json",
   "/assets/simba.jpg",
   "/icons/icon-192.png",

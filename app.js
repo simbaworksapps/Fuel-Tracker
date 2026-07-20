@@ -390,7 +390,9 @@ function groupEntries(entries) {
       return Number.isFinite(time) && time > latest ? time : latest;
     }, 0);
     return group;
-  }).sort((a, b) => b.lastDate - a.lastDate);
+  }).sort((a, b) => (b.lastDate - a.lastDate)
+    || a.callsign.localeCompare(b.callsign)
+    || a.tail.localeCompare(b.tail));
 }
 
 function parseBoomMinutes(value) {
