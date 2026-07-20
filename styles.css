@@ -1322,6 +1322,14 @@ input:focus-visible {
   #cgModal input {
     font-size: 16px;
   }
+
+  .date-sync-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .date-now-btn {
+    justify-self: end;
+  }
 }
 
 @media (max-width: 920px) {
