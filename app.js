@@ -706,8 +706,14 @@ function timelineHeader(entries) {
   return firstLabel === lastLabel ? `Receivers ${firstLabel}` : `Receivers ${firstLabel} - ${lastLabel}`;
 }
 
+function compareTimelineEntries(a, b) {
+  return (entryTimestamp(a.date) - entryTimestamp(b.date))
+    || String(a.callsign || "").localeCompare(String(b.callsign || ""))
+    || entryTail(a).localeCompare(entryTail(b));
+}
+
 function buildTimelineText(entries = currentEntries()) {
-  const sorted = [...entries].sort((a, b) => entryTimestamp(a.date) - entryTimestamp(b.date));
+  const sorted = [...entries].sort(compareTimelineEntries);
   const totalOffload = entries.reduce((sum, entry) => sum + entry.offload, 0);
   const receiverCount = groupEntries(entries).length;
   const contacts = entries.reduce((sum, entry) => sum + (Number(entry.contacts) || 0), 0);
