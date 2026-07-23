@@ -13,7 +13,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
   <link rel="icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=0.1.282">
+  <link rel="stylesheet" href="styles.css?v=0.1.304">
 </head>
 <body>
   <header class="app-header">
@@ -327,6 +327,33 @@
           <b>More Stable</b>
         </div>
       </div>
+      <div class="formula-card burn-time-card">
+        <div class="burn-time-header">
+          <span>Main Tank Burn Time</span>
+          <strong id="burnTimeResult">-- / --</strong>
+        </div>
+        <div class="form-grid burn-time-grid">
+          <div class="field">
+            <label for="burnTimeAmount">Amount to Burn</label>
+            <div class="unit-input">
+              <input id="burnTimeAmount" type="number" min="0" step="0.1" inputmode="decimal" placeholder="0.8">
+              <span>K</span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="burnTimeRate">1 Eng Burn Rate</label>
+            <div class="unit-input">
+              <input id="burnTimeRate" type="number" min="0" step="0.1" inputmode="decimal" placeholder="2.5">
+              <span>K/hr</span>
+            </div>
+          </div>
+        </div>
+        <div class="burn-time-footer">
+          <small id="burnTimeFormula">Amount to burn / burn rate x 60</small>
+          <button id="burnTimeInfoBtn" class="mini-btn cg-info-btn burn-time-info-btn" type="button" aria-label="Main tank burn time info" title="Main tank burn time info">i</button>
+          <button id="burnTimeTimerBtn" class="mini-btn burn-time-timer-btn" type="button" tabindex="-1" aria-label="Start main tank burn timer" title="Start main tank burn timer">&#9201;</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -344,6 +371,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=0.1.282"></script>
+  <script src="app.js?v=0.1.304"></script>
 </body>
 </html>

@@ -898,6 +898,38 @@ button:disabled {
   display: inline-grid;
 }
 
+.burn-time-card {
+  display: grid;
+  gap: 10px;
+}
+
+.burn-time-card strong {
+  color: var(--green);
+}
+
+.burn-time-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  align-items: start;
+  justify-content: stretch;
+}
+
+.burn-time-grid .field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+#cgModal .burn-time-card .unit-input input {
+  min-height: 38px;
+}
+
+#cgModal .burn-time-card .unit-input span {
+  padding: 0 8px;
+  font-size: .76rem;
+}
+
 #offloadModal .form-actions {
   width: 100%;
   display: flex;
@@ -1174,6 +1206,77 @@ input:disabled {
   color: var(--muted);
   font-size: .84rem;
   line-height: 1.35;
+}
+
+.formula-card .burn-time-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.formula-card .burn-time-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  align-items: start;
+  justify-content: stretch;
+}
+
+.formula-card .burn-time-grid .field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.burn-time-timer-btn {
+  width: 38px;
+  min-width: 38px;
+  min-height: 38px;
+  padding: 0;
+  color: var(--gold);
+}
+
+.formula-card .burn-time-footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 38px 38px;
+  gap: 8px;
+  align-items: center;
+}
+
+.burn-time-info-btn {
+  width: 38px;
+  min-width: 38px;
+  min-height: 38px;
+  margin-left: 0;
+}
+
+.burn-time-card #burnTimeResult {
+  color: var(--text);
+  font-size: .95rem;
+  font-weight: 760;
+  white-space: nowrap;
+}
+
+.burn-time-card #burnTimeResult span {
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.burn-time-card #burnTimeResult .burn-time-required {
+  color: var(--green);
+}
+
+.burn-time-card .burn-time-left.is-complete {
+  animation: burnTimeCompleteBlink .8s step-end 5;
+  color: var(--gold);
+}
+
+@keyframes burnTimeCompleteBlink {
+  50% {
+    opacity: .28;
+  }
 }
 
 #confirmBody {

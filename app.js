@@ -34,6 +34,12 @@ const els = {
   feedbackBtn: $("feedbackBtn"),
   cgMaxBtn: $("cgMaxBtn"),
   cgClearBtn: $("cgClearBtn"),
+  burnTimeRate: $("burnTimeRate"),
+  burnTimeAmount: $("burnTimeAmount"),
+  burnTimeInfoBtn: $("burnTimeInfoBtn"),
+  burnTimeTimerBtn: $("burnTimeTimerBtn"),
+  burnTimeResult: $("burnTimeResult"),
+  burnTimeFormula: $("burnTimeFormula"),
   clearFilterBtn: $("clearFilterBtn"),
   applyFilterBtn: $("applyFilterBtn"),
   resetBtn: $("resetBtn"),
@@ -76,7 +82,7 @@ const els = {
 
 const STORAGE_KEY = "simba-fuel-tracker-v1";
 const DEFAULT_BURN_RATE = 10.0;
-const APP_CAO = "CAO 20JUL26";
+const APP_CAO = "CAO 23JUL26";
 const CG_FILL_VALUES = {
   cgFb: "39",
   cgCw: "49",
@@ -109,6 +115,17 @@ let entryDateSyncTimer = null;
 let boomTimerInterval = null;
 let boomTimerStartedAt = 0;
 let boomTimerBaseSeconds = 0;
+let boomTimerHold = null;
+let boomTimerIgnoreClick = false;
+let burnTimerInterval = null;
+let burnTimerStartedAt = 0;
+let burnTimerRemainingSeconds = 0;
+let burnTimerRequiredSeconds = 0;
+let burnTimerCompleted = false;
+let burnTimerHasStarted = false;
+let burnTimerBlinking = false;
+let burnTimerHold = null;
+let burnTimerIgnoreClick = false;
 
 function id() {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -542,10 +559,92 @@ function updateCgPreview() {
   els.cgAltUdWarning.hidden = !(Number(els.cgUd.value) > 1);
 }
 
+function calculateBurnTimeMinutes() {
+  const burnRate = Number(els.burnTimeRate.value);
+  const amount = Number(els.burnTimeAmount.value);
+  if (els.burnTimeRate.value === "" || els.burnTimeAmount.value === "") return null;
+  if (![burnRate, amount].every(Number.isFinite) || burnRate <= 0 || amount < 0) return null;
+  return (amount / burnRate) * 60;
+}
+
+function updateBurnTimePreview() {
+  const minutes = calculateBurnTimeMinutes();
+  if (!burnTimerInterval && !burnTimerCompleted) {
+    burnTimerRequiredSeconds = minutes === null ? 0 : Math.round(minutes * 60);
+    burnTimerRemainingSeconds = burnTimerRequiredSeconds;
+  }
+  renderBurnTimerDisplay();
+  els.burnTimeFormula.textContent = minutes === null
+    ? "Amount to burn / burn rate x 60"
+    : `${formatK(els.burnTimeAmount.value)} K / ${formatK(els.burnTimeRate.value)} K/hr x 60`;
+}
+
+function formatBurnTimerMinutes(seconds) {
+  return `${formatK(Math.max(0, seconds) / 60, 1)} min`;
+}
+
+function renderBurnTimerDisplay() {
+  const requiredText = burnTimerRequiredSeconds > 0 ? formatBurnTimerMinutes(burnTimerRequiredSeconds) : "--";
+  const remainingText = burnTimerRequiredSeconds > 0 ? formatBurnTimerMinutes(burnTimerRemainingSeconds) : "--";
+  els.burnTimeResult.innerHTML = burnTimerHasStarted
+    ? `<span class="burn-time-left${burnTimerBlinking ? " is-complete" : ""}">${remainingText}</span> / <span class="burn-time-required">${requiredText}</span>`
+    : `<span class="burn-time-required">${requiredText}</span>`;
+}
+
+function setBurnTimerRunning(isRunning) {
+  els.burnTimeTimerBtn.classList.toggle("active", isRunning);
+  els.burnTimeTimerBtn.setAttribute("aria-label", isRunning ? "Pause main tank burn timer" : "Start main tank burn timer");
+  els.burnTimeTimerBtn.title = isRunning ? "Pause main tank burn timer" : "Start main tank burn timer";
+}
+
+function resetBurnTimer() {
+  if (burnTimerInterval) clearInterval(burnTimerInterval);
+  burnTimerInterval = null;
+  burnTimerCompleted = false;
+  burnTimerHasStarted = false;
+  burnTimerBlinking = false;
+  setBurnTimerRunning(false);
+  const minutes = calculateBurnTimeMinutes();
+  burnTimerRequiredSeconds = minutes === null ? 0 : Math.round(minutes * 60);
+  burnTimerRemainingSeconds = burnTimerRequiredSeconds;
+  renderBurnTimerDisplay();
+}
+
+function updateBurnTimerCountdown() {
+  const elapsedSeconds = Math.floor((Date.now() - burnTimerStartedAt) / 1000);
+  burnTimerRemainingSeconds = Math.max(0, burnTimerRemainingSeconds - elapsedSeconds);
+  burnTimerStartedAt = Date.now();
+  if (burnTimerRemainingSeconds <= 0) {
+    clearInterval(burnTimerInterval);
+    burnTimerInterval = null;
+    burnTimerCompleted = true;
+    burnTimerBlinking = true;
+    setBurnTimerRunning(false);
+  }
+  renderBurnTimerDisplay();
+}
+
+function toggleBurnTimer() {
+  if (burnTimerInterval) {
+    updateBurnTimerCountdown();
+    clearInterval(burnTimerInterval);
+    burnTimerInterval = null;
+    setBurnTimerRunning(false);
+    return;
+  }
+  if (burnTimerRequiredSeconds <= 0 || burnTimerCompleted || burnTimerRemainingSeconds <= 0) resetBurnTimer();
+  if (burnTimerRequiredSeconds <= 0) return;
+  burnTimerHasStarted = true;
+  burnTimerStartedAt = Date.now();
+  burnTimerInterval = setInterval(updateBurnTimerCountdown, 1000);
+  setBurnTimerRunning(true);
+  renderBurnTimerDisplay();
+}
+
 function openCgCalculator() {
   updateCgPreview();
+  updateBurnTimePreview();
   openModal("cgModal");
-  focusAndSelect(els.cgFb);
 }
 
 function setCgMaxValues() {
@@ -556,11 +655,31 @@ function setCgMaxValues() {
 }
 
 function clearCgInputs() {
-  [els.cgFb, els.cgCw, els.cgAb, els.cgRes, els.cgUd].forEach((input) => {
+  [els.cgFb, els.cgCw, els.cgAb, els.cgRes, els.cgUd, els.burnTimeRate, els.burnTimeAmount].forEach((input) => {
     input.value = "";
   });
   updateCgPreview();
+  resetBurnTimer();
   focusAndSelect(els.cgFb);
+}
+
+function handleBurnTimeInput() {
+  resetBurnTimer();
+  updateBurnTimePreview();
+}
+
+function openBurnTimeInfo() {
+  openConfirm(
+    "Main Tank Burn Time",
+    `
+      <p>When balancing the fuel panel, the primary method is to feed the lighter main tank's respective engine from fuselage fuel while the heavier main tank continues feeding its respective engine.</p>
+      <p>This lets the heavier main tank decrease over time while the lighter main tank stays about constant.</p>
+      <p>This timer estimates when the tanks will balance by calculating how long it takes to burn the difference between the main tanks.</p>
+      <p>Example: Main 1 = 10.0K, Main 4 = 9.2K. The difference is 0.8K. If Engine 1 fuel flow is about 2.5 K/hr, enter 2.5 and 0.8 to display the time required to equalize those tanks.</p>
+    `,
+    null,
+    { hideCancel: true, hideOk: true, danger: false, html: true, technique: true }
+  );
 }
 
 function openCgInfo() {
@@ -793,6 +912,7 @@ function closeModal(idName) {
     editingEntryId = null;
     addToReceiver = null;
   }
+  if (idName === "cgModal") resetBurnTimer();
   if (idName === "confirmModal") confirmAction = null;
   if (!document.querySelector(".modal:not([hidden])")) document.body.classList.remove("modal-open");
 }
@@ -919,6 +1039,14 @@ function stopBoomTimer() {
   if (boomTimerInterval) clearInterval(boomTimerInterval);
   boomTimerInterval = null;
   setBoomTimerRunning(false);
+}
+
+function resetBoomTimer() {
+  stopBoomTimer();
+  boomTimerBaseSeconds = 0;
+  boomTimerStartedAt = 0;
+  els.boomTime.value = "0";
+  updatePreview();
 }
 
 function toggleBoomTimer() {
@@ -1400,6 +1528,10 @@ function initEvents() {
     event.stopPropagation();
     openCgInfo();
   });
+  els.burnTimeInfoBtn.addEventListener("click", (event) => {
+    event.stopPropagation();
+    openBurnTimeInfo();
+  });
   els.feedbackBtn.addEventListener("click", (event) => {
     event.stopPropagation();
     openFeedback();
@@ -1421,8 +1553,45 @@ function initEvents() {
     bindNumberOnlyInput(el, updatePreview, { allowDecimal: false });
   });
   els.boomTime.addEventListener("input", stopBoomTimer);
-  els.boomTimerBtn.addEventListener("click", toggleBoomTimer);
+  els.boomTimerBtn.addEventListener("click", (event) => {
+    event.preventDefault();
+    if (boomTimerIgnoreClick) {
+      boomTimerIgnoreClick = false;
+      return;
+    }
+    toggleBoomTimer();
+  });
+  els.boomTimerBtn.addEventListener("pointerdown", () => {
+    clearTimeout(boomTimerHold);
+    boomTimerIgnoreClick = false;
+    boomTimerHold = setTimeout(() => {
+      boomTimerIgnoreClick = true;
+      resetBoomTimer();
+    }, 650);
+  });
+  ["pointerup", "pointercancel", "pointerleave"].forEach((eventName) => {
+    els.boomTimerBtn.addEventListener(eventName, () => clearTimeout(boomTimerHold));
+  });
   els.contactsUpBtn.addEventListener("click", () => adjustContacts(1));
+  els.burnTimeTimerBtn.addEventListener("click", (event) => {
+    event.preventDefault();
+    if (burnTimerIgnoreClick) {
+      burnTimerIgnoreClick = false;
+      return;
+    }
+    toggleBurnTimer();
+  });
+  els.burnTimeTimerBtn.addEventListener("pointerdown", () => {
+    clearTimeout(burnTimerHold);
+    burnTimerIgnoreClick = false;
+    burnTimerHold = setTimeout(() => {
+      burnTimerIgnoreClick = true;
+      resetBurnTimer();
+    }, 650);
+  });
+  ["pointerup", "pointercancel", "pointerleave"].forEach((eventName) => {
+    els.burnTimeTimerBtn.addEventListener(eventName, () => clearTimeout(burnTimerHold));
+  });
 
   const cgInputs = [els.cgFb, els.cgCw, els.cgAb, els.cgRes, els.cgUd];
   cgInputs.forEach((el, index) => {
@@ -1433,6 +1602,19 @@ function initEvents() {
       if (event.key !== "Enter") return;
       event.preventDefault();
       const next = cgInputs[index + 1];
+      if (next) focusAndSelect(next);
+      else el.blur();
+    });
+  });
+  const burnTimeInputs = [els.burnTimeAmount, els.burnTimeRate];
+  burnTimeInputs.forEach((el, index) => {
+    bindNumberOnlyInput(el, handleBurnTimeInput, { allowDecimal: true });
+    el.addEventListener("focus", () => selectInputValue(el));
+    el.addEventListener("click", () => selectInputValue(el));
+    el.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      const next = burnTimeInputs[index + 1];
       if (next) focusAndSelect(next);
       else el.blur();
     });
