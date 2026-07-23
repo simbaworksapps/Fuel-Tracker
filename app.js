@@ -675,7 +675,7 @@ function openBurnTimeInfo() {
       <p>When balancing the fuel panel, the primary method is to feed the lighter main tank's respective engine from fuselage fuel while the heavier main tank continues feeding its respective engine.</p>
       <p>This lets the heavier main tank decrease over time while the lighter main tank stays about constant.</p>
       <p>This timer estimates when the tanks will balance by calculating how long it takes to burn the difference between the main tanks.</p>
-      <p>Example: Main 1 = 10.0K, Main 4 = 9.2K. The difference is 0.8K. If Engine 1 fuel flow is about 2.5 K/hr, enter 2.5 and 0.8 to display the time required to equalize those tanks.</p>
+      <p>Example: Main 1 = 10.0K, Main 4 = 9.2K. The difference is 0.8K. If Engine 1 fuel flow is about 2.5 K/hr, enter <span class="inline-input-chip">0.8</span> and <span class="inline-input-chip">2.5</span> to display the time required to equalize those tanks.</p>
     `,
     null,
     { hideCancel: true, hideOk: true, danger: false, html: true, technique: true }
@@ -1601,6 +1601,7 @@ function initEvents() {
     el.addEventListener("keydown", (event) => {
       if (event.key !== "Enter") return;
       event.preventDefault();
+      event.stopImmediatePropagation();
       const next = cgInputs[index + 1];
       if (next) focusAndSelect(next);
       else el.blur();

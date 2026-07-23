@@ -13,7 +13,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
   <link rel="icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=0.1.304">
+  <link rel="stylesheet" href="styles.css?v=0.1.306">
 </head>
 <body>
   <header class="app-header">
@@ -263,7 +263,7 @@
         </div>
         <div class="field">
           <label for="cgUd">UD <span class="label-note">MAX ~15K</span></label>
-          <input id="cgUd" type="number" step="0.001" inputmode="decimal">
+          <input id="cgUd" type="number" step="0.001" inputmode="decimal" enterkeyhint="done">
         </div>
         <div class="field cg-main-max">
           <span>Main 1/4 MAX ~14K</span>
@@ -336,14 +336,14 @@
           <div class="field">
             <label for="burnTimeAmount">Amount to Burn</label>
             <div class="unit-input">
-              <input id="burnTimeAmount" type="number" min="0" step="0.1" inputmode="decimal" placeholder="0.8">
+              <input id="burnTimeAmount" type="number" min="0" step="0.1" inputmode="decimal" enterkeyhint="next" placeholder="0.8">
               <span>K</span>
             </div>
           </div>
           <div class="field">
             <label for="burnTimeRate">1 Eng Burn Rate</label>
             <div class="unit-input">
-              <input id="burnTimeRate" type="number" min="0" step="0.1" inputmode="decimal" placeholder="2.5">
+              <input id="burnTimeRate" type="number" min="0" step="0.1" inputmode="decimal" enterkeyhint="done" placeholder="2.5">
               <span>K/hr</span>
             </div>
           </div>
@@ -371,6 +371,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=0.1.304"></script>
+  <script src="app.js?v=0.1.306"></script>
 </body>
 </html>

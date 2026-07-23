@@ -1314,6 +1314,19 @@ input:disabled {
   overflow-wrap: anywhere;
 }
 
+.inline-input-chip {
+  display: inline-block;
+  min-width: 36px;
+  padding: 2px 8px;
+  color: var(--text);
+  background: var(--field);
+  border: 1px solid var(--stroke-strong);
+  border-radius: 6px;
+  font-weight: 760;
+  text-align: center;
+  white-space: nowrap;
+}
+
 #confirmBody.summary-table {
   width: 100%;
   max-width: 100%;
