@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -13,7 +13,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
   <link rel="icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=0.1.306">
+  <link rel="stylesheet" href="styles.css?v=0.1.365">
 </head>
 <body>
   <header class="app-header">
@@ -27,7 +27,7 @@
       </div>
     </div>
     <div class="header-actions">
-      <div class="cao-line" id="caoLine">CAO 19JUL26</div>
+      <div class="cao-line" id="caoLine">CAO 14AUG26</div>
     </div>
   </header>
 
@@ -238,13 +238,224 @@
   <div id="cgModal" class="modal" hidden>
     <div class="modal-card cg-card">
       <div class="section-row">
-        <h2>CG Calculator</h2>
+        <h2>SIMBA Assist</h2>
         <button id="feedbackBtn" class="mini-btn cg-header-btn" type="button" aria-label="Send feedback" title="Send feedback">&#9993;</button>
-        <button id="cgMaxBtn" class="mini-btn cg-header-btn" type="button" aria-label="Fill CG max values" title="Fill CG max values">M</button>
         <button id="cgClearBtn" class="mini-btn cg-header-btn" type="button" aria-label="Clear CG inputs" title="Clear CG inputs">C</button>
         <button class="mini-btn modal-close" data-close="cgModal" type="button" aria-label="Close">&times;</button>
       </div>
-      <div class="form-grid">
+
+      <div class="formula-card rdvz-card">
+        <div class="rdvz-header">
+          <span>Turn Range &amp; Offset</span>
+        </div>
+        <div class="rdvz-grid">
+          <div class="field">
+            <label for="rdvzProfile">Receiver Type</label>
+            <div class="select-add-control">
+              <select id="rdvzProfile" class="native-select-state" tabindex="-1" aria-hidden="true">
+                <option value="" selected disabled>No receiver types</option>
+              </select>
+              <button id="rdvzProfileButton" class="themed-select-button" type="button" aria-haspopup="listbox" aria-expanded="false"><span>No receiver types</span></button>
+              <div id="rdvzProfileMenu" class="themed-select-menu" role="listbox" hidden></div>
+              <button id="rdvzAddProfile" type="button" aria-label="Add receiver type" title="Add receiver type">+</button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="rdvzKias">RDVZ KIAS</label>
+            <div class="unit-input">
+              <input id="rdvzKias" type="number" min="0" step="1" inputmode="numeric" enterkeyhint="next" placeholder="315">
+              <span>KIAS</span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="rdvzArFl">AR Altitude</label>
+            <div class="unit-input">
+              <input id="rdvzArFl" type="text" inputmode="numeric" pattern="[0-9]*" enterkeyhint="next" autocomplete="off" placeholder="210">
+              <span>FL</span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="rdvzTankerKias">Tanker KIAS</label>
+            <div class="unit-input">
+              <input id="rdvzTankerKias" type="number" min="0" step="1" inputmode="numeric" enterkeyhint="next" value="275">
+              <span>KIAS</span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="rdvzTrack">AR Track</label>
+            <div class="unit-input">
+              <input id="rdvzTrack" type="number" min="0" max="360" step="1" inputmode="numeric" enterkeyhint="next" placeholder="090">
+              <span>&deg;</span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="rdvzOrbit">Orbit</label>
+            <div class="themed-select">
+              <select id="rdvzOrbit" class="native-select-state" tabindex="-1" aria-hidden="true">
+              <option value="left">Left</option>
+              <option value="right">Right</option>
+              </select>
+              <button id="rdvzOrbitButton" class="themed-select-button" type="button" aria-haspopup="listbox" aria-expanded="false"><span>Left</span></button>
+              <div id="rdvzOrbitMenu" class="themed-select-menu" role="listbox" hidden>
+                <button type="button" role="option" data-value="left" aria-selected="true">Left</button>
+                <button type="button" role="option" data-value="right" aria-selected="false">Right</button>
+              </div>
+            </div>
+          </div>
+          <div class="field">
+            <label for="rdvzWind">Wind</label>
+            <input id="rdvzWind" type="text" inputmode="text" enterkeyhint="next" autocomplete="off" spellcheck="false" placeholder="270/20, 270020, 0">
+          </div>
+          <div class="field">
+            <label>Wind Components</label>
+            <div id="rdvzWindComponents" class="wind-components">HW -- <span></span> XW --</div>
+          </div>
+        </div>
+        <div id="rdvzResults" class="rdvz-results">
+          <div><span>Turn Range</span><b>--</b></div>
+          <div><span>Offset</span><b>--</b></div>
+          <div><span>Receiver Alt</span><b>--</b></div>
+          <div><span>Tanker Alt</span><b>--</b></div>
+          <div><span>Receiver TAS</span><b>--</b></div>
+          <div><span>Tanker TAS</span><b>--</b></div>
+          <div><span>Closure</span><b>--</b></div>
+          <div><span>Drift</span><b>--</b></div>
+          <div><span>40 NM (Chart)</span><b>--</b></div>
+          <div><span>30 NM (Chart)</span><b>--</b></div>
+          <div><span>40 NM <button class="rdvz-wind-time-info" type="button" data-rdvz-wind-info aria-label="About wind-corrected timing" title="Wind-corrected timing">&#127788;&#65039;</button></span><b>--</b></div>
+          <div><span>30 NM <button class="rdvz-wind-time-info" type="button" data-rdvz-wind-info aria-label="About wind-corrected timing" title="Wind-corrected timing">&#127788;&#65039;</button></span><b>--</b></div>
+          <div class="rdvz-overrun-result">
+            <div class="rdvz-overrun-heading"><span>Overrun</span><b>--</b></div>
+            <div class="rdvz-turn-metrics" aria-label="Turn reference metrics">
+              <div><span>Rate of Turn</span><b>--</b></div>
+              <div><span>SR Bank</span><b>--</b></div>
+              <div><span>&frac12; SR Bank</span><b>--</b></div>
+            </div>
+          </div>
+          <div class="rdvz-timer-result">
+            <span class="rdvz-timer-heading"><span>Timer</span><b id="rdvzTimerDisplay">0:00</b></span>
+            <div class="rdvz-timer-actions">
+              <button class="mini-btn cg-info-btn" type="button" data-rdvz-info aria-label="Turn range assumptions" title="Turn range assumptions">i</button>
+              <button id="rdvzTimerBtn" class="mini-btn burn-time-timer-btn" type="button" tabindex="-1" aria-label="Start rendezvous timer" title="Start rendezvous timer">&#9201;</button>
+            </div>
+          </div>
+          <div class="rdvz-assumptions"><span>25&deg; AOB &bull; Standard atmosphere</span></div>
+        </div>
+        <div id="rdvzVisual" class="rdvz-visual">
+          <div class="rdvz-visual-readout" aria-label="Wind relationship to AR track">
+            <div><span>XW</span><b id="rdvzCompassXw">--</b></div>
+            <div id="rdvzCompassAlongRow"><span id="rdvzCompassAlongLabel">HW</span><b id="rdvzCompassAlong">--</b></div>
+            <div><span>Angle</span><b id="rdvzCompassAngle">--</b></div>
+          </div>
+          <button id="rdvzWindAdjustBtn" class="mini-btn rdvz-wind-adjust-btn" type="button" aria-label="Adjust wind direction" title="Adjust wind direction" aria-pressed="false"></button>
+          <svg id="rdvzVisualSvg" viewBox="0 0 320 320" role="img" aria-labelledby="rdvzVisualTitle rdvzVisualDesc">
+            <title id="rdvzVisualTitle">AR track, wind, and orbit diagram</title>
+            <desc id="rdvzVisualDesc">A north-up view of the ARIP-to-ARCP course, wind push, and selected orbit side.</desc>
+            <defs>
+              <marker id="rdvzTrackArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker>
+              <marker id="rdvzWindArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker>
+              <marker id="rdvzOrbitArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker>
+            </defs>
+            <circle class="rdvz-compass-ring" cx="160" cy="160" r="136"></circle>
+            <g class="rdvz-compass-ticks" aria-hidden="true">
+              <line class="major" x1="160" y1="24" x2="160" y2="38"></line>
+              <line x1="160" y1="24" x2="160" y2="34" transform="rotate(30 160 160)"></line>
+              <line x1="160" y1="24" x2="160" y2="34" transform="rotate(60 160 160)"></line>
+              <line class="major" x1="160" y1="24" x2="160" y2="38" transform="rotate(90 160 160)"></line>
+              <line x1="160" y1="24" x2="160" y2="34" transform="rotate(120 160 160)"></line>
+              <line x1="160" y1="24" x2="160" y2="34" transform="rotate(150 160 160)"></line>
+              <line class="major" x1="160" y1="24" x2="160" y2="38" transform="rotate(180 160 160)"></line>
+              <line x1="160" y1="24" x2="160" y2="34" transform="rotate(210 160 160)"></line>
+              <line x1="160" y1="24" x2="160" y2="34" transform="rotate(240 160 160)"></line>
+              <line class="major" x1="160" y1="24" x2="160" y2="38" transform="rotate(270 160 160)"></line>
+              <line x1="160" y1="24" x2="160" y2="34" transform="rotate(300 160 160)"></line>
+              <line x1="160" y1="24" x2="160" y2="34" transform="rotate(330 160 160)"></line>
+            </g>
+            <g class="rdvz-cardinal-labels" aria-hidden="true">
+              <text class="north" x="160" y="53">N</text>
+              <text x="270" y="164">E</text>
+              <text x="160" y="276">S</text>
+              <text x="50" y="164">W</text>
+            </g>
+            <line id="rdvzTrackLine" class="rdvz-track-line" marker-end="url(#rdvzTrackArrow)"></line>
+            <path id="rdvzCpTurnPath" class="rdvz-turn-path" marker-end="url(#rdvzOrbitArrow)"></path>
+            <line id="rdvzDownwindLine" class="rdvz-downwind-line" marker-end="url(#rdvzOrbitArrow)"></line>
+            <path id="rdvzTurnPath" class="rdvz-turn-path" marker-end="url(#rdvzOrbitArrow)"></path>
+            <line id="rdvzWindGuide" class="rdvz-wind-guide"></line>
+            <line id="rdvzWindLine" class="rdvz-wind-line" marker-end="url(#rdvzWindArrow)"></line>
+            <circle class="rdvz-arcp-dot" cx="160" cy="160" r="4"></circle>
+            <text id="rdvzWindAnglePrimary" class="rdvz-wind-angle"></text>
+            <text id="rdvzWindAngleSecondary" class="rdvz-wind-angle"></text>
+            <text id="rdvzAripLabel" class="rdvz-diagram-label">ARIP</text>
+            <text id="rdvzArcpLabel" class="rdvz-diagram-label">ARCP</text>
+          </svg>
+          <div class="rdvz-visual-key">
+            <span id="rdvzVisualTrack">Track --&deg;</span>
+            <span id="rdvzVisualWind">Wind --</span>
+            <span id="rdvzVisualOrbit">Orbit Left</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-card burn-time-card">
+        <div class="burn-time-header">
+          <span>Main Tank Burn Time</span>
+          <strong id="burnTimeResult">-- / --</strong>
+        </div>
+        <div class="burn-time-grid">
+          <div class="field">
+            <label for="burnTimeAmount">Amount to Burn</label>
+            <div class="unit-input">
+              <input id="burnTimeAmount" type="number" min="0" step="0.1" inputmode="decimal" enterkeyhint="next" placeholder="0.8">
+              <span>K</span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="burnTimeRate">1 Eng Burn Rate</label>
+            <div class="unit-input">
+              <input id="burnTimeRate" type="number" min="0" step="0.1" inputmode="decimal" enterkeyhint="done" placeholder="2.5">
+              <span>K/hr</span>
+            </div>
+          </div>
+        </div>
+        <div class="burn-time-footer">
+          <small id="burnTimeFormula">Amount to burn / burn rate x 60</small>
+          <button id="burnTimeInfoBtn" class="mini-btn cg-info-btn burn-time-info-btn" type="button" aria-label="Main tank burn time info" title="Main tank burn time info">i</button>
+          <button id="burnTimeTimerBtn" class="mini-btn burn-time-timer-btn" type="button" tabindex="-1" aria-label="Start main tank burn timer" title="Start main tank burn timer">&#9201;</button>
+        </div>
+      </div>
+      <div class="cg-reference">
+        <div>
+          <span>Mains &rarr; AB</span>
+          <b>~1.3K PPM</b>
+        </div>
+        <div>
+          <span>1 Main &rarr; AB</span>
+          <b>~1K PPM</b>
+        </div>
+        <div>
+          <span>CW &rarr; FB</span>
+          <b>~2.3K PPM</b>
+        </div>
+        <div>
+          <span>UD &rarr; AB</span>
+          <b>~1.4K PPM</b>
+        </div>
+        <div>
+          <span>Moving Fuel</span>
+          <b>~<span class="stack-frac"><span>2</span><span>3</span></span> CG Shift</b>
+        </div>
+        <div>
+          <span>AFT CG</span>
+          <b>Fuel Efficient (&plusmn;32% MAC)</b>
+        </div>
+        <div>
+          <span>FWD CG</span>
+          <b>More Stable</b>
+        </div>
+      </div>
+      <h2 class="subsection-title">CG Calculator</h2>
+      <div class="cg-input-grid">
         <div class="field">
           <label for="cgFb">FB <span class="label-note">MAX ~39K</span></label>
           <input id="cgFb" type="number" step="0.001" inputmode="decimal">
@@ -297,62 +508,31 @@
           <span id="cgAltUdWarning" class="cg-alt-warning" hidden>UD</span>
         </small>
       </div>
-      <div class="cg-reference">
-        <div>
-          <span>Mains &rarr; AB</span>
-          <b>~1.3K PPM</b>
+    </div>
+  </div>
+
+  <div id="rdvzProfileModal" class="modal" hidden>
+    <div class="modal-card rdvz-profile-card">
+      <div class="section-row">
+        <h2>Add Receiver Type</h2>
+        <button class="mini-btn modal-close" data-close="rdvzProfileModal" type="button" aria-label="Close">&times;</button>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label for="rdvzType">Receiver Type</label>
+          <input id="rdvzType" type="text" maxlength="16" autocomplete="off" spellcheck="false" placeholder="C-17">
         </div>
-        <div>
-          <span>1 Main &rarr; AB</span>
-          <b>~1K PPM</b>
-        </div>
-        <div>
-          <span>CW &rarr; FB</span>
-          <b>~2.3K PPM</b>
-        </div>
-        <div>
-          <span>UD &rarr; AB</span>
-          <b>~1.4K PPM</b>
-        </div>
-        <div>
-          <span>Moving Fuel</span>
-          <b>~<span class="stack-frac"><span>2</span><span>3</span></span> CG Shift</b>
-        </div>
-        <div>
-          <span>AFT CG</span>
-          <b>Fuel Efficient (&plusmn;32% MAC)</b>
-        </div>
-        <div>
-          <span>FWD CG</span>
-          <b>More Stable</b>
+        <div class="field">
+          <label for="rdvzNewKias">RDVZ KIAS</label>
+          <div class="unit-input">
+            <input id="rdvzNewKias" type="number" min="0" step="1" inputmode="numeric" enterkeyhint="done" placeholder="310">
+            <span>KIAS</span>
+          </div>
         </div>
       </div>
-      <div class="formula-card burn-time-card">
-        <div class="burn-time-header">
-          <span>Main Tank Burn Time</span>
-          <strong id="burnTimeResult">-- / --</strong>
-        </div>
-        <div class="form-grid burn-time-grid">
-          <div class="field">
-            <label for="burnTimeAmount">Amount to Burn</label>
-            <div class="unit-input">
-              <input id="burnTimeAmount" type="number" min="0" step="0.1" inputmode="decimal" enterkeyhint="next" placeholder="0.8">
-              <span>K</span>
-            </div>
-          </div>
-          <div class="field">
-            <label for="burnTimeRate">1 Eng Burn Rate</label>
-            <div class="unit-input">
-              <input id="burnTimeRate" type="number" min="0" step="0.1" inputmode="decimal" enterkeyhint="done" placeholder="2.5">
-              <span>K/hr</span>
-            </div>
-          </div>
-        </div>
-        <div class="burn-time-footer">
-          <small id="burnTimeFormula">Amount to burn / burn rate x 60</small>
-          <button id="burnTimeInfoBtn" class="mini-btn cg-info-btn burn-time-info-btn" type="button" aria-label="Main tank burn time info" title="Main tank burn time info">i</button>
-          <button id="burnTimeTimerBtn" class="mini-btn burn-time-timer-btn" type="button" tabindex="-1" aria-label="Start main tank burn timer" title="Start main tank burn timer">&#9201;</button>
-        </div>
+      <div class="confirm-actions">
+        <button id="rdvzCancelProfile" class="primary-btn" type="button">Cancel</button>
+        <button id="rdvzSaveProfile" class="primary-btn" type="button">Save</button>
       </div>
     </div>
   </div>
@@ -371,6 +551,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=0.1.306"></script>
+  <script src="app.js?v=0.1.365"></script>
 </body>
 </html>

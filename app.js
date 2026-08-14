@@ -22,6 +22,7 @@ const els = {
   filterFrom: $("filterFrom"),
   filterTo: $("filterTo"),
   cgModal: $("cgModal"),
+  rdvzProfileModal: $("rdvzProfileModal"),
   cgFb: $("cgFb"),
   cgCw: $("cgCw"),
   cgAb: $("cgAb"),
@@ -32,8 +33,46 @@ const els = {
   cgAltUdWarning: $("cgAltUdWarning"),
   cgInfoBtn: $("cgInfoBtn"),
   feedbackBtn: $("feedbackBtn"),
-  cgMaxBtn: $("cgMaxBtn"),
   cgClearBtn: $("cgClearBtn"),
+  rdvzProfile: $("rdvzProfile"),
+  rdvzProfileButton: $("rdvzProfileButton"),
+  rdvzProfileMenu: $("rdvzProfileMenu"),
+  rdvzAddProfile: $("rdvzAddProfile"),
+  rdvzType: $("rdvzType"),
+  rdvzNewKias: $("rdvzNewKias"),
+  rdvzSaveProfile: $("rdvzSaveProfile"),
+  rdvzCancelProfile: $("rdvzCancelProfile"),
+  rdvzKias: $("rdvzKias"),
+  rdvzArFl: $("rdvzArFl"),
+  rdvzTankerKias: $("rdvzTankerKias"),
+  rdvzTrack: $("rdvzTrack"),
+  rdvzWind: $("rdvzWind"),
+  rdvzWindComponents: $("rdvzWindComponents"),
+  rdvzOrbit: $("rdvzOrbit"),
+  rdvzOrbitButton: $("rdvzOrbitButton"),
+  rdvzOrbitMenu: $("rdvzOrbitMenu"),
+  rdvzResults: $("rdvzResults"),
+  rdvzVisual: $("rdvzVisual"),
+  rdvzVisualSvg: $("rdvzVisualSvg"),
+  rdvzWindAdjustBtn: $("rdvzWindAdjustBtn"),
+  rdvzCompassXw: $("rdvzCompassXw"),
+  rdvzCompassAlongRow: $("rdvzCompassAlongRow"),
+  rdvzCompassAlongLabel: $("rdvzCompassAlongLabel"),
+  rdvzCompassAlong: $("rdvzCompassAlong"),
+  rdvzCompassAngle: $("rdvzCompassAngle"),
+  rdvzTrackLine: $("rdvzTrackLine"),
+  rdvzCpTurnPath: $("rdvzCpTurnPath"),
+  rdvzDownwindLine: $("rdvzDownwindLine"),
+  rdvzTurnPath: $("rdvzTurnPath"),
+  rdvzWindGuide: $("rdvzWindGuide"),
+  rdvzWindLine: $("rdvzWindLine"),
+  rdvzWindAnglePrimary: $("rdvzWindAnglePrimary"),
+  rdvzWindAngleSecondary: $("rdvzWindAngleSecondary"),
+  rdvzAripLabel: $("rdvzAripLabel"),
+  rdvzArcpLabel: $("rdvzArcpLabel"),
+  rdvzVisualTrack: $("rdvzVisualTrack"),
+  rdvzVisualWind: $("rdvzVisualWind"),
+  rdvzVisualOrbit: $("rdvzVisualOrbit"),
   burnTimeRate: $("burnTimeRate"),
   burnTimeAmount: $("burnTimeAmount"),
   burnTimeInfoBtn: $("burnTimeInfoBtn"),
@@ -82,7 +121,7 @@ const els = {
 
 const STORAGE_KEY = "simba-fuel-tracker-v1";
 const DEFAULT_BURN_RATE = 10.0;
-const APP_CAO = "CAO 23JUL26";
+const APP_CAO = "CAO 14AUG26";
 const CG_FILL_VALUES = {
   cgFb: "39",
   cgCw: "49",
@@ -97,11 +136,74 @@ const CG_MAX_VALUES = {
   cgRes: 3.0,
   cgUd: 15
 };
+const RDVZ_TAS_TABLE = {
+  kias: [200, 210, 225, 235, 245, 250, 255, 260, 270, 275, 280, 285, 290, 300, 305, 310, 315, 320, 325, 330, 335, 340, 345, 350, 355, 360],
+  rows: [
+    [3, [212, 222, 238, 249, 259, 265, 269, 275, 286, 291, 297, 302, 307, 318, 323, 328, 334, 339, 344, 350, 355, 360, 366, 371, 376, 381]],
+    [6, [214, 224, 240, 251, 261, 268, 272, 278, 289, 294, 298, 305, 310, 321, 326, 331, 337, 342, 347, 352, 358, 364, 369, 374, 379, 385]],
+    [9, [223, 235, 251, 263, 274, 279, 285, 290, 302, 307, 313, 318, 324, 335, 340, 346, 351, 357, 362, 368, 373, 379, 385, 390, 395, 401]],
+    [10, [227, 238, 255, 267, 278, 283, 289, 295, 307, 312, 317, 322, 328, 340, 345, 351, 356, 362, 367, 373, 378, 384, 390, 395, 401, 406]],
+    [12, [234, 245, 263, 275, 286, 292, 298, 303, 315, 321, 327, 332, 338, 349, 355, 361, 367, 372, 378, 384, 390, 395, 400, 406, 412, 418]],
+    [14, [241, 253, 271, 283, 295, 301, 307, 313, 325, 330, 336, 342, 348, 360, 366, 372, 377, 383, 389, 395, 401, 407, 412, 418, 424, 430]],
+    [16, [249, 261, 280, 292, 304, 310, 316, 322, 335, 341, 347, 352, 359, 371, 372, 383, 389, 395, 401, 407, 412, 418, 424, 430, 436, 442]],
+    [18, [257, 269, 288, 301, 314, 320, 326, 332, 346, 351, 357, 363, 370, 382, 388, 394, 400, 407, 413, 419, 425, 431, 437, 443, 449, 455]],
+    [20, [265, 278, 298, 311, 324, 330, 336, 343, 356, 362, 367, 374, 381, 394, 400, 406, 412, 419, 425, 431, 437, 444, 450, 456, 462, 469]],
+    [21, [270, 283, 303, 316, 329, 335, 342, 348, 361, 367, 374, 379, 387, 400, 406, 413, 418, 425, 431, 438, 444, 450, 456, 463, 469, 475]],
+    [22, [274, 288, 308, 321, 334, 341, 347, 355, 367, 374, 380, 386, 393, 406, 413, 419, 425, 432, 438, 445, 452, 457, 463, 470, 476, 483]],
+    [23, [279, 292, 313, 326, 339, 347, 354, 360, 372, 379, 385, 392, 399, 411, 417, 425, 431, 437, 444, 451, 457, 464, 470, 477, 483, 490]],
+    [24, [283, 297, 318, 332, 345, 353, 359, 365, 379, 384, 391, 397, 404, 417, 424, 431, 437, 444, 451, 458, 464, 471, 477, 484, 490, 497]],
+    [25, [288, 302, 324, 338, 351, 358, 364, 371, 385, 390, 397, 404, 411, 424, 431, 437, 444, 450, 458, 465, 472, 478, 485, 491, 497, 504]],
+    [26, [293, 307, 329, 343, 357, 363, 371, 377, 390, 397, 404, 410, 417, 431, 437, 444, 450, 458, 465, 472, 479, 486, 492, 499, 505, 512]],
+    [27, [298, 312, 334, 348, 363, 370, 376, 384, 397, 404, 410, 417, 424, 437, 445, 451, 459, 466, 472, 479, 486, 493, 500, 506, 513, 520]],
+    [28, [303, 318, 340, 354, 369, 376, 382, 390, 404, 410, 417, 424, 431, 445, 452, 459, 466, 474, 480, 487, 494, 501, 507, 514, 521, 528]],
+    [29, [308, 323, 345, 360, 375, 385, 389, 396, 411, 416, 424, 431, 437, 452, 459, 466, 474, 482, 488, 494, 501, 508, 515, 522, 529, 536]],
+    [30, [313, 329, 351, 366, 381, 388, 395, 403, 416, 424, 431, 437, 445, 459, 466, 474, 482, 490, 496, 502, 509, 516, 523, 530, 537, 544]],
+    [31, [319, 335, 357, 372, 387, 395, 402, 410, 424, 431, 437, 444, 453, 466, 474, 481, 489, 497, 503, 510, 517, 524, 531, 538, 545, 552]],
+    [32, [325, 340, 364, 379, 394, 401, 409, 416, 431, 437, 445, 452, 459, 474, 481, 489, 496, 504, 511, 518, 525, 532, 539, 546, 553, 560]],
+    [33, [331, 346, 370, 385, 401, 408, 416, 424, 438, 445, 452, 460, 466, 481, 489, 496, 504, 512, 519, 526, 533, 540, 547, 554, 561, 568]],
+    [34, [336, 352, 376, 392, 407, 415, 423, 431, 445, 452, 460, 466, 474, 489, 497, 504, 512, 520, 527, 534, 541, 549, 556, 563, 570, 577]],
+    [35, [342, 358, 382, 398, 414, 422, 430, 438, 454, 460, 467, 474, 481, 497, 504, 512, 521, 529, 535, 542, 550, 558, 564, 571, 578, 585]]
+  ]
+};
+const RDVZ_DRIFT_BUCKETS = [-15, -10, -5, 0, 5, 10, 15];
+const RDVZ_TIMING_CHART = {
+  closures: [460, 480, 500, 520, 540, 560, 580, 600, 620, 640, 660, 680, 700, 720, 740, 760, 780, 800, 820, 840, 860, 880, 900, 920, 940, 960, 980, 1000],
+  time40Seconds: [262, 246, 230, 216, 202, 190, 178, 168, 157, 148, 139, 131, 118, 110, 102, 95, 88, 81, 75, 69, 63, 57, 52, 47, 42, 38, 33, 29],
+  time30Seconds: [185, 171, 158, 147, 136, 126, 117, 108, 99, 92, 85, 78, 67, 60, 54, 47, 42, 36, 31, 26, 21, 16, 12, 8, 4, 0, null, null]
+};
+const RDVZ_TURN_RANGE_25 = [
+  [1000, [26, 28, 30, 32, 34, 36, 39]], [975, [25, 27, 28, 30, 32, 34, 36]],
+  [950, [24, 26, 27, 29, 31, 33, 35]], [925, [23, 24, 26, 28, 29, 31, 33]],
+  [900, [22, 23, 25, 27, 28, 30, 32]], [875, [21, 23, 24, 26, 27, 29, 31]],
+  [850, [20, 21, 23, 24, 26, 27, 29]], [825, [19, 20, 21, 23, 24, 26, 27]],
+  [800, [18, 19, 21, 22, 23, 25, 26]], [775, [17, 18, 19, 21, 22, 23, 25]],
+  [750, [16, 17, 18, 20, 21, 22, 24]], [725, [15, 16, 17, 18, 20, 21, 22]],
+  [700, [15, 15, 16, 17, 18, 19, 20]], [675, [12, 13, 14, 15, 15, 16, 17]],
+  [650, [11, 12, 13, 14, 15, 15, 17]], [625, [10, 11, 12, 13, 14, 15, 16]],
+  [600, [9, 10, 11, 12, 13, 14, 15]], [575, [9, 10, 10, 11, 12, 13, 14]],
+  [550, [8, 9, 9, 10, 11, 12, 12]], [525, [7, 8, 8, 9, 10, 11, 11]],
+  [500, [7, 7, 8, 8, 9, 10, 11]], [475, [6, 7, 7, 8, 8, 9, 10]]
+];
+const RDVZ_OFFSET_25 = [
+  [520, [11, 13, 15, 17, 20, 22, 26]], [500, [10, 12, 14, 16, 18, 21, 23]],
+  [480, [9, 11, 13, 15, 17, 19, 21]], [460, [9, 10, 12, 13, 15, 18, 20]],
+  [440, [8, 9, 11, 12, 14, 16, 18]], [430, [7.5, 8.5, 10.5, 11.5, 13.5, 15.5, 17.5]],
+  [420, [7, 8, 10, 11, 13, 15, 17]], [410, [6.5, 7.5, 9.5, 10.5, 12.5, 14, 16]],
+  [400, [6, 7, 9, 10, 12, 13, 15]], [390, [6, 7, 8.5, 9.5, 11.5, 12.5, 14.5]],
+  [380, [6, 7, 8, 9, 11, 12, 14]], [370, [5.5, 6.5, 7.5, 8.5, 10, 11.5, 13]],
+  [360, [5, 6, 7, 8, 9, 11, 12]], [350, [5, 5.5, 6.5, 7.5, 8.5, 10.5, 11.5]],
+  [340, [5, 5, 6, 7, 8, 10, 11]], [320, [4, 5, 6, 6, 7, 9, 10]],
+  [300, [4, 4, 5, 6, 7, 8, 9]], [280, [3, 4, 4, 5, 6, 7, 8]],
+  [260, [3, 3, 4, 4, 5, 6, 7]], [240, [2, 3, 3, 4, 5, 5, 6]],
+  [220, [2, 3, 3, 4, 4, 5, 5]]
+];
 
 let state = {
   entries: [],
   lastUpdated: null,
-  lastBlockMode: "B40"
+  lastBlockMode: "B40",
+  receiverProfiles: [],
+  rdvzInputs: null
 };
 let editingEntryId = null;
 let addToReceiver = null;
@@ -123,12 +225,40 @@ let burnTimerRemainingSeconds = 0;
 let burnTimerRequiredSeconds = 0;
 let burnTimerCompleted = false;
 let burnTimerHasStarted = false;
+let rdvzWindAdjustMode = false;
+let rdvzWindDragging = false;
 let burnTimerBlinking = false;
 let burnTimerHold = null;
 let burnTimerIgnoreClick = false;
+let rdvzTimerInterval = null;
+let rdvzTimerStartedAt = 0;
+let rdvzTimerBaseSeconds = 0;
+let rdvzTimerHold = null;
+let rdvzTimerIgnoreClick = false;
+let editingRdvzProfileId = null;
 
 function id() {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function normalizeRdvzProfiles(profiles) {
+  if (!Array.isArray(profiles)) return [];
+  const seen = new Set();
+  return profiles
+    .map((profile) => ({
+      id: String(profile.id || id()),
+      type: String(profile.type || "").trim().toUpperCase(),
+      kias: Math.round(Number(profile.kias) || 0),
+      notes: String(profile.notes || "").trim()
+    }))
+    .filter((profile) => profile.type && profile.kias > 0)
+    .filter((profile) => {
+      const key = profile.type;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((a, b) => a.type.localeCompare(b.type));
 }
 
 function loadState() {
@@ -139,17 +269,49 @@ function loadState() {
       state = {
         entries,
         lastUpdated: parsed.lastUpdated || null,
-        lastBlockMode: validBlockMode(parsed.lastBlockMode) || latestEntryBlockMode(entries) || "B40"
+        lastBlockMode: validBlockMode(parsed.lastBlockMode) || latestEntryBlockMode(entries) || "B40",
+        receiverProfiles: normalizeRdvzProfiles(parsed.receiverProfiles),
+        rdvzInputs: normalizeRdvzWorkingInputs(parsed.rdvzInputs)
       };
     }
   } catch {
-    state = { entries: [], lastUpdated: null, lastBlockMode: "B40" };
+    state = { entries: [], lastUpdated: null, lastBlockMode: "B40", receiverProfiles: [], rdvzInputs: null };
   }
 }
 
 function saveState() {
   state.lastUpdated = new Date().toISOString();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function normalizeRdvzWorkingInputs(value) {
+  if (!value || typeof value !== "object") return null;
+  return {
+    profileId: String(value.profileId || ""),
+    kias: String(value.kias || ""),
+    arFl: String(value.arFl || ""),
+    tankerKias: String(value.tankerKias || "275"),
+    track: String(value.track || ""),
+    wind: String(value.wind || ""),
+    orbit: value.orbit === "right" ? "right" : "left"
+  };
+}
+
+function saveRdvzWorkingInputs() {
+  state.rdvzInputs = {
+    profileId: els.rdvzProfile.value || "",
+    kias: els.rdvzKias.value,
+    arFl: els.rdvzArFl.value,
+    tankerKias: els.rdvzTankerKias.value || "275",
+    track: els.rdvzTrack.value,
+    wind: els.rdvzWind.value,
+    orbit: els.rdvzOrbit.value === "right" ? "right" : "left"
+  };
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    // Keep the calculator usable if browser storage is unavailable.
+  }
 }
 
 function formatNumber(value) {
@@ -512,6 +674,607 @@ function updatePreview() {
   else if (result.offload === 0) card.classList.add("warn");
 }
 
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function bracketIndex(values, value) {
+  if (value <= values[0]) return [0, 0];
+  const last = values.length - 1;
+  if (value >= values[last]) return [last, last];
+  for (let i = 0; i < last; i += 1) {
+    if (value >= values[i] && value <= values[i + 1]) return [i, i + 1];
+  }
+  return [last, last];
+}
+
+function extrapolationBracketIndex(values, value) {
+  const last = values.length - 1;
+  if (last < 1) return [0, 0];
+  if (value <= values[0]) return [0, 1];
+  if (value >= values[last]) return [last - 1, last];
+  return bracketIndex(values, value);
+}
+
+function tableRangeStatus(values, value, allowedIntervals = 2) {
+  const sorted = [...values].map(Number).sort((a, b) => a - b);
+  if (sorted.length < 2 || !Number.isFinite(value)) return "out";
+  const lowStep = sorted[1] - sorted[0];
+  const last = sorted.length - 1;
+  const highStep = sorted[last] - sorted[last - 1];
+  if (value < sorted[0] - (lowStep * allowedIntervals) || value > sorted[last] + (highStep * allowedIntervals)) return "out";
+  if (value < sorted[0] || value > sorted[last]) return "estimated";
+  return "inside";
+}
+
+function interpolate(a, b, ratio) {
+  return a + ((b - a) * ratio);
+}
+
+function interpolateTable(rows, value, columnIndex) {
+  const points = rows.map(([key, values]) => [Number(key), Number(values[columnIndex])]);
+  points.sort((a, b) => a[0] - b[0]);
+  const keys = points.map(([key]) => key);
+  const [loIndex, hiIndex] = bracketIndex(keys, value);
+  const [loKey, loValue] = points[loIndex];
+  const [hiKey, hiValue] = points[hiIndex];
+  if (loIndex === hiIndex || hiKey === loKey) return loValue;
+  return interpolate(loValue, hiValue, (value - loKey) / (hiKey - loKey));
+}
+
+function extrapolateTable(rows, value, columnIndex) {
+  const points = rows.map(([key, values]) => [Number(key), Number(values[columnIndex])]);
+  points.sort((a, b) => a[0] - b[0]);
+  const keys = points.map(([key]) => key);
+  const [loIndex, hiIndex] = extrapolationBracketIndex(keys, value);
+  const [loKey, loValue] = points[loIndex];
+  const [hiKey, hiValue] = points[hiIndex];
+  if (loIndex === hiIndex || hiKey === loKey) return loValue;
+  return interpolate(loValue, hiValue, (value - loKey) / (hiKey - loKey));
+}
+
+function extrapolateDriftTable(rows, value, driftDegrees) {
+  const [loIndex, hiIndex] = extrapolationBracketIndex(RDVZ_DRIFT_BUCKETS, driftDegrees);
+  const loDrift = RDVZ_DRIFT_BUCKETS[loIndex];
+  const hiDrift = RDVZ_DRIFT_BUCKETS[hiIndex];
+  const loValue = extrapolateTable(rows, value, loIndex);
+  const hiValue = extrapolateTable(rows, value, hiIndex);
+  if (loIndex === hiIndex || hiDrift === loDrift) return loValue;
+  return interpolate(loValue, hiValue, (driftDegrees - loDrift) / (hiDrift - loDrift));
+}
+
+function nearestDriftBucket(driftDegrees) {
+  const bounded = clamp(Math.round(driftDegrees / 5) * 5, -15, 15);
+  return bounded;
+}
+
+function rdvzDriftColumn(driftDegrees, orbit) {
+  const bucket = nearestDriftBucket(rdvzOrbitDrift(driftDegrees, orbit));
+  return RDVZ_DRIFT_BUCKETS.indexOf(bucket);
+}
+
+function rdvzOrbitDrift(driftDegrees, orbit) {
+  return orbit === "right" ? -driftDegrees : driftDegrees;
+}
+
+function formatDrift(value) {
+  if (!Number.isFinite(value) || Math.abs(value) < .5) return "0";
+  return `${formatK(Math.abs(value), 0)}${value < 0 ? "L" : "R"}`;
+}
+
+function lookupTas(fl, kias) {
+  const altitudes = RDVZ_TAS_TABLE.rows.map(([alt]) => alt);
+  if (tableRangeStatus(altitudes, fl) === "out" || tableRangeStatus(RDVZ_TAS_TABLE.kias, kias) === "out") return NaN;
+  const [altLo, altHi] = extrapolationBracketIndex(altitudes, fl);
+  const [kiasLo, kiasHi] = extrapolationBracketIndex(RDVZ_TAS_TABLE.kias, kias);
+  const altitudeRatio = altLo === altHi ? 0 : (fl - altitudes[altLo]) / (altitudes[altHi] - altitudes[altLo]);
+  const kiasRatio = kiasLo === kiasHi ? 0 : (kias - RDVZ_TAS_TABLE.kias[kiasLo]) / (RDVZ_TAS_TABLE.kias[kiasHi] - RDVZ_TAS_TABLE.kias[kiasLo]);
+  const rowLo = RDVZ_TAS_TABLE.rows[altLo][1];
+  const rowHi = RDVZ_TAS_TABLE.rows[altHi][1];
+  const tasLo = interpolate(rowLo[kiasLo], rowLo[kiasHi], kiasRatio);
+  const tasHi = interpolate(rowHi[kiasLo], rowHi[kiasHi], kiasRatio);
+  return interpolate(tasLo, tasHi, altitudeRatio);
+}
+
+function calculateWindDrift(tas, track, windDir, windKts) {
+  if (![tas, track, windDir, windKts].every(Number.isFinite) || tas <= 0 || windKts <= 0) return 0;
+  const relative = ((windDir - track + 540) % 360) - 180;
+  // Wind direction is where the wind comes from; its push is the opposite vector.
+  const crosswind = -windKts * Math.sin(relative * Math.PI / 180);
+  return Math.asin(clamp(crosswind / tas, -1, 1)) * 180 / Math.PI;
+}
+
+function parseRdvzWind(value) {
+  const text = String(value || "").trim();
+  if (!text || text === "0") return { direction: 0, speed: 0 };
+  const slashMatch = text.match(/^(\d{1,3})\s*\/\s*(\d{1,3})$/);
+  const compactMatch = text.match(/^(\d{3})(\d{2,3})$/);
+  const match = slashMatch || compactMatch;
+  if (!match) return null;
+  const direction = Number(match[1]);
+  const speed = Number(match[2]);
+  if (!Number.isFinite(direction) || !Number.isFinite(speed) || direction > 360) return null;
+  return { direction, speed };
+}
+
+function normalizeRdvzWind() {
+  const wind = parseRdvzWind(els.rdvzWind.value);
+  if (!wind) return;
+  els.rdvzWind.value = wind.speed === 0 ? "0" : `${String(wind.direction).padStart(3, "0")}/${wind.speed}`;
+  saveRdvzWorkingInputs();
+}
+
+function calculateRdvz() {
+  const receiverKias = Number(els.rdvzKias.value);
+  const arFl = Number(els.rdvzArFl.value);
+  const tankerKias = Number(els.rdvzTankerKias.value || 275);
+  if (![receiverKias, arFl, tankerKias].every(Number.isFinite) || receiverKias <= 0 || arFl <= 0 || tankerKias <= 0) return null;
+  const receiverFl = Math.max(0, arFl - 10);
+  const tankerTas = lookupTas(arFl / 10, tankerKias);
+  const receiverTas = lookupTas(receiverFl / 10, receiverKias);
+  const closure = tankerTas + receiverTas;
+  const wind = parseRdvzWind(els.rdvzWind.value) || { direction: 0, speed: 0 };
+  const windDrift = calculateWindDrift(tankerTas, Number(els.rdvzTrack.value), wind.direction, wind.speed);
+  const orbit = els.rdvzOrbit.value || "left";
+  // ARIP-to-ARCP drift is measured on course and does not change with orbit direction.
+  // Orbit direction only reverses which ATP table header maps to the numeric column.
+  const drift = windDrift;
+  const orbitDrift = rdvzOrbitDrift(windDrift, orbit);
+  const driftIndex = Math.max(0, rdvzDriftColumn(windDrift, orbit));
+  const roundedClosure = Math.round(closure / 5) * 5;
+  const turnRangeInRange = Number.isFinite(closure)
+    && tableRangeStatus(RDVZ_TURN_RANGE_25.map(([value]) => value), roundedClosure) !== "out"
+    && tableRangeStatus(RDVZ_DRIFT_BUCKETS, orbitDrift) !== "out";
+  const offsetInRange = Number.isFinite(tankerTas)
+    && tableRangeStatus(RDVZ_OFFSET_25.map(([value]) => value), tankerTas) !== "out"
+    && tableRangeStatus(RDVZ_DRIFT_BUCKETS, orbitDrift) !== "out";
+  const turnRange = !turnRangeInRange ? NaN : Math.abs(orbitDrift) > 15
+    ? extrapolateDriftTable(RDVZ_TURN_RANGE_25, roundedClosure, orbitDrift)
+    : extrapolateTable(RDVZ_TURN_RANGE_25, roundedClosure, driftIndex);
+  const offset = !offsetInRange ? NaN : Math.abs(orbitDrift) > 15
+    ? extrapolateDriftTable(RDVZ_OFFSET_25, tankerTas, orbitDrift)
+    : extrapolateTable(RDVZ_OFFSET_25, tankerTas, driftIndex);
+  const windTime40 = Number.isFinite(turnRange) && Number.isFinite(closure) ? Math.max(0, (40 - turnRange) / (closure / 60)) : NaN;
+  const windTime30 = Number.isFinite(turnRange) && Number.isFinite(closure) ? Math.max(0, (30 - turnRange) / (closure / 60)) : NaN;
+  const chartTime40 = lookupRdvzChartTime(closure, RDVZ_TIMING_CHART.time40Seconds);
+  const chartTime30 = lookupRdvzChartTime(closure, RDVZ_TIMING_CHART.time30Seconds);
+  const turnRate25 = 1091 * Math.tan(25 * Math.PI / 180) / tankerTas;
+  const standardRateBank = Math.atan((3 * tankerTas) / 1091) * 180 / Math.PI;
+  const halfStandardRateBank = Math.atan((1.5 * tankerTas) / 1091) * 180 / Math.PI;
+  const receiverTasEstimated = Number.isFinite(receiverTas) && (receiverFl / 10 < 3 || receiverFl / 10 > 35 || receiverKias < 200 || receiverKias > 360);
+  const tankerTasEstimated = Number.isFinite(tankerTas) && (arFl / 10 < 3 || arFl / 10 > 35 || tankerKias < 200 || tankerKias > 360);
+  const closureEstimated = receiverTasEstimated || tankerTasEstimated;
+  const turnRangeEstimated = closureEstimated || closure < 475 || closure > 1000 || Math.abs(drift) > 15;
+  const offsetEstimated = tankerTasEstimated || tankerTas < 220 || tankerTas > 520 || Math.abs(drift) > 15;
+  const chartTimeEstimated = closureEstimated || closure < 460 || closure > 1000;
+  const estimates = {
+    receiverTas: receiverTasEstimated,
+    tankerTas: tankerTasEstimated,
+    closure: closureEstimated,
+    turnRange: turnRangeEstimated,
+    offset: offsetEstimated,
+    chartTime: chartTimeEstimated,
+    windTime: turnRangeEstimated || closureEstimated,
+    overrun: turnRangeEstimated,
+    turnMetrics: tankerTasEstimated
+  };
+  const tableWarnings = [];
+  if (arFl / 10 < 3 || arFl / 10 > 35 || receiverFl / 10 < 3 || receiverFl / 10 > 35) tableWarnings.push("altitude");
+  if (receiverKias < 200 || receiverKias > 360 || tankerKias < 200 || tankerKias > 360) tableWarnings.push("KIAS");
+  if (closure < 475 || closure > 1000) tableWarnings.push("closure");
+  if (tankerTas < 220 || tankerTas > 520) tableWarnings.push("tanker TAS");
+  if (Math.abs(drift) > 15) tableWarnings.push("drift");
+  const outOfRange = {
+    receiverTas: !Number.isFinite(receiverTas),
+    tankerTas: !Number.isFinite(tankerTas),
+    closure: !Number.isFinite(closure),
+    turnRange: !Number.isFinite(turnRange),
+    offset: !Number.isFinite(offset),
+    chartTime: !Number.isFinite(closure) || tableRangeStatus(RDVZ_TIMING_CHART.closures, closure) === "out",
+    windTime: !Number.isFinite(windTime40) || !Number.isFinite(windTime30),
+    turnMetrics: !Number.isFinite(tankerTas)
+  };
+  return { receiverFl, tankerFl: arFl, tankerTas, receiverTas, closure, drift, turnRange, offset, chartTime40, chartTime30, windTime40, windTime30, turnRate25, standardRateBank, halfStandardRateBank, tableWarnings, estimates, outOfRange };
+}
+
+function lookupRdvzChartTime(closure, values) {
+  if (!Number.isFinite(closure) || tableRangeStatus(RDVZ_TIMING_CHART.closures, closure) === "out") return NaN;
+  const [lo, hi] = extrapolationBracketIndex(RDVZ_TIMING_CHART.closures, closure);
+  if (!Number.isFinite(values[lo]) || !Number.isFinite(values[hi])) return NaN;
+  const ratio = lo === hi ? 0 : (closure - RDVZ_TIMING_CHART.closures[lo]) / (RDVZ_TIMING_CHART.closures[hi] - RDVZ_TIMING_CHART.closures[lo]);
+  return Math.max(0, interpolate(values[lo], values[hi], ratio)) / 60;
+}
+
+function formatTimerMinutes(value) {
+  if (!Number.isFinite(value)) return "--";
+  const totalSeconds = Math.round(value * 60);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+function updateRdvzProfileOptions() {
+  const selected = els.rdvzProfile.value;
+  els.rdvzProfile.innerHTML = `${state.receiverProfiles.length ? "" : '<option value="" selected disabled>No receiver types</option>'}${state.receiverProfiles.map((profile) => (
+    `<option value="${escapeHtml(profile.id)}">${escapeHtml(profile.type)}</option>`
+  )).join("")}`;
+  if (state.receiverProfiles.some((profile) => profile.id === selected)) els.rdvzProfile.value = selected;
+  else if (state.receiverProfiles.length) els.rdvzProfile.value = state.receiverProfiles[0].id;
+  else els.rdvzProfile.value = "";
+  const active = state.receiverProfiles.find((profile) => profile.id === els.rdvzProfile.value);
+  els.rdvzProfileButton.querySelector("span").textContent = active?.type || "No receiver types";
+  els.rdvzProfileMenu.innerHTML = state.receiverProfiles.length
+    ? state.receiverProfiles.map((profile) => `<div class="receiver-profile-option" role="option" aria-selected="${profile.id === els.rdvzProfile.value}"><button class="profile-select" type="button" data-select-profile="${escapeHtml(profile.id)}">${escapeHtml(profile.type)}</button><button class="profile-edit" type="button" data-edit-profile="${escapeHtml(profile.id)}" aria-label="Edit ${escapeHtml(profile.type)}" title="Edit">&#9998;</button><button class="profile-delete" type="button" data-delete-profile="${escapeHtml(profile.id)}" aria-label="Delete ${escapeHtml(profile.type)}" title="Delete">&times;</button></div>`).join("")
+    : '<span class="themed-select-empty">No receiver types</span>';
+}
+
+function closeRdvzMenus() {
+  els.rdvzProfileMenu.hidden = true;
+  els.rdvzOrbitMenu.hidden = true;
+  els.rdvzProfileButton.setAttribute("aria-expanded", "false");
+  els.rdvzOrbitButton.setAttribute("aria-expanded", "false");
+}
+
+function toggleRdvzMenu(menu, button) {
+  const willOpen = menu.hidden;
+  closeRdvzMenus();
+  menu.hidden = !willOpen;
+  button.setAttribute("aria-expanded", String(willOpen));
+}
+
+function syncRdvzOrbitControl() {
+  const value = els.rdvzOrbit.value || "left";
+  els.rdvzOrbitButton.querySelector("span").textContent = value === "right" ? "Right" : "Left";
+  els.rdvzOrbitMenu.querySelectorAll("[data-value]").forEach((option) => {
+    option.setAttribute("aria-selected", String(option.dataset.value === value));
+  });
+}
+
+function openRdvzProfileEditor(profile = null) {
+  closeRdvzMenus();
+  editingRdvzProfileId = profile?.id || null;
+  els.rdvzType.value = profile?.type || "C-17";
+  els.rdvzNewKias.value = profile?.kias || "310";
+  openModal("rdvzProfileModal");
+  setTimeout(() => els.rdvzType.focus(), 0);
+}
+
+function updateRdvzWindComponents() {
+  const wind = parseRdvzWind(els.rdvzWind.value);
+  const track = Number(els.rdvzTrack.value);
+  if (!wind || !Number.isFinite(track) || els.rdvzTrack.value === "") {
+    els.rdvzWindComponents.innerHTML = 'HW -- <span></span> XW --';
+    return;
+  }
+  const relative = ((wind.direction - track + 540) % 360) - 180;
+  const along = wind.speed * Math.cos(relative * Math.PI / 180);
+  const crosswind = Math.abs(wind.speed * Math.sin(relative * Math.PI / 180));
+  const alongLabel = along < -.5 ? "TW" : "HW";
+  els.rdvzWindComponents.innerHTML = `${alongLabel} ${formatK(Math.abs(along), 0)} <span></span> XW ${formatK(crosswind, 0)}`;
+}
+
+function setSvgLine(line, start, end) {
+  line.setAttribute("x1", start.x.toFixed(1));
+  line.setAttribute("y1", start.y.toFixed(1));
+  line.setAttribute("x2", end.x.toFixed(1));
+  line.setAttribute("y2", end.y.toFixed(1));
+}
+
+function setSvgLabel(label, point, anchor = "middle") {
+  label.setAttribute("x", point.x.toFixed(1));
+  label.setAttribute("y", point.y.toFixed(1));
+  label.setAttribute("text-anchor", anchor);
+}
+
+function signedHeadingDifference(a, b) {
+  return ((a - b + 540) % 360) - 180;
+}
+
+function setRdvzWindAdjustMode(enabled) {
+  rdvzWindAdjustMode = Boolean(enabled);
+  els.cgModal.classList.toggle("rdvz-wind-adjust-mode", rdvzWindAdjustMode);
+  els.rdvzVisualSvg.classList.toggle("wind-adjust-mode", rdvzWindAdjustMode);
+  els.rdvzWindAdjustBtn.classList.toggle("active", rdvzWindAdjustMode);
+  els.rdvzWindAdjustBtn.setAttribute("aria-pressed", String(rdvzWindAdjustMode));
+  const label = rdvzWindAdjustMode ? "Exit wind adjustment" : "Adjust wind direction";
+  els.rdvzWindAdjustBtn.setAttribute("aria-label", label);
+  els.rdvzWindAdjustBtn.title = label;
+}
+
+function rdvzWindDirectionFromPointer(event) {
+  const point = els.rdvzVisualSvg.createSVGPoint();
+  point.x = event.clientX;
+  point.y = event.clientY;
+  const matrix = els.rdvzVisualSvg.getScreenCTM();
+  if (!matrix) return null;
+  const local = point.matrixTransform(matrix.inverse());
+  const dx = local.x - 160;
+  const dy = local.y - 160;
+  if (Math.hypot(dx, dy) < 18) return null;
+  return ((Math.round(Math.atan2(dx, -dy) * 180 / Math.PI) % 360) + 360) % 360;
+}
+
+function setRdvzWindDirection(direction) {
+  const current = parseRdvzWind(els.rdvzWind.value);
+  const speed = current?.speed > 0 ? current.speed : 20;
+  els.rdvzWind.value = `${String(direction).padStart(3, "0")}/${speed}`;
+  updateRdvzPreview();
+  saveRdvzWorkingInputs();
+}
+
+function initRdvzWindDrag() {
+  const updateFromPointer = (event) => {
+    const direction = rdvzWindDirectionFromPointer(event);
+    if (direction === null) return;
+    setRdvzWindDirection(direction);
+  };
+  els.rdvzVisualSvg.addEventListener("pointerdown", (event) => {
+    if (!rdvzWindAdjustMode || (event.pointerType === "mouse" && event.button !== 0)) return;
+    event.preventDefault();
+    rdvzWindDragging = true;
+    els.rdvzVisualSvg.setPointerCapture?.(event.pointerId);
+    updateFromPointer(event);
+  });
+  els.rdvzVisualSvg.addEventListener("pointermove", (event) => {
+    if (!rdvzWindDragging) return;
+    event.preventDefault();
+    updateFromPointer(event);
+  });
+  const stopDragging = (event) => {
+    if (!rdvzWindDragging) return;
+    rdvzWindDragging = false;
+    if (event.pointerId !== undefined) els.rdvzVisualSvg.releasePointerCapture?.(event.pointerId);
+  };
+  els.rdvzVisualSvg.addEventListener("pointerup", stopDragging);
+  els.rdvzVisualSvg.addEventListener("pointercancel", stopDragging);
+}
+
+function updateRdvzVisualization() {
+  const enteredTrack = Number(els.rdvzTrack.value);
+  const hasTrack = els.rdvzTrack.value !== "" && Number.isFinite(enteredTrack);
+  const track = hasTrack ? ((enteredTrack % 360) + 360) % 360 : 0;
+  const orbit = els.rdvzOrbit.value === "right" ? "right" : "left";
+  const wind = parseRdvzWind(els.rdvzWind.value);
+  const radians = track * Math.PI / 180;
+  const forward = { x: Math.sin(radians), y: -Math.cos(radians) };
+  const left = { x: forward.y, y: -forward.x };
+  const side = orbit === "left" ? left : { x: -left.x, y: -left.y };
+  const center = { x: 160, y: 160 };
+  const point = (along, across = 0) => ({
+    x: center.x + (forward.x * along) + (side.x * across),
+    y: center.y + (forward.y * along) + (side.y * across)
+  });
+  const arip = point(-84);
+  const arcp = point(84);
+  const downwindStart = point(84, 60);
+  const downwindEnd = point(0, 60);
+  const cpTurnControlOne = point(124, 0);
+  const cpTurnControlTwo = point(124, 60);
+  const turnControlOne = point(-40, 60);
+  const turnControlTwo = point(-40, 0);
+
+  setSvgLine(els.rdvzTrackLine, arip, arcp);
+  els.rdvzCpTurnPath.setAttribute("d", `M ${arcp.x.toFixed(1)} ${arcp.y.toFixed(1)} C ${cpTurnControlOne.x.toFixed(1)} ${cpTurnControlOne.y.toFixed(1)} ${cpTurnControlTwo.x.toFixed(1)} ${cpTurnControlTwo.y.toFixed(1)} ${downwindStart.x.toFixed(1)} ${downwindStart.y.toFixed(1)}`);
+  setSvgLine(els.rdvzDownwindLine, downwindStart, downwindEnd);
+  els.rdvzTurnPath.setAttribute("d", `M ${downwindEnd.x.toFixed(1)} ${downwindEnd.y.toFixed(1)} C ${turnControlOne.x.toFixed(1)} ${turnControlOne.y.toFixed(1)} ${turnControlTwo.x.toFixed(1)} ${turnControlTwo.y.toFixed(1)} ${center.x.toFixed(1)} ${center.y.toFixed(1)}`);
+  setSvgLabel(els.rdvzAripLabel, { x: arip.x - (side.x * 8), y: arip.y - (side.y * 8) + 4 }, orbit === "left" ? "start" : "end");
+  setSvgLabel(els.rdvzArcpLabel, { x: arcp.x - (side.x * 8), y: arcp.y - (side.y * 8) + 4 }, orbit === "left" ? "start" : "end");
+
+  if (wind && wind.speed > 0 && hasTrack) {
+    const relative = signedHeadingDifference(wind.direction, track);
+    const along = wind.speed * Math.cos(relative * Math.PI / 180);
+    const crosswind = Math.abs(wind.speed * Math.sin(relative * Math.PI / 180));
+    const alongLabel = along < -.5 ? "TW" : "HW";
+    els.rdvzCompassXw.textContent = `${formatK(crosswind, 0)} kt`;
+    els.rdvzCompassAlongLabel.textContent = alongLabel;
+    els.rdvzCompassAlong.textContent = `${formatK(Math.abs(along), 0)} kt`;
+    els.rdvzCompassAngle.textContent = `${Math.round(Math.abs(relative))}°`;
+  } else {
+    els.rdvzCompassXw.textContent = "--";
+    els.rdvzCompassAlongLabel.textContent = "HW";
+    els.rdvzCompassAlong.textContent = "--";
+    els.rdvzCompassAngle.textContent = "--";
+  }
+
+  if (wind && wind.speed > 0) {
+    const windRadians = wind.direction * Math.PI / 180;
+    const windVector = { x: Math.sin(windRadians), y: -Math.cos(windRadians) };
+    setSvgLine(els.rdvzWindGuide, center,
+      { x: center.x + (windVector.x * 134), y: center.y + (windVector.y * 134) });
+    setSvgLine(els.rdvzWindLine,
+      { x: center.x + (windVector.x * 156), y: center.y + (windVector.y * 156) },
+      { x: center.x + (windVector.x * 137), y: center.y + (windVector.y * 137) });
+    els.rdvzWindGuide.hidden = false;
+    els.rdvzWindLine.hidden = false;
+    const trackAngle = Math.abs(signedHeadingDifference(wind.direction, track));
+    const reciprocal = (track + 180) % 360;
+    const reciprocalAngle = Math.abs(signedHeadingDifference(wind.direction, reciprocal));
+    const anglePoint = (bearing, radius) => {
+      const angleRadians = bearing * Math.PI / 180;
+      return { x: center.x + (Math.sin(angleRadians) * radius), y: center.y - (Math.cos(angleRadians) * radius) };
+    };
+    const primarySide = signedHeadingDifference(track, wind.direction) >= 0 ? 1 : -1;
+    let secondarySide = signedHeadingDifference(reciprocal, wind.direction) >= 0 ? 1 : -1;
+    if (secondarySide === primarySide) secondarySide = -primarySide;
+    const primaryPoint = anglePoint(wind.direction + (primarySide * 23), 72);
+    const secondaryPoint = anglePoint(wind.direction + (secondarySide * 23), 72);
+    setSvgLabel(els.rdvzWindAnglePrimary, primaryPoint);
+    setSvgLabel(els.rdvzWindAngleSecondary, secondaryPoint);
+    els.rdvzWindAnglePrimary.textContent = `${Math.round(trackAngle)}°`;
+    els.rdvzWindAngleSecondary.textContent = `${Math.round(reciprocalAngle)}°`;
+    els.rdvzWindAnglePrimary.hidden = false;
+    els.rdvzWindAngleSecondary.hidden = false;
+  } else {
+    els.rdvzWindGuide.hidden = true;
+    els.rdvzWindLine.hidden = true;
+    els.rdvzWindAnglePrimary.hidden = true;
+    els.rdvzWindAngleSecondary.hidden = true;
+  }
+
+  els.rdvzVisual.classList.toggle("is-incomplete", !hasTrack);
+  els.rdvzVisualTrack.textContent = `Track ${hasTrack ? String(Math.round(track)).padStart(3, "0") : "--"}°`;
+  els.rdvzVisualWind.textContent = wind && wind.speed > 0
+    ? `Wind ${String(wind.direction).padStart(3, "0")}° / ${wind.speed} kt`
+    : "Wind calm";
+  els.rdvzVisualOrbit.textContent = `Orbit ${orbit === "left" ? "Left" : "Right"}`;
+}
+
+function updateRdvzPreview() {
+  const result = calculateRdvz();
+  const approximate = (value, estimated) => estimated ? `<span class="rdvz-estimate-mark" aria-label="Estimated">~</span>${value}` : value;
+  const tableValue = (value, estimated, outOfRange) => outOfRange ? "OUT OF RANGE" : approximate(value, estimated);
+  const rows = result
+    ? [
+      ["Turn Range", tableValue(`${formatK(result.turnRange, 1)} NM`, result.estimates.turnRange, result.outOfRange.turnRange)],
+      ["Offset", tableValue(`${formatK(result.offset, 1)} NM`, result.estimates.offset, result.outOfRange.offset)],
+      ["Receiver Alt", `FL${formatK(result.receiverFl, 0)}`],
+      ["Tanker Alt", `FL${formatK(result.tankerFl, 0)}`],
+      ["Receiver TAS", tableValue(`${formatK(result.receiverTas, 0)} kt`, result.estimates.receiverTas, result.outOfRange.receiverTas)],
+      ["Tanker TAS", tableValue(`${formatK(result.tankerTas, 0)} kt`, result.estimates.tankerTas, result.outOfRange.tankerTas)],
+      ["Closure", tableValue(`${formatK(result.closure, 0)} kt`, result.estimates.closure, result.outOfRange.closure)],
+      ["Drift", formatDrift(result.drift)],
+      ["40 NM (Chart)", tableValue(formatTimerMinutes(result.chartTime40), result.estimates.chartTime, result.outOfRange.chartTime)],
+      ["30 NM (Chart)", tableValue(formatTimerMinutes(result.chartTime30), result.estimates.chartTime, result.outOfRange.chartTime)],
+      ['40 NM <button class="rdvz-wind-time-info" type="button" data-rdvz-wind-info aria-label="About wind-corrected timing" title="Wind-corrected timing">&#127788;&#65039;</button>', tableValue(formatTimerMinutes(result.windTime40), result.estimates.windTime, result.outOfRange.windTime)],
+      ['30 NM <button class="rdvz-wind-time-info" type="button" data-rdvz-wind-info aria-label="About wind-corrected timing" title="Wind-corrected timing">&#127788;&#65039;</button>', tableValue(formatTimerMinutes(result.windTime30), result.estimates.windTime, result.outOfRange.windTime)]
+    ]
+    : [
+      ["Turn Range", "--"], ["Offset", "--"], ["Receiver Alt", "--"], ["Tanker Alt", "--"],
+      ["Receiver TAS", "--"], ["Tanker TAS", "--"],
+      ["Closure", "--"], ["Drift", "--"], ["40 NM (Chart)", "--"], ["30 NM (Chart)", "--"],
+      ['40 NM <button class="rdvz-wind-time-info" type="button" data-rdvz-wind-info aria-label="About wind-corrected timing" title="Wind-corrected timing">&#127788;&#65039;</button>', "--"],
+      ['30 NM <button class="rdvz-wind-time-info" type="button" data-rdvz-wind-info aria-label="About wind-corrected timing" title="Wind-corrected timing">&#127788;&#65039;</button>', "--"]
+    ];
+  const turnMetrics = result
+    ? [["Rate of Turn", tableValue(`${formatK(result.turnRate25, 1)}°/sec`, result.estimates.turnMetrics, result.outOfRange.turnMetrics)], ["SR Bank", tableValue(`${formatK(result.standardRateBank, 0)}°`, result.estimates.turnMetrics, result.outOfRange.turnMetrics)], ["½ SR Bank", tableValue(`${formatK(result.halfStandardRateBank, 0)}°`, result.estimates.turnMetrics, result.outOfRange.turnMetrics)]]
+    : [["Rate of Turn", "--"], ["SR Bank", "--"], ["½ SR Bank", "--"]];
+  const overrun = result ? tableValue(`&lt;${formatK(result.turnRange / 3, 1)} NM`, result.estimates.overrun, result.outOfRange.turnRange) : "--";
+  const hasOutOfRange = result && Object.values(result.outOfRange).some(Boolean);
+  const warning = result?.tableWarnings.length
+    ? `<span class="rdvz-table-warning">&#9888; ${hasOutOfRange ? "Outside supported range" : "Estimated outside ATP table"}: ${escapeHtml(result.tableWarnings.join(", "))}</span>`
+    : "";
+  els.rdvzResults.innerHTML = `${rows.map(([label, value]) => `<div><span>${label}</span><b>${value}</b></div>`).join("")}<div class="rdvz-overrun-result"><div class="rdvz-overrun-heading"><span>Overrun</span><b>${overrun}</b></div><div class="rdvz-turn-metrics" aria-label="Turn reference metrics">${turnMetrics.map(([label, value]) => `<div><span>${label}</span><b>${value}</b></div>`).join("")}</div></div><div class="rdvz-timer-result"><span class="rdvz-timer-heading"><span>Timer</span><b id="rdvzTimerDisplay">0:00</b></span><div class="rdvz-timer-actions"><button class="mini-btn cg-info-btn" type="button" data-rdvz-info aria-label="Turn range assumptions" title="Turn range assumptions">i</button><button id="rdvzTimerBtn" class="mini-btn burn-time-timer-btn" type="button" tabindex="-1" aria-label="Start rendezvous timer" title="Start rendezvous timer">&#9201;</button></div></div><div class="rdvz-assumptions"><span>25° AOB • Standard atmosphere</span>${warning}</div>`;
+  updateRdvzWindComponents();
+  updateRdvzVisualization();
+  renderRdvzTimer();
+}
+
+function formatCountUpTimer(seconds) {
+  const total = Math.max(0, Math.floor(seconds));
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+}
+
+function currentRdvzTimerSeconds() {
+  return rdvzTimerBaseSeconds + (rdvzTimerInterval ? Math.floor((Date.now() - rdvzTimerStartedAt) / 1000) : 0);
+}
+
+function renderRdvzTimer() {
+  const display = $("rdvzTimerDisplay");
+  const button = $("rdvzTimerBtn");
+  if (display) display.textContent = formatCountUpTimer(currentRdvzTimerSeconds());
+  if (button) {
+    button.classList.toggle("active", Boolean(rdvzTimerInterval));
+    button.setAttribute("aria-label", rdvzTimerInterval ? "Pause rendezvous timer" : "Start rendezvous timer");
+    button.title = rdvzTimerInterval ? "Pause rendezvous timer" : "Start rendezvous timer";
+  }
+}
+
+function stopRdvzTimer() {
+  if (rdvzTimerInterval) {
+    rdvzTimerBaseSeconds = currentRdvzTimerSeconds();
+    clearInterval(rdvzTimerInterval);
+  }
+  rdvzTimerInterval = null;
+  renderRdvzTimer();
+}
+
+function resetRdvzTimer() {
+  if (rdvzTimerInterval) clearInterval(rdvzTimerInterval);
+  rdvzTimerInterval = null;
+  rdvzTimerStartedAt = 0;
+  rdvzTimerBaseSeconds = 0;
+  renderRdvzTimer();
+}
+
+function toggleRdvzTimer() {
+  if (rdvzTimerInterval) {
+    stopRdvzTimer();
+    return;
+  }
+  rdvzTimerStartedAt = Date.now();
+  rdvzTimerInterval = setInterval(renderRdvzTimer, 1000);
+  renderRdvzTimer();
+}
+
+function applyRdvzProfile() {
+  const profile = state.receiverProfiles.find((item) => item.id === els.rdvzProfile.value);
+  if (!profile) {
+    updateRdvzPreview();
+    return;
+  }
+  els.rdvzKias.value = profile.kias;
+  updateRdvzPreview();
+}
+
+function restoreRdvzWorkingInputs() {
+  const saved = state.rdvzInputs;
+  if (!saved) return false;
+  if (state.receiverProfiles.some((profile) => profile.id === saved.profileId)) {
+    els.rdvzProfile.value = saved.profileId;
+    updateRdvzProfileOptions();
+  }
+  els.rdvzKias.value = saved.kias;
+  els.rdvzArFl.value = saved.arFl;
+  els.rdvzTankerKias.value = saved.tankerKias || "275";
+  els.rdvzTrack.value = saved.track;
+  els.rdvzWind.value = saved.wind;
+  els.rdvzOrbit.value = saved.orbit === "right" ? "right" : "left";
+  syncRdvzOrbitControl();
+  updateRdvzPreview();
+  return true;
+}
+
+function saveRdvzProfile() {
+  const type = els.rdvzType.value.trim().toUpperCase().slice(0, 16);
+  const kias = Math.round(Number(els.rdvzNewKias.value) || 0);
+  if (!type || kias <= 0) {
+    openConfirm("Receiver Profile", "Enter a receiver type and RDVZ KIAS before saving.", null, { hideCancel: true, hideOk: true, danger: false });
+    return;
+  }
+  const existing = state.receiverProfiles.find((profile) => profile.id === editingRdvzProfileId)
+    || state.receiverProfiles.find((profile) => profile.type === type);
+  if (existing) Object.assign(existing, { type, kias });
+  else state.receiverProfiles.push({ id: id(), type, kias, notes: "" });
+  state.receiverProfiles = normalizeRdvzProfiles(state.receiverProfiles);
+  const saved = state.receiverProfiles.find((profile) => profile.type === type);
+  saveState();
+  updateRdvzProfileOptions();
+  if (saved) els.rdvzProfile.value = saved.id;
+  updateRdvzProfileOptions();
+  els.rdvzKias.value = kias;
+  closeModal("rdvzProfileModal");
+  editingRdvzProfileId = null;
+  updateRdvzPreview();
+  saveRdvzWorkingInputs();
+}
+
+function deleteRdvzProfile(profileId) {
+  const profile = state.receiverProfiles.find((item) => item.id === profileId);
+  if (!profile) return;
+  closeRdvzMenus();
+  openConfirm("Delete Receiver Type", `Delete ${profile.type} from saved receiver types?`, () => {
+    state.receiverProfiles = state.receiverProfiles.filter((item) => item.id !== profileId);
+    saveState();
+    updateRdvzProfileOptions();
+    if (state.receiverProfiles.length) applyRdvzProfile();
+    else {
+      els.rdvzKias.value = "";
+      updateRdvzPreview();
+    }
+    saveRdvzWorkingInputs();
+  }, { okText: "Delete", danger: true });
+}
+
 function calculateCg() {
   const inputs = [els.cgFb, els.cgCw, els.cgAb, els.cgRes, els.cgUd];
   if (inputs.some((input) => input.value === "")) return null;
@@ -642,6 +1405,11 @@ function toggleBurnTimer() {
 }
 
 function openCgCalculator() {
+  updateRdvzProfileOptions();
+  if (!restoreRdvzWorkingInputs()) {
+    if (state.receiverProfiles.length) applyRdvzProfile();
+    else updateRdvzPreview();
+  }
   updateCgPreview();
   updateBurnTimePreview();
   openModal("cgModal");
@@ -655,12 +1423,21 @@ function setCgMaxValues() {
 }
 
 function clearCgInputs() {
-  [els.cgFb, els.cgCw, els.cgAb, els.cgRes, els.cgUd, els.burnTimeRate, els.burnTimeAmount].forEach((input) => {
+  [
+    els.rdvzType, els.rdvzNewKias, els.rdvzKias, els.rdvzArFl, els.rdvzTrack, els.rdvzWind,
+    els.cgFb, els.cgCw, els.cgAb, els.cgRes, els.cgUd, els.burnTimeRate, els.burnTimeAmount
+  ].forEach((input) => {
     input.value = "";
   });
+  els.rdvzProfile.value = "";
+  els.rdvzTankerKias.value = "275";
+  els.rdvzOrbit.value = "left";
+  syncRdvzOrbitControl();
+  updateRdvzPreview();
+  saveRdvzWorkingInputs();
   updateCgPreview();
   resetBurnTimer();
-  focusAndSelect(els.cgFb);
+  resetRdvzTimer();
 }
 
 function handleBurnTimeInput() {
@@ -718,6 +1495,8 @@ function openFeedback() {
 }
 
 function render() {
+  updateRdvzProfileOptions();
+  updateRdvzPreview();
   const entries = currentEntries();
   const groups = groupEntries(entries);
   const totalOffload = entries.reduce((sum, entry) => sum + entry.offload, 0);
@@ -912,7 +1691,12 @@ function closeModal(idName) {
     editingEntryId = null;
     addToReceiver = null;
   }
-  if (idName === "cgModal") resetBurnTimer();
+  if (idName === "cgModal") {
+    saveRdvzWorkingInputs();
+    setRdvzWindAdjustMode(false);
+    resetBurnTimer();
+    resetRdvzTimer();
+  }
   if (idName === "confirmModal") confirmAction = null;
   if (!document.querySelector(".modal:not([hidden])")) document.body.classList.remove("modal-open");
 }
@@ -1392,12 +2176,18 @@ function importData(file) {
         return true;
       });
       const duplicateCount = importedEntries.length - newEntries.length;
+      const importedProfiles = normalizeRdvzProfiles(parsed.receiverProfiles);
+      const profileMap = new Map(state.receiverProfiles.map((profile) => [profile.type, profile]));
+      importedProfiles.forEach((profile) => {
+        profileMap.set(profile.type, { ...profileMap.get(profile.type), ...profile, id: profileMap.get(profile.type)?.id || profile.id });
+      });
       state.entries = [...state.entries, ...newEntries];
+      state.receiverProfiles = normalizeRdvzProfiles([...profileMap.values()]);
       saveState();
       render();
       openConfirm(
         "Import Complete",
-        `Added ${newEntries.length} new offload entr${newEntries.length === 1 ? "y" : "ies"}. Skipped ${duplicateCount} duplicate entr${duplicateCount === 1 ? "y" : "ies"}.`,
+        `Added ${newEntries.length} new offload entr${newEntries.length === 1 ? "y" : "ies"}. Skipped ${duplicateCount} duplicate entr${duplicateCount === 1 ? "y" : "ies"}. Imported ${importedProfiles.length} RDVZ profile${importedProfiles.length === 1 ? "" : "s"}.`,
         null,
         { okText: "OK", hideCancel: true, danger: false }
       );
@@ -1430,20 +2220,28 @@ function refreshMessageCenter() {
   els.messageCenterPanel.hidden = !(showInstall || showUpdatePrompt);
 }
 
+function watchServiceWorker(worker) {
+  if (!worker) return;
+  const reconcileWorkerState = () => {
+    if (worker.state === "installed" && navigator.serviceWorker.controller) showUpdate(worker);
+  };
+  reconcileWorkerState();
+  worker.addEventListener("statechange", reconcileWorkerState);
+}
+
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) {
     refreshMessageCenter();
     return;
   }
-  navigator.serviceWorker.register("service-worker.js").then((reg) => {
+  navigator.serviceWorker.register("service-worker.js", { updateViaCache: "none" }).then((reg) => {
     if (reg.waiting) showUpdate(reg.waiting);
-    reg.addEventListener("updatefound", () => {
-      const worker = reg.installing;
-      if (!worker) return;
-      worker.addEventListener("statechange", () => {
-        if (worker.state === "installed" && navigator.serviceWorker.controller) showUpdate(worker);
-      });
-    });
+    watchServiceWorker(reg.installing);
+    reg.addEventListener("updatefound", () => watchServiceWorker(reg.installing));
+    reg.update().then(() => {
+      if (reg.waiting) showUpdate(reg.waiting);
+      watchServiceWorker(reg.installing);
+    }).catch(() => {});
   }).catch(refreshMessageCenter);
 
   navigator.serviceWorker.addEventListener("controllerchange", () => window.location.reload());
@@ -1536,13 +2334,141 @@ function initEvents() {
     event.stopPropagation();
     openFeedback();
   });
-  els.cgMaxBtn.addEventListener("click", (event) => {
-    event.stopPropagation();
-    setCgMaxValues();
-  });
   els.cgClearBtn.addEventListener("click", (event) => {
     event.stopPropagation();
     clearCgInputs();
+  });
+  els.rdvzProfileButton.addEventListener("click", () => toggleRdvzMenu(els.rdvzProfileMenu, els.rdvzProfileButton));
+  els.rdvzProfileMenu.addEventListener("click", (event) => {
+    const editButton = event.target.closest("[data-edit-profile]");
+    if (editButton) {
+      const profile = state.receiverProfiles.find((item) => item.id === editButton.dataset.editProfile);
+      if (profile) openRdvzProfileEditor(profile);
+      return;
+    }
+    const deleteButton = event.target.closest("[data-delete-profile]");
+    if (deleteButton) {
+      deleteRdvzProfile(deleteButton.dataset.deleteProfile);
+      return;
+    }
+    const option = event.target.closest("[data-select-profile]");
+    if (!option) return;
+    els.rdvzProfile.value = option.dataset.selectProfile;
+    closeRdvzMenus();
+    updateRdvzProfileOptions();
+    applyRdvzProfile();
+    saveRdvzWorkingInputs();
+  });
+  els.rdvzAddProfile.addEventListener("click", () => openRdvzProfileEditor());
+  els.rdvzSaveProfile.addEventListener("click", saveRdvzProfile);
+  els.rdvzCancelProfile.addEventListener("click", () => {
+    editingRdvzProfileId = null;
+    closeModal("rdvzProfileModal");
+    updateRdvzProfileOptions();
+    if (state.receiverProfiles.length) applyRdvzProfile();
+  });
+  els.rdvzType.addEventListener("input", () => {
+    const cursor = els.rdvzType.selectionStart;
+    els.rdvzType.value = els.rdvzType.value.toUpperCase().slice(0, 16);
+    if (cursor !== null) els.rdvzType.setSelectionRange(Math.min(cursor, 16), Math.min(cursor, 16));
+    updateRdvzPreview();
+  });
+  [els.rdvzKias, els.rdvzArFl, els.rdvzTankerKias, els.rdvzTrack].forEach((el) => {
+    bindNumberOnlyInput(el, () => {
+      updateRdvzPreview();
+      saveRdvzWorkingInputs();
+    }, { allowDecimal: false });
+  });
+  bindNumberOnlyInput(els.rdvzNewKias, updateRdvzPreview, { allowDecimal: false });
+  els.rdvzWind.addEventListener("input", () => {
+    const cursor = els.rdvzWind.selectionStart;
+    els.rdvzWind.value = els.rdvzWind.value.replace(/[^\d/]/g, "");
+    if (cursor !== null) els.rdvzWind.setSelectionRange(cursor, cursor);
+    updateRdvzPreview();
+    saveRdvzWorkingInputs();
+  });
+  els.rdvzWind.addEventListener("blur", normalizeRdvzWind);
+  els.rdvzWind.addEventListener("change", normalizeRdvzWind);
+  els.rdvzWindAdjustBtn.addEventListener("click", () => setRdvzWindAdjustMode(!rdvzWindAdjustMode));
+  initRdvzWindDrag();
+  els.rdvzOrbitButton.addEventListener("click", () => toggleRdvzMenu(els.rdvzOrbitMenu, els.rdvzOrbitButton));
+  els.rdvzOrbitMenu.addEventListener("click", (event) => {
+    const option = event.target.closest("[data-value]");
+    if (!option) return;
+    els.rdvzOrbit.value = option.dataset.value;
+    syncRdvzOrbitControl();
+    closeRdvzMenus();
+    updateRdvzPreview();
+    saveRdvzWorkingInputs();
+  });
+  document.addEventListener("click", (event) => {
+    if (!event.target.closest(".themed-select, .select-add-control")) closeRdvzMenus();
+  });
+  const profileInputs = [els.rdvzType, els.rdvzNewKias];
+  profileInputs.forEach((el, index) => {
+    el.addEventListener("focus", () => selectInputValue(el));
+    el.addEventListener("click", () => selectInputValue(el));
+    el.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const next = profileInputs[index + 1];
+      if (next) focusAndSelect(next);
+      else saveRdvzProfile();
+    });
+  });
+  const rdvzInputs = [els.rdvzKias, els.rdvzArFl, els.rdvzTankerKias, els.rdvzTrack, els.rdvzWind];
+  rdvzInputs.forEach((el, index) => {
+    el.addEventListener("focus", () => selectInputValue(el));
+    el.addEventListener("click", () => selectInputValue(el));
+    el.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      const next = rdvzInputs[index + 1];
+      if (next) focusAndSelect(next);
+      else el.blur();
+    });
+  });
+  els.rdvzResults.addEventListener("click", (event) => {
+    if (event.target.closest("[data-rdvz-info]")) {
+      event.preventDefault();
+      openConfirm(
+        "Turn Range Assumptions",
+        "Turn Range and Offset use the ATP 25° AOB tables with interpolation. TAS assumes standard atmosphere and is not temperature-corrected. Receiver altitude is modeled 1,000 feet below tanker altitude. Drift is estimated from the entered wind; use tanker navigation-system ARIP-to-ARCP drift when available. Chart timing is the published nil-wind backup; wind-symbol timing is supplemental. Inputs up to two table intervals beyond a published limit are linearly extrapolated and identified by a yellow ~. Values farther outside the table display OUT OF RANGE.",
+        null,
+        { hideCancel: true, hideOk: true, danger: false }
+      );
+      return;
+    }
+    if (event.target.closest("[data-rdvz-wind-info]")) {
+      event.preventDefault();
+      openConfirm(
+        "Wind-Corrected Timing",
+        "These supplemental times use the entered wind and the resulting drift-adjusted turn range. The chart times above are interpolated from ATP-3.3.4.2 Table 2-13 (Nil Wind) and remain the published student reference.",
+        null,
+        { hideCancel: true, hideOk: true, danger: false }
+      );
+      return;
+    }
+    if (!event.target.closest("#rdvzTimerBtn")) return;
+    event.preventDefault();
+    if (rdvzTimerIgnoreClick) {
+      rdvzTimerIgnoreClick = false;
+      return;
+    }
+    toggleRdvzTimer();
+  });
+  els.rdvzResults.addEventListener("pointerdown", (event) => {
+    if (!event.target.closest("#rdvzTimerBtn")) return;
+    clearTimeout(rdvzTimerHold);
+    rdvzTimerIgnoreClick = false;
+    rdvzTimerHold = setTimeout(() => {
+      rdvzTimerIgnoreClick = true;
+      resetRdvzTimer();
+    }, 650);
+  });
+  ["pointerup", "pointercancel", "pointerleave"].forEach((eventName) => {
+    els.rdvzResults.addEventListener(eventName, () => clearTimeout(rdvzTimerHold));
   });
   els.offloadForm.addEventListener("submit", saveEntry);
   els.deleteEntryBtn.addEventListener("click", deleteCurrentEntry);
@@ -1696,7 +2622,8 @@ function initEvents() {
         state = {
           entries: [],
           lastUpdated: new Date().toISOString(),
-          lastBlockMode: state.lastBlockMode || "B40"
+          lastBlockMode: state.lastBlockMode || "B40",
+          receiverProfiles: state.receiverProfiles || []
         };
         saveState();
         render();
