@@ -1593,7 +1593,7 @@ button:disabled {
 }
 
 #cgModal .burn-time-card {
-  border-top: 3px solid var(--stroke-strong);
+  border-top: 4px solid #526f96;
 }
 
 .burn-time-card strong {
@@ -1618,6 +1618,50 @@ button:disabled {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+}
+
+#cgModal .cg-calculator-card {
+  display: grid;
+  gap: 10px;
+  border-top: 4px solid #526f96;
+}
+
+#cgModal .cg-calculator-card .cg-input-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+#cgModal .cg-calculator-card .cg-input-grid > .field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+  min-width: 0;
+}
+
+#cgModal .cg-calculator-card .subsection-title {
+  margin: 0;
+}
+
+#cgModal .cg-calculator-card .cg-result-card {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  padding-top: 10px;
+  border-top: 1px solid var(--stroke);
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+#cgModal .cg-calculator-card .cg-result-card > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  width: 100%;
+  align-items: baseline;
+}
+
+#cgModal .cg-calculator-card .cg-result-card > div > strong {
+  text-align: right;
 }
 
 #cgModal .unit-input {

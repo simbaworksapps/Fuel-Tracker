@@ -13,7 +13,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
   <link rel="icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=0.1.365">
+  <link rel="stylesheet" href="styles.css?v=0.1.369">
 </head>
 <body>
   <header class="app-header">
@@ -454,8 +454,9 @@
           <b>More Stable</b>
         </div>
       </div>
-      <h2 class="subsection-title">CG Calculator</h2>
-      <div class="cg-input-grid">
+      <section class="formula-card cg-calculator-card">
+        <h2 class="subsection-title">CG Calculator</h2>
+        <div class="cg-input-grid">
         <div class="field">
           <label for="cgFb">FB <span class="label-note">MAX ~39K</span></label>
           <input id="cgFb" type="number" step="0.001" inputmode="decimal">
@@ -480,8 +481,8 @@
           <span>Main 1/4 MAX ~14K</span>
           <span>Main 2/3 MAX ~15K</span>
         </div>
-      </div>
-      <div class="formula-card cg-result-card">
+        </div>
+        <div class="cg-result-card">
         <div>
           <span>CG (%MAC) <button id="cgInfoBtn" class="mini-btn cg-info-btn" type="button" aria-label="CG formula info" title="CG formula info">i</button></span>
           <strong id="cgResult">--</strong>
@@ -507,7 +508,8 @@
           </span>
           <span id="cgAltUdWarning" class="cg-alt-warning" hidden>UD</span>
         </small>
-      </div>
+        </div>
+      </section>
     </div>
   </div>
 
@@ -551,6 +553,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=0.1.365"></script>
+  <script src="app.js?v=0.1.369"></script>
 </body>
 </html>
