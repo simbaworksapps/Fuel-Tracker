@@ -195,9 +195,26 @@ const RDVZ_TIMING_CHART = {
   time40Seconds: [262, 246, 230, 216, 202, 190, 178, 168, 157, 148, 139, 131, 118, 110, 102, 95, 88, 81, 75, 69, 63, 57, 52, 47, 42, 38, 33, 29],
   time30Seconds: [185, 171, 158, 147, 136, 126, 117, 108, 99, 92, 85, 78, 67, 60, 54, 47, 42, 36, 31, 26, 21, 16, 12, 8, 4, 0, null, null]
 };
+const RDVZ_TIMING_TABLE = [
+  [100, ["12:12","11:36","11:02","10:31","10:02","9:36","9:11","8:48","8:26","8:06","7:46","7:28","7:06","6:50","6:34","6:18","6:04","5:51","5:38","5:25","5:13","5:02","4:52","4:41","4:31","4:22","4:13","4:05"]],
+  [95, ["11:33","10:58","10:26","9:56","9:29","9:03","8:40","8:18","7:57","7:37","7:19","7:02","6:41","6:25","6:09","5:55","5:42","5:29","5:16","5:04","4:53","4:42","4:32","4:22","4:12","4:03","3:55","3:47"]],
+  [90, ["10:54","10:21","9:50","9:22","8:56","8:31","8:09","7:48","7:28","7:09","6:52","6:36","6:15","6:00","5:45","5:31","5:18","5:06","4:54","4:43","4:32","4:21","4:11","4:02","3:53","3:45","3:36","3:29"]],
+  [85, ["10:15","9:43","9:14","8:47","8:22","7:59","7:38","7:18","6:59","6:41","6:25","6:09","5:49","5:35","5:21","5:07","4:55","4:44","4:32","4:21","4:11","4:01","3:52","3:43","3:34","3:26","3:18","3:11"]],
+  [80, ["9:36","9:06","8:38","8:12","7:49","7:27","7:07","6:48","6:30","6:13","5:57","5:43","5:24","5:10","4:56","4:44","4:32","4:21","4:10","4:00","3:50","3:40","3:31","3:23","3:15","3:08","3:00","2:53"]],
+  [75, ["8:56","8:28","8:02","7:38","7:16","6:55","6:36","6:18","6:01","5:45","5:30","5:16","4:58","4:45","4:32","4:20","4:09","3:59","3:48","3:38","3:29","3:20","3:12","3:04","2:56","2:48","2:41","2:35"]],
+  [70, ["8:17","7:51","7:26","7:03","6:42","6:23","6:04","5:48","5:32","5:17","5:03","4:50","4:32","4:20","4:08","3:56","3:46","3:36","3:26","3:17","3:08","3:00","2:52","2:44","2:37","2:30","2:23","2:17"]],
+  [65, ["7:38","7:13","6:50","6:29","6:09","5:51","5:33","5:18","5:03","4:49","4:36","4:23","4:06","3:55","3:43","3:33","3:23","3:13","3:04","2:55","2:47","2:39","2:31","2:24","2:18","2:11","2:04","1:59"]],
+  [60, ["6:59","6:36","6:14","5:54","5:36","5:18","5:02","4:48","4:34","4:21","4:08","3:57","3:41","3:30","3:19","3:09","3:00","2:51","2:42","2:34","2:26","2:19","2:12","2:05","1:58","1:52","1:46","1:41"]],
+  [55, ["6:20","5:58","5:38","5:19","5:02","4:46","4:31","4:18","4:05","3:52","3:41","3:30","3:15","3:05","2:55","2:45","2:36","2:28","2:20","2:12","2:05","1:58","1:52","1:46","1:40","1:34","1:28","1:23"]],
+  [50, ["5:41","5:21","5:02","4:45","4:29","4:14","4:00","3:48","3:36","3:24","3:14","3:04","2:50","2:40","2:30","2:21","2:13","2:05","1:58","1:51","1:44","1:38","1:32","1:26","1:20","1:15","1:10","1:05"]],
+  [45, ["5:02","4:43","4:26","4:10","3:56","3:42","3:30","3:18","3:06","2:56","2:46","2:37","2:24","2:15","2:06","1:58","1:50","1:43","1:37","1:30","1:24","1:18","1:12","1:07","1:01","0:56","0:51","0:47"]],
+  [40, ["4:22","4:06","3:50","3:36","3:22","3:10","2:58","2:48","2:37","2:28","2:19","2:11","1:58","1:50","1:42","1:35","1:28","1:21","1:15","1:09","1:03","0:57","0:52","0:47","0:42","0:38","0:33","0:29"]],
+  [35, ["3:44","3:28","3:14","3:01","2:49","2:38","2:27","2:18","2:09","2:00","1:52","1:44","1:33","1:25","1:18","1:11","1:05","0:59","0:53","0:47","0:42","0:37","0:32","0:27","0:23","0:19","0:15","0:11"]],
+  [30, ["3:05","2:51","2:38","2:27","2:16","2:06","1:57","1:48","1:39","1:32","1:25","1:18","1:07","1:00","0:54","0:47","0:42","0:36","0:31","0:26","0:21","0:16","0:12","0:08","0:04","0:00","-","-"]]
+];
 const RDVZ_TURN_RANGE_25 = [
   [1000, [26, 28, 30, 32, 34, 36, 39]], [975, [25, 27, 28, 30, 32, 34, 36]],
-  [950, [24, 26, 27, 29, 31, 33, 35]], [925, [23, 24, 26, 28, 29, 31, 33]],
+  [950, [24, 26, 27, 29, 31, 33, 35]], [925, [23, 24, 29, 28, 29, 31, 33]],
   [900, [22, 23, 25, 27, 28, 30, 32]], [875, [21, 23, 24, 26, 27, 29, 31]],
   [850, [20, 21, 23, 24, 26, 27, 29]], [825, [19, 20, 21, 23, 24, 26, 27]],
   [800, [18, 19, 21, 22, 23, 25, 26]], [775, [17, 18, 19, 21, 22, 23, 25]],
@@ -848,20 +865,14 @@ function calculateRdvz() {
   // Orbit direction only reverses which ATP table header maps to the numeric column.
   const drift = windDrift;
   const orbitDrift = rdvzOrbitDrift(windDrift, orbit);
-  const driftIndex = Math.max(0, rdvzDriftColumn(windDrift, orbit));
-  const roundedClosure = Math.round(closure / 5) * 5;
   const turnRangeInRange = Number.isFinite(closure)
-    && tableRangeStatus(RDVZ_TURN_RANGE_25.map(([value]) => value), roundedClosure) !== "out"
+    && tableRangeStatus(RDVZ_TURN_RANGE_25.map(([value]) => value), closure) !== "out"
     && tableRangeStatus(RDVZ_DRIFT_BUCKETS, orbitDrift) !== "out";
   const offsetInRange = Number.isFinite(tankerTas)
     && tableRangeStatus(RDVZ_OFFSET_25.map(([value]) => value), tankerTas) !== "out"
     && tableRangeStatus(RDVZ_DRIFT_BUCKETS, orbitDrift) !== "out";
-  const turnRange = !turnRangeInRange ? NaN : Math.abs(orbitDrift) > 15
-    ? extrapolateDriftTable(RDVZ_TURN_RANGE_25, roundedClosure, orbitDrift)
-    : extrapolateTable(RDVZ_TURN_RANGE_25, roundedClosure, driftIndex);
-  const offset = !offsetInRange ? NaN : Math.abs(orbitDrift) > 15
-    ? extrapolateDriftTable(RDVZ_OFFSET_25, tankerTas, orbitDrift)
-    : extrapolateTable(RDVZ_OFFSET_25, tankerTas, driftIndex);
+  const turnRange = !turnRangeInRange ? NaN : extrapolateDriftTable(RDVZ_TURN_RANGE_25, closure, orbitDrift);
+  const offset = !offsetInRange ? NaN : extrapolateDriftTable(RDVZ_OFFSET_25, tankerTas, orbitDrift);
   const windTime40 = Number.isFinite(turnRange) && Number.isFinite(closure) ? Math.max(0, (40 - turnRange) / (closure / 60)) : NaN;
   const windTime30 = Number.isFinite(turnRange) && Number.isFinite(closure) ? Math.max(0, (30 - turnRange) / (closure / 60)) : NaN;
   const chartTime40 = lookupRdvzChartTime(closure, RDVZ_TIMING_CHART.time40Seconds);
@@ -1199,6 +1210,168 @@ function updateRdvzVisualization() {
     ? `Wind ${String(wind.direction).padStart(3, "0")}° / ${wind.speed} kt`
     : "Wind calm";
   els.rdvzVisualOrbit.textContent = `Orbit ${orbit === "left" ? "Left" : "Right"}`;
+}
+
+function rdvzBracketIndices(values, value) {
+  if (!Number.isFinite(value) || !values.length) return [];
+  const exact = values.findIndex((item) => Math.abs(item - value) < 0.0001);
+  if (exact >= 0) return [exact];
+  for (let index = 0; index < values.length - 1; index += 1) {
+    const start = values[index];
+    const end = values[index + 1];
+    if ((value > start && value < end) || (value < start && value > end)) return [index, index + 1];
+  }
+  const firstDistance = Math.abs(value - values[0]);
+  const lastDistance = Math.abs(value - values[values.length - 1]);
+  return [firstDistance <= lastDistance ? 0 : values.length - 1];
+}
+
+function rdvzChartCell(bounds, index, total) {
+  const boundedIndex = clamp(index, 0, bounds.length - 2);
+  const start = bounds[boundedIndex];
+  const end = bounds[boundedIndex + 1];
+  return { position: (start / total) * 100, size: ((end - start) / total) * 100 };
+}
+
+function addRdvzChartGuide(chartName, x, y, width, height, cross = true) {
+  const frame = document.querySelector(`[data-rdvz-chart="${chartName}"]`);
+  if (!frame || ![x, y, width, height].every(Number.isFinite)) return;
+  const add = (className, styles) => {
+    const guide = document.createElement("span");
+    guide.className = `rdvz-chart-guide ${className}`;
+    Object.assign(guide.style, styles);
+    frame.appendChild(guide);
+  };
+  const percent = (value) => `${value}%`;
+  if (cross) {
+    add("row", { top: percent(y), height: percent(height) });
+    add("column", { left: percent(x), width: percent(width) });
+  }
+  const insetXPixels = 1;
+  const insetY = 0;
+  add("cell", {
+    left: `calc(${percent(x)} + ${insetXPixels}px)`,
+    top: percent(y + insetY),
+    width: `calc(${percent(width)} - ${insetXPixels * 2}px)`,
+    height: percent(height - (insetY * 2))
+  });
+}
+
+function updateRdvzChartGuides() {
+  document.querySelectorAll(".rdvz-chart-guide").forEach((guide) => guide.remove());
+  const result = calculateRdvz();
+  if (!result) return;
+
+  const orbit = els.rdvzOrbit.value || "left";
+  const driftColumn = clamp(rdvzDriftColumn(result.drift, orbit), 0, 6);
+  const turnRows = rdvzBracketIndices(RDVZ_TURN_RANGE_25.map(([value]) => value), result.closure);
+  const offsetRows = rdvzBracketIndices(RDVZ_OFFSET_25.map(([value]) => value), result.tankerTas);
+  const driftCell = rdvzChartCell([150, 209, 267, 327, 386, 444, 503, 562], driftColumn, 695);
+  const turnY = [136, 161, 187, 213, 239, 265, 291, 317, 343, 369, 395, 421, 447, 473, 501, 525, 551, 577, 603, 629, 655, 681, 709];
+  const offsetY = [136, 160, 186, 212, 238, 264, 292, 316, 342, 368, 394, 422, 446, 472, 498, 524, 552, 576, 602, 628, 654, 682];
+  turnRows.forEach((row) => {
+    const cell = rdvzChartCell(turnY, row, 842);
+    addRdvzChartGuide("turn", driftCell.position, cell.position, driftCell.size, cell.size, false);
+  });
+  offsetRows.forEach((row) => {
+    const cell = rdvzChartCell(offsetY, row, 692);
+    addRdvzChartGuide("offset", driftCell.position, cell.position, driftCell.size, cell.size, false);
+  });
+
+  const closureColumns = rdvzBracketIndices(RDVZ_TIMING_CHART.closures, result.closure);
+  const timingGroupX = [76, 169, 261, 353, 445, 537, 629, 722];
+  const timingCenterOffsets = [19, 38, 57, 77];
+  const timingY = [68, 131, 193, 257, 321, 378, 435, 494, 553, 610, 672, 737, 800, 862, 925, 987];
+  const timingRows = [12, 14];
+  timingRows.forEach((row) => closureColumns.forEach((column) => {
+    const group = Math.floor(column / 4);
+    const center = timingGroupX[group] + timingCenterOffsets[column % 4];
+    const xCell = { position: ((center - 15) / 768) * 100, size: (30 / 768) * 100 };
+    const yCell = rdvzChartCell(timingY, row, 1130);
+    addRdvzChartGuide("timing", xCell.position, yCell.position, xCell.size, yCell.size, false);
+  }));
+
+  const tasRows = RDVZ_TAS_TABLE.rows.map(([altitude]) => altitude);
+  const tasPoints = [
+    { fl: result.receiverFl / 10, kias: Number(els.rdvzKias.value) },
+    { fl: result.tankerFl / 10, kias: Number(els.rdvzTankerKias.value || 275) }
+  ];
+  tasPoints.forEach(({ fl, kias }) => {
+    const rows = rdvzBracketIndices(tasRows, fl);
+    const upperBlock = kias >= 300;
+    const columns = upperBlock ? RDVZ_TAS_TABLE.kias.slice(13) : RDVZ_TAS_TABLE.kias.slice(0, 13);
+    const columnIndices = rdvzBracketIndices(columns, kias);
+    const tasX = [53, 109, 164, 221, 276, 332, 388, 444, 500, 556, 612, 665, 718, 772];
+    const tasY = upperBlock
+      ? [653, 670, 686, 704, 721, 737, 755, 772, 790, 807, 824, 840, 856, 874, 891, 908, 924, 940, 958, 975, 992, 1008, 1024, 1040, 1057]
+      : [163, 181, 197, 214, 232, 248, 266, 283, 301, 318, 334, 351, 367, 385, 402, 418, 435, 451, 469, 486, 502, 519, 535, 551, 568];
+    rows.forEach((row) => columnIndices.forEach((column) => {
+      const xCell = rdvzChartCell(tasX, column, 774);
+      const yCell = rdvzChartCell(tasY, row, 1061);
+      addRdvzChartGuide("tas", xCell.position, yCell.position, xCell.size, yCell.size, false);
+    }));
+  });
+}
+
+function rdvzDigitalTable(headers, rows, highlighted = new Set(), firstHeader = "") {
+  const tableClass = headers.length <= 7 ? ' class="fills-viewport"' : "";
+  return `<table${tableClass}><thead><tr><th>${escapeHtml(firstHeader)}</th>${headers.map((header) => `<th>${escapeHtml(String(header))}</th>`).join("")}</tr></thead><tbody>${rows.map((row, rowIndex) => `<tr><th>${escapeHtml(String(row[0]))}</th>${row.slice(1).map((value, columnIndex) => `<td${highlighted.has(`${rowIndex}:${columnIndex}`) ? ' class="is-source"' : ""}>${escapeHtml(String(value))}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+}
+
+function renderRdvzDigitalCharts() {
+  const result = calculateRdvz();
+  const targets = Object.fromEntries([...document.querySelectorAll("[data-rdvz-digital]")].map((element) => [element.dataset.rdvzDigital, element]));
+  const references = Object.fromEntries([...document.querySelectorAll("[data-rdvz-reference]")].map((element) => [element.dataset.rdvzReference, element]));
+  if (!result) {
+    Object.values(targets).forEach((target) => { target.innerHTML = '<p class="rdvz-chart-empty">Enter valid calculator inputs to display the digital table.</p>'; });
+    Object.values(references).forEach((reference) => { reference.textContent = "No valid lookup inputs"; });
+    return;
+  }
+
+  const receiverKias = Number(els.rdvzKias.value);
+  const tankerKias = Number(els.rdvzTankerKias.value || 275);
+  references.tas.textContent = `Receiver: FL${formatK(result.receiverFl, 0)} • ${formatK(receiverKias, 0)} KIAS → ${formatK(result.receiverTas, 0)} KTAS | Tanker: FL${formatK(result.tankerFl, 0)} • ${formatK(tankerKias, 0)} KIAS → ${formatK(result.tankerTas, 0)} KTAS`;
+  references.turn.textContent = `Closure ${formatK(result.closure, 0)} kt • Drift ${formatDrift(result.drift)} → Turn Range ${formatK(result.turnRange, 1)} NM`;
+  references.offset.textContent = `T TAS ${formatK(result.tankerTas, 0)} kt • Drift ${formatDrift(result.drift)} → Offset ${formatK(result.offset, 1)} NM`;
+  references.timing.textContent = `Closure ${formatK(result.closure, 0)} kt • 40 NM → ${formatTimerMinutes(result.chartTime40)} | 30 NM → ${formatTimerMinutes(result.chartTime30)}`;
+  const tasRows = RDVZ_TAS_TABLE.rows.map(([altitude]) => altitude);
+  const tasSelections = [
+    { fl: result.receiverFl / 10, kias: receiverKias },
+    { fl: result.tankerFl / 10, kias: tankerKias }
+  ];
+  const renderTasBlock = (start, end) => {
+    const kiasColumns = RDVZ_TAS_TABLE.kias.slice(start, end);
+    const marks = new Set();
+    tasSelections.forEach(({ fl, kias }) => {
+      if (kias < kiasColumns[0] || kias > kiasColumns[kiasColumns.length - 1]) return;
+      rdvzBracketIndices(tasRows, fl).forEach((row) => rdvzBracketIndices(kiasColumns, kias).forEach((column) => marks.add(`${row}:${column}`)));
+    });
+    const rows = RDVZ_TAS_TABLE.rows.map(([altitude, values]) => [altitude, ...values.slice(start, end)]);
+    return rdvzDigitalTable(kiasColumns, rows, marks, "FL");
+  };
+  targets.tas.innerHTML = `<div class="rdvz-table-block"><div class="rdvz-table-kicker"><span>KIAS 200-290</span><span class="rdvz-table-source">ATP-3.3.4.2 Ed D V1</span></div>${renderTasBlock(0, 13)}</div><div class="rdvz-table-block"><div class="rdvz-table-kicker">KIAS 300-360</div>${renderTasBlock(13, 26)}</div>`;
+
+  const orbit = els.rdvzOrbit.value || "left";
+  const driftColumns = rdvzBracketIndices(RDVZ_DRIFT_BUCKETS, rdvzOrbitDrift(result.drift, orbit));
+  const driftHeaders = orbit === "left" ? ["15L", "10L", "5L", "0", "5R", "10R", "15R"] : ["15R", "10R", "5R", "0", "5L", "10L", "15L"];
+  const turnMarks = new Set(rdvzBracketIndices(RDVZ_TURN_RANGE_25.map(([value]) => value), result.closure).flatMap((row) => driftColumns.map((column) => `${row}:${column}`)));
+  const offsetMarks = new Set(rdvzBracketIndices(RDVZ_OFFSET_25.map(([value]) => value), result.tankerTas).flatMap((row) => driftColumns.map((column) => `${row}:${column}`)));
+  targets.turn.innerHTML = rdvzDigitalTable(driftHeaders, RDVZ_TURN_RANGE_25.map(([value, cells]) => [value, ...cells]), turnMarks, "Closure");
+  targets.offset.innerHTML = rdvzDigitalTable(driftHeaders, RDVZ_OFFSET_25.map(([value, cells]) => [value, ...cells]), offsetMarks, "T TAS");
+
+  const timingMarks = new Set();
+  const closureRows = rdvzBracketIndices(RDVZ_TIMING_CHART.closures, result.closure);
+  const timingDistanceRows = [...RDVZ_TIMING_TABLE].reverse();
+  const timingDistances = timingDistanceRows.map(([distance]) => distance);
+  [timingDistances.indexOf(40), timingDistances.indexOf(30)].forEach((column) => {
+    closureRows.forEach((row) => timingMarks.add(`${row}:${column}`));
+  });
+  const timingRows = RDVZ_TIMING_CHART.closures.map((closure, closureIndex) => [
+    closure,
+    ...timingDistanceRows.map(([, values]) => values[closureIndex])
+  ]);
+  targets.timing.innerHTML = `<div class="rdvz-timing-distance-label">Distance (NM) &rarr;</div>${rdvzDigitalTable(timingDistances, timingRows, timingMarks, "Closure")}`;
+
 }
 
 function updateRdvzPreview() {
@@ -2561,6 +2734,7 @@ function initEvents() {
   els.rdvzResults.addEventListener("click", (event) => {
     if (event.target.closest("[data-rdvz-charts]")) {
       event.preventDefault();
+      renderRdvzDigitalCharts();
       openModal("rdvzChartsModal");
       return;
     }
@@ -2591,6 +2765,15 @@ function initEvents() {
       return;
     }
     toggleRdvzTimer();
+  });
+  els.rdvzChartsModal.addEventListener("click", (event) => {
+    const selectedTable = event.target.closest(".rdvz-digital-table");
+    document.querySelectorAll(".rdvz-digital-table.is-horizontal-scroll").forEach((table) => {
+      if (table !== selectedTable) table.classList.remove("is-horizontal-scroll");
+    });
+    if (selectedTable && selectedTable.scrollWidth > selectedTable.clientWidth + 1) {
+      selectedTable.classList.add("is-horizontal-scroll");
+    }
   });
   els.rdvzResults.addEventListener("pointerdown", (event) => {
     if (!event.target.closest("#rdvzTimerBtn")) return;

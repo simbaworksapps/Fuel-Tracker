@@ -13,7 +13,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
   <link rel="icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=0.1.401">
+  <link rel="stylesheet" href="styles.css?v=0.1.441">
 </head>
 <body>
   <header class="app-header">
@@ -336,7 +336,6 @@
             <span class="rdvz-timer-heading"><span>Timer</span><b id="rdvzTimerDisplay">0:00</b></span>
             <div class="rdvz-timer-actions">
               <button class="mini-btn cg-info-btn rdvz-chart-btn" type="button" data-rdvz-charts aria-label="View source charts" title="View source charts">&#9638;</button>
-              <button class="mini-btn cg-info-btn" type="button" data-rdvz-info aria-label="Turn range assumptions" title="Turn range assumptions">i</button>
               <button id="rdvzTimerBtn" class="mini-btn burn-time-timer-btn" type="button" tabindex="-1" aria-label="Start rendezvous timer" title="Start rendezvous timer">&#9201;</button>
             </div>
           </div>
@@ -458,7 +457,7 @@
         </div>
       </div>
       <section class="formula-card cg-calculator-card">
-        <h2 class="subsection-title">CG Calculator</h2>
+        <h2 class="subsection-title">KC135 CG Calc Estimate</h2>
         <div class="cg-input-grid">
         <div class="field">
           <label for="cgFb">FB <span class="label-note">MAX ~39K</span></label>
@@ -565,14 +564,23 @@
   <div id="rdvzChartsModal" class="modal rdvz-charts-modal" hidden>
     <div class="modal-card rdvz-charts-card">
       <div class="section-row rdvz-charts-header">
-        <div><h2>Turn Range Reference Charts</h2><small>ATP-3.3.4.2 - tables used by this calculator</small></div>
         <button class="mini-btn modal-close" data-close="rdvzChartsModal" type="button" aria-label="Close charts">&times;</button>
       </div>
       <div class="rdvz-chart-list">
-        <figure><figcaption>Table 2-4 - KIAS to TAS Conversion</figcaption><img src="assets/rdvz-charts/table-2-4-kias-tas.png" alt="ATP Table 2-4 KIAS to TAS conversion chart" loading="lazy"></figure>
-        <figure><figcaption>Table 2-8 - 25&deg; AOB Turn Range</figcaption><img src="assets/rdvz-charts/table-2-8-turn-range.png" alt="ATP Table 2-8 turn range chart" loading="lazy"></figure>
-        <figure><figcaption>Table 2-9 - 25&deg; AOB Offset</figcaption><img src="assets/rdvz-charts/table-2-9-offset.png" alt="ATP Table 2-9 offset chart" loading="lazy"></figure>
-        <figure><figcaption>Table 2-13 - Timing Chart (Nil Wind)</figcaption><img src="assets/rdvz-charts/table-2-13-timing.png" alt="ATP Table 2-13 nil-wind timing chart" loading="lazy"></figure>
+        <figure><figcaption>Table 2-4 - KIAS to TAS Conversion</figcaption><div class="rdvz-chart-reference" data-rdvz-reference="tas"></div><div class="rdvz-digital-table" data-rdvz-digital="tas"></div></figure>
+        <figure><figcaption>Table 2-8 - 25&deg; AOB Turn Range</figcaption><div class="rdvz-chart-reference" data-rdvz-reference="turn"></div><div class="rdvz-digital-table" data-rdvz-digital="turn"></div></figure>
+        <figure><figcaption>Table 2-9 - 25&deg; AOB Offset</figcaption><div class="rdvz-chart-reference" data-rdvz-reference="offset"></div><div class="rdvz-digital-table" data-rdvz-digital="offset"></div></figure>
+        <figure><figcaption>Table 2-13 - Timing Chart (Nil Wind)</figcaption><div class="rdvz-chart-reference" data-rdvz-reference="timing"></div><div class="rdvz-digital-table" data-rdvz-digital="timing"></div></figure>
+        <section class="rdvz-chart-notes" aria-labelledby="rdvzChartNotesTitle">
+          <h3 id="rdvzChartNotesTitle">Quick Notes</h3>
+          <ul>
+            <li>Yellow boxes mark the published cells used. Two or four boxes indicate interpolation.</li>
+            <li>TAS uses standard atmosphere; receiver altitude is modeled 1,000 feet below tanker altitude.</li>
+            <li>Turn range and offset use the 25&deg; AOB tables and ARIP-to-ARCP course drift.</li>
+            <li>Chart timing is nil wind. Wind-symbol timing in the calculator is supplemental.</li>
+            <li>A yellow ~ marks limited extrapolation; farther values display OUT OF RANGE.</li>
+          </ul>
+        </section>
       </div>
     </div>
   </div>
@@ -591,6 +599,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=0.1.401"></script>
+  <script src="app.js?v=0.1.441"></script>
 </body>
 </html>
