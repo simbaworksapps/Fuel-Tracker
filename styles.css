@@ -964,9 +964,13 @@ button:disabled {
   color: var(--green);
 }
 
-#cgModal .rdvz-timer-result {
+#cgModal .rdvz-results .rdvz-timer-result {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  align-self: stretch;
+  align-items: stretch;
+  height: 100%;
   gap: 6px;
 }
 
@@ -976,21 +980,114 @@ button:disabled {
   align-items: center;
 }
 
-#cgModal .rdvz-timer-actions {
-  display: flex;
-  justify-content: flex-end;
+#cgModal .rdvz-results .rdvz-timer-actions {
+  align-self: end;
+  transform: none;
+}
+
+.formula-card .calculator-action-row,
+#cgModal .rdvz-results .rdvz-timer-actions {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 40px;
+  justify-content: end;
+  align-items: center;
   gap: 8px;
 }
 
+.formula-card .calculator-action-row > button,
 #cgModal .rdvz-timer-actions > button {
-  width: 38px;
-  min-width: 38px;
-  min-height: 38px;
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  min-height: 40px;
+  margin: 0;
   padding: 0;
+  display: grid;
+  place-items: center;
+  line-height: 1;
 }
 
 #cgModal .rdvz-timer-actions .burn-time-timer-btn {
   color: var(--gold);
+}
+
+#cgModal .rdvz-chart-btn {
+  position: relative;
+  color: var(--muted);
+  font-size: 0;
+}
+
+#cgModal .rdvz-chart-btn::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  box-sizing: border-box;
+  transform: translate(-50%, -50%);
+  border: 1px solid var(--muted);
+  background:
+    linear-gradient(to right, transparent 31%, var(--muted) 31%, var(--muted) 38%, transparent 38%, transparent 63%, var(--muted) 63%, var(--muted) 70%, transparent 70%),
+    linear-gradient(to bottom, transparent 31%, var(--muted) 31%, var(--muted) 38%, transparent 38%, transparent 63%, var(--muted) 63%, var(--muted) 70%, transparent 70%);
+}
+
+.rdvz-charts-modal {
+  padding: 0;
+  place-items: stretch;
+}
+
+.rdvz-charts-card {
+  width: 100%;
+  max-width: 100vw;
+  min-height: 100dvh;
+  max-height: 100dvh;
+  padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  border: 0;
+  border-radius: 0;
+  overflow: hidden;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.rdvz-charts-header { align-items: center; }
+.rdvz-charts-header > div { min-width: 0; }
+.rdvz-charts-header h2 { margin-bottom: 2px; }
+.rdvz-charts-header small { color: var(--dim); }
+
+.rdvz-chart-list {
+  min-height: 0;
+  overflow: auto;
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  overscroll-behavior: contain;
+}
+
+.rdvz-chart-list figure {
+  margin: 0;
+  padding: 10px;
+  background: #fff;
+  border: 1px solid var(--stroke-strong);
+  border-radius: 6px;
+}
+
+.rdvz-chart-list figcaption {
+  position: sticky;
+  top: -1px;
+  z-index: 1;
+  margin: -10px -10px 10px;
+  padding: 9px 10px;
+  color: var(--text);
+  background: var(--panel);
+  border-bottom: 1px solid var(--stroke-strong);
+  font-weight: 700;
+}
+
+.rdvz-chart-list img {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 #cgModal .wind-components {
@@ -2155,24 +2252,24 @@ input:disabled {
 }
 
 .burn-time-timer-btn {
-  width: 38px;
-  min-width: 38px;
-  min-height: 38px;
+  width: 40px;
+  min-width: 40px;
+  min-height: 40px;
   padding: 0;
   color: var(--gold);
 }
 
 .formula-card .burn-time-footer {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 38px 38px;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
   align-items: center;
 }
 
 .burn-time-info-btn {
-  width: 38px;
-  min-width: 38px;
-  min-height: 38px;
+  width: 40px;
+  min-width: 40px;
+  min-height: 40px;
   margin-left: 0;
 }
 

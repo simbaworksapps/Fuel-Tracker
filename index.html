@@ -13,7 +13,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
   <link rel="icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=0.1.382">
+  <link rel="stylesheet" href="styles.css?v=0.1.401">
 </head>
 <body>
   <header class="app-header">
@@ -335,6 +335,7 @@
           <div class="rdvz-timer-result">
             <span class="rdvz-timer-heading"><span>Timer</span><b id="rdvzTimerDisplay">0:00</b></span>
             <div class="rdvz-timer-actions">
+              <button class="mini-btn cg-info-btn rdvz-chart-btn" type="button" data-rdvz-charts aria-label="View source charts" title="View source charts">&#9638;</button>
               <button class="mini-btn cg-info-btn" type="button" data-rdvz-info aria-label="Turn range assumptions" title="Turn range assumptions">i</button>
               <button id="rdvzTimerBtn" class="mini-btn burn-time-timer-btn" type="button" tabindex="-1" aria-label="Start rendezvous timer" title="Start rendezvous timer">&#9201;</button>
             </div>
@@ -420,8 +421,10 @@
         </div>
         <div class="burn-time-footer">
           <small id="burnTimeFormula">Amount to burn / burn rate x 60</small>
-          <button id="burnTimeInfoBtn" class="mini-btn cg-info-btn burn-time-info-btn" type="button" aria-label="Main tank burn time info" title="Main tank burn time info">i</button>
-          <button id="burnTimeTimerBtn" class="mini-btn burn-time-timer-btn" type="button" tabindex="-1" aria-label="Start main tank burn timer" title="Start main tank burn timer">&#9201;</button>
+          <div class="calculator-action-row">
+            <button id="burnTimeInfoBtn" class="mini-btn cg-info-btn burn-time-info-btn" type="button" aria-label="Main tank burn time info" title="Main tank burn time info">i</button>
+            <button id="burnTimeTimerBtn" class="mini-btn burn-time-timer-btn" type="button" tabindex="-1" aria-label="Start main tank burn timer" title="Start main tank burn timer">&#9201;</button>
+          </div>
         </div>
       </div>
       <div class="cg-reference">
@@ -559,6 +562,21 @@
     </div>
   </div>
 
+  <div id="rdvzChartsModal" class="modal rdvz-charts-modal" hidden>
+    <div class="modal-card rdvz-charts-card">
+      <div class="section-row rdvz-charts-header">
+        <div><h2>Turn Range Reference Charts</h2><small>ATP-3.3.4.2 - tables used by this calculator</small></div>
+        <button class="mini-btn modal-close" data-close="rdvzChartsModal" type="button" aria-label="Close charts">&times;</button>
+      </div>
+      <div class="rdvz-chart-list">
+        <figure><figcaption>Table 2-4 - KIAS to TAS Conversion</figcaption><img src="assets/rdvz-charts/table-2-4-kias-tas.png" alt="ATP Table 2-4 KIAS to TAS conversion chart" loading="lazy"></figure>
+        <figure><figcaption>Table 2-8 - 25&deg; AOB Turn Range</figcaption><img src="assets/rdvz-charts/table-2-8-turn-range.png" alt="ATP Table 2-8 turn range chart" loading="lazy"></figure>
+        <figure><figcaption>Table 2-9 - 25&deg; AOB Offset</figcaption><img src="assets/rdvz-charts/table-2-9-offset.png" alt="ATP Table 2-9 offset chart" loading="lazy"></figure>
+        <figure><figcaption>Table 2-13 - Timing Chart (Nil Wind)</figcaption><img src="assets/rdvz-charts/table-2-13-timing.png" alt="ATP Table 2-13 nil-wind timing chart" loading="lazy"></figure>
+      </div>
+    </div>
+  </div>
+
   <div id="confirmModal" class="modal" hidden>
     <div id="confirmCard" class="modal-card confirm-card">
       <div class="section-row">
@@ -573,6 +591,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=0.1.382"></script>
+  <script src="app.js?v=0.1.401"></script>
 </body>
 </html>

@@ -43,6 +43,7 @@ const els = {
   rdvzSaveProfile: $("rdvzSaveProfile"),
   rdvzCancelProfile: $("rdvzCancelProfile"),
   rdvzLibraryModal: $("rdvzLibraryModal"),
+  rdvzChartsModal: $("rdvzChartsModal"),
   rdvzLibraryCategories: $("rdvzLibraryCategories"),
   rdvzLibrarySearch: $("rdvzLibrarySearch"),
   rdvzLibraryCustom: $("rdvzLibraryCustom"),
@@ -1234,7 +1235,7 @@ function updateRdvzPreview() {
   const warning = result?.tableWarnings.length
     ? `<span class="rdvz-table-warning">&#9888; ${hasOutOfRange ? "Outside supported range" : "Estimated outside ATP table"}: ${escapeHtml(result.tableWarnings.join(", "))}</span>`
     : "";
-  els.rdvzResults.innerHTML = `${rows.map(([label, value]) => `<div><span>${label}</span><b>${value}</b></div>`).join("")}<div class="rdvz-overrun-result"><div class="rdvz-overrun-heading"><span>Overrun</span><b>${overrun}</b></div><div class="rdvz-turn-metrics" aria-label="Turn reference metrics">${turnMetrics.map(([label, value]) => `<div><span>${label}</span><b>${value}</b></div>`).join("")}</div></div><div class="rdvz-timer-result"><span class="rdvz-timer-heading"><span>Timer</span><b id="rdvzTimerDisplay">0:00</b></span><div class="rdvz-timer-actions"><button class="mini-btn cg-info-btn" type="button" data-rdvz-info aria-label="Turn range assumptions" title="Turn range assumptions">i</button><button id="rdvzTimerBtn" class="mini-btn burn-time-timer-btn" type="button" tabindex="-1" aria-label="Start rendezvous timer" title="Start rendezvous timer">&#9201;</button></div></div><div class="rdvz-assumptions"><span>25° AOB • Standard atmosphere</span><span class="rdvz-wind-override-status"${rdvzWindAdjustMode ? "" : " hidden"}>WIND OVERRIDE - SCROLL OFF</span>${warning}</div>`;
+  els.rdvzResults.innerHTML = `${rows.map(([label, value]) => `<div><span>${label}</span><b>${value}</b></div>`).join("")}<div class="rdvz-overrun-result"><div class="rdvz-overrun-heading"><span>Overrun</span><b>${overrun}</b></div><div class="rdvz-turn-metrics" aria-label="Turn reference metrics">${turnMetrics.map(([label, value]) => `<div><span>${label}</span><b>${value}</b></div>`).join("")}</div></div><div class="rdvz-timer-result"><span class="rdvz-timer-heading"><span>Timer</span><b id="rdvzTimerDisplay">0:00</b></span><div class="rdvz-timer-actions"><button class="mini-btn cg-info-btn rdvz-chart-btn" type="button" data-rdvz-charts aria-label="View source charts" title="View source charts">&#9638;</button><button class="mini-btn cg-info-btn" type="button" data-rdvz-info aria-label="Turn range assumptions" title="Turn range assumptions">i</button><button id="rdvzTimerBtn" class="mini-btn burn-time-timer-btn" type="button" tabindex="-1" aria-label="Start rendezvous timer" title="Start rendezvous timer">&#9201;</button></div></div><div class="rdvz-assumptions"><span>25° AOB • Standard atmosphere</span><span class="rdvz-wind-override-status"${rdvzWindAdjustMode ? "" : " hidden"}>WIND OVERRIDE - SCROLL OFF</span>${warning}</div>`;
   updateRdvzWindComponents();
   updateRdvzVisualization();
   renderRdvzTimer();
@@ -2558,6 +2559,11 @@ function initEvents() {
     });
   });
   els.rdvzResults.addEventListener("click", (event) => {
+    if (event.target.closest("[data-rdvz-charts]")) {
+      event.preventDefault();
+      openModal("rdvzChartsModal");
+      return;
+    }
     if (event.target.closest("[data-rdvz-info]")) {
       event.preventDefault();
       openConfirm(
