@@ -1221,7 +1221,7 @@ button:disabled {
 #cgModal .rdvz-results .rdvz-assumptions {
   grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 3px;
   padding-top: 7px;
   border-top: 1px solid rgba(72, 95, 128, .42);
@@ -1234,7 +1234,14 @@ button:disabled {
 }
 
 #cgModal .rdvz-assumptions .rdvz-table-warning {
+  grid-column: 1 / -1;
   color: var(--gold);
+}
+
+#cgModal .rdvz-assumptions .rdvz-wind-override-status {
+  color: var(--gold);
+  text-align: right;
+  white-space: nowrap;
 }
 
 #cgModal .rdvz-estimate-mark,

@@ -979,6 +979,8 @@ function setRdvzWindAdjustMode(enabled) {
   const label = rdvzWindAdjustMode ? "Exit wind adjustment" : "Adjust wind direction";
   els.rdvzWindAdjustBtn.setAttribute("aria-label", label);
   els.rdvzWindAdjustBtn.title = label;
+  const status = els.rdvzResults.querySelector(".rdvz-wind-override-status");
+  if (status) status.hidden = !rdvzWindAdjustMode;
 }
 
 function rdvzWindDirectionFromPointer(event) {
@@ -1153,7 +1155,7 @@ function updateRdvzPreview() {
   const warning = result?.tableWarnings.length
     ? `<span class="rdvz-table-warning">&#9888; ${hasOutOfRange ? "Outside supported range" : "Estimated outside ATP table"}: ${escapeHtml(result.tableWarnings.join(", "))}</span>`
     : "";
-  els.rdvzResults.innerHTML = `${rows.map(([label, value]) => `<div><span>${label}</span><b>${value}</b></div>`).join("")}<div class="rdvz-overrun-result"><div class="rdvz-overrun-heading"><span>Overrun</span><b>${overrun}</b></div><div class="rdvz-turn-metrics" aria-label="Turn reference metrics">${turnMetrics.map(([label, value]) => `<div><span>${label}</span><b>${value}</b></div>`).join("")}</div></div><div class="rdvz-timer-result"><span class="rdvz-timer-heading"><span>Timer</span><b id="rdvzTimerDisplay">0:00</b></span><div class="rdvz-timer-actions"><button class="mini-btn cg-info-btn" type="button" data-rdvz-info aria-label="Turn range assumptions" title="Turn range assumptions">i</button><button id="rdvzTimerBtn" class="mini-btn burn-time-timer-btn" type="button" tabindex="-1" aria-label="Start rendezvous timer" title="Start rendezvous timer">&#9201;</button></div></div><div class="rdvz-assumptions"><span>25° AOB • Standard atmosphere</span>${warning}</div>`;
+  els.rdvzResults.innerHTML = `${rows.map(([label, value]) => `<div><span>${label}</span><b>${value}</b></div>`).join("")}<div class="rdvz-overrun-result"><div class="rdvz-overrun-heading"><span>Overrun</span><b>${overrun}</b></div><div class="rdvz-turn-metrics" aria-label="Turn reference metrics">${turnMetrics.map(([label, value]) => `<div><span>${label}</span><b>${value}</b></div>`).join("")}</div></div><div class="rdvz-timer-result"><span class="rdvz-timer-heading"><span>Timer</span><b id="rdvzTimerDisplay">0:00</b></span><div class="rdvz-timer-actions"><button class="mini-btn cg-info-btn" type="button" data-rdvz-info aria-label="Turn range assumptions" title="Turn range assumptions">i</button><button id="rdvzTimerBtn" class="mini-btn burn-time-timer-btn" type="button" tabindex="-1" aria-label="Start rendezvous timer" title="Start rendezvous timer">&#9201;</button></div></div><div class="rdvz-assumptions"><span>25° AOB • Standard atmosphere</span><span class="rdvz-wind-override-status"${rdvzWindAdjustMode ? "" : " hidden"}>WIND OVERRIDE - SCROLL OFF</span>${warning}</div>`;
   updateRdvzWindComponents();
   updateRdvzVisualization();
   renderRdvzTimer();
