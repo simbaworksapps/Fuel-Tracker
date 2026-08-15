@@ -1165,11 +1165,18 @@ button:disabled {
   text-align: left;
 }
 
-button.rdvz-library-select:hover,
 button.rdvz-library-select:focus-visible {
   background: var(--button-hover);
   outline: 1px solid var(--blue);
   outline-offset: -1px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  button.rdvz-library-select:hover {
+    background: var(--button-hover);
+    outline: 1px solid var(--blue);
+    outline-offset: -1px;
+  }
 }
 
 .rdvz-library-select span {
