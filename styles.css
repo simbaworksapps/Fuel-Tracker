@@ -1229,7 +1229,7 @@ button:disabled {
 
 .rdvz-digital-table table {
   width: max-content;
-  min-width: 0;
+  min-width: 100%;
   table-layout: auto;
   border-collapse: collapse;
   font-size: .68rem;
