@@ -1349,7 +1349,7 @@ function renderRdvzDigitalCharts() {
     const rows = RDVZ_TAS_TABLE.rows.map(([altitude, values]) => [altitude, ...values.slice(start, end)]);
     return rdvzDigitalTable(kiasColumns, rows, marks, "FL");
   };
-  targets.tas.innerHTML = `<div class="rdvz-table-block"><div class="rdvz-table-kicker"><span>KIAS 200-290</span><span class="rdvz-table-source">ATP-3.3.4.2 Ed D V1</span></div>${renderTasBlock(0, 13)}</div><div class="rdvz-table-block"><div class="rdvz-table-kicker">KIAS 300-360</div>${renderTasBlock(13, 26)}</div>`;
+  targets.tas.innerHTML = `<div class="rdvz-table-block"><div class="rdvz-table-kicker"><span>KIAS 200-290</span><span class="rdvz-table-scroll-hint">Click table to scroll horizontally</span><span class="rdvz-table-source">ATP-3.3.4.2 Ed D V1</span></div>${renderTasBlock(0, 13)}</div><div class="rdvz-table-block"><div class="rdvz-table-kicker">KIAS 300-360</div>${renderTasBlock(13, 26)}</div>`;
 
   const orbit = els.rdvzOrbit.value || "left";
   const driftColumns = rdvzBracketIndices(RDVZ_DRIFT_BUCKETS, rdvzOrbitDrift(result.drift, orbit));

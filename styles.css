@@ -1254,10 +1254,18 @@ button:disabled {
 }
 
 .rdvz-table-source {
+  margin-left: auto;
   color: var(--dim);
   font-size: .66rem;
   font-weight: 600;
   text-align: right;
+  white-space: nowrap;
+}
+
+.rdvz-table-scroll-hint {
+  color: var(--muted);
+  font-size: .66rem;
+  font-weight: 500;
   white-space: nowrap;
 }
 
@@ -1415,6 +1423,14 @@ button:disabled {
   grid-template-rows: auto auto auto auto auto minmax(0, 1fr);
   overflow: hidden;
   border-radius: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: .86rem;
+}
+
+.rdvz-library-card button:not(.modal-close),
+.rdvz-library-card input {
+  font-family: inherit;
+  font-size: .86rem;
 }
 
 #rdvzLibraryModal {
@@ -1424,7 +1440,7 @@ button:disabled {
 
 .rdvz-library-source {
   color: var(--dim);
-  font-size: .7rem;
+  font-size: .76rem;
   font-weight: 500;
 }
 
@@ -1447,6 +1463,7 @@ button:disabled {
   background: var(--button);
   border: 1px solid var(--stroke-strong);
   border-radius: 8px;
+  font-weight: 760;
 }
 
 .rdvz-library-tankers button.active,
@@ -1478,7 +1495,7 @@ button:disabled {
 .rdvz-library-list h3 {
   margin: 12px 4px 6px;
   color: var(--muted);
-  font-size: .76rem;
+  font-size: .78rem;
   font-weight: 800;
   text-transform: uppercase;
 }
@@ -1528,7 +1545,7 @@ button.rdvz-library-select:focus-visible {
 
 .rdvz-library-select b {
   color: var(--text);
-  font-size: .78rem;
+  font-size: .86rem;
   font-weight: 500;
   white-space: nowrap;
 }
