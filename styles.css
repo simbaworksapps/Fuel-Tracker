@@ -142,6 +142,27 @@ p {
   text-align: right;
 }
 
+.header-reference {
+  display: grid;
+  justify-items: end;
+  gap: 5px;
+  transform: translateY(6px);
+}
+
+.share-link {
+  color: var(--gold);
+  font-size: .76rem;
+  font-weight: 760;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.share-link:hover,
+.share-link:focus-visible {
+  text-decoration: underline;
+}
+
 .header-actions {
   display: flex;
   align-items: center;
@@ -1121,6 +1142,42 @@ button:disabled {
   font-size: .72rem;
   font-weight: 700;
   line-height: 1.35;
+}
+
+.rdvz-chart-reference.has-orbit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.rdvz-chart-reference.has-lines {
+  display: grid;
+  gap: 2px;
+}
+
+.rdvz-tas-reference-row {
+  display: grid;
+  grid-template-columns: 3.8rem 3.2rem 1.8rem 3.75rem 1.8rem minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rdvz-tas-reference-row > :nth-child(2) {
+  text-align: right;
+}
+
+.rdvz-tas-reference-row > :nth-child(3),
+.rdvz-tas-reference-row > :nth-child(5) {
+  text-align: center;
+}
+
+.rdvz-reference-orbit {
+  margin-left: auto;
+  white-space: nowrap;
+  text-align: right;
 }
 
 .rdvz-chart-list img {

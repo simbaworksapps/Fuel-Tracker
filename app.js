@@ -1330,9 +1330,12 @@ function renderRdvzDigitalCharts() {
 
   const receiverKias = Number(els.rdvzKias.value);
   const tankerKias = Number(els.rdvzTankerKias.value || 275);
-  references.tas.textContent = `Receiver: FL${formatK(result.receiverFl, 0)} • ${formatK(receiverKias, 0)} KIAS → ${formatK(result.receiverTas, 0)} KTAS | Tanker: FL${formatK(result.tankerFl, 0)} • ${formatK(tankerKias, 0)} KIAS → ${formatK(result.tankerTas, 0)} KTAS`;
+  const orbit = els.rdvzOrbit.value || "left";
+  references.tas.classList.add("has-lines");
+  references.tas.innerHTML = `<span class="rdvz-tas-reference-row"><span>Tanker:</span><span>FL${formatK(result.tankerFl, 0)}</span><span>•</span><span>${formatK(tankerKias, 0)} KIAS</span><span>→</span><span>${formatK(result.tankerTas, 0)} KTAS</span></span><span class="rdvz-tas-reference-row"><span>Receiver:</span><span>FL${formatK(result.receiverFl, 0)}</span><span>•</span><span>${formatK(receiverKias, 0)} KIAS</span><span>→</span><span>${formatK(result.receiverTas, 0)} KTAS</span></span>`;
   references.turn.textContent = `Closure ${formatK(result.closure, 0)} kt • Drift ${formatDrift(result.drift)} → Turn Range ${formatK(result.turnRange, 1)} NM`;
-  references.offset.textContent = `T TAS ${formatK(result.tankerTas, 0)} kt • Drift ${formatDrift(result.drift)} → Offset ${formatK(result.offset, 1)} NM`;
+  references.offset.classList.add("has-orbit");
+  references.offset.innerHTML = `<span>T TAS ${formatK(result.tankerTas, 0)} kt • Drift ${formatDrift(result.drift)} → Offset ${formatK(result.offset, 1)} NM</span><span class="rdvz-reference-orbit">Orbit ${orbit === "right" ? "Right" : "Left"}</span>`;
   references.timing.textContent = `Closure ${formatK(result.closure, 0)} kt • 40 NM → ${formatTimerMinutes(result.chartTime40)} | 30 NM → ${formatTimerMinutes(result.chartTime30)}`;
   const tasRows = RDVZ_TAS_TABLE.rows.map(([altitude]) => altitude);
   const tasSelections = [
@@ -1351,7 +1354,6 @@ function renderRdvzDigitalCharts() {
   };
   targets.tas.innerHTML = `<div class="rdvz-table-block"><div class="rdvz-table-kicker"><span>KIAS 200-290</span><span class="rdvz-table-scroll-hint">Click table to scroll horizontally</span><span class="rdvz-table-source">ATP-3.3.4.2 Ed D V1</span></div>${renderTasBlock(0, 13)}</div><div class="rdvz-table-block"><div class="rdvz-table-kicker">KIAS 300-360</div>${renderTasBlock(13, 26)}</div>`;
 
-  const orbit = els.rdvzOrbit.value || "left";
   const driftColumns = rdvzBracketIndices(RDVZ_DRIFT_BUCKETS, rdvzOrbitDrift(result.drift, orbit));
   const driftHeaders = orbit === "left" ? ["15L", "10L", "5L", "0", "5R", "10R", "15R"] : ["15R", "10R", "5R", "0", "5L", "10L", "15L"];
   const turnMarks = new Set(rdvzBracketIndices(RDVZ_TURN_RANGE_25.map(([value]) => value), result.closure).flatMap((row) => driftColumns.map((column) => `${row}:${column}`)));
