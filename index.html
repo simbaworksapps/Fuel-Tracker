@@ -13,7 +13,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
   <link rel="icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=0.1.370">
+  <link rel="stylesheet" href="styles.css?v=0.1.381">
 </head>
 <body>
   <header class="app-header">
@@ -27,7 +27,7 @@
       </div>
     </div>
     <div class="header-actions">
-      <div class="cao-line" id="caoLine">CAO 14AUG26</div>
+      <div class="cao-line" id="caoLine">CAO 15AUG26</div>
     </div>
   </header>
 
@@ -69,7 +69,7 @@
         <div class="receiver-heading">
           <h2>Receivers</h2>
           <div class="receiver-heading-actions">
-            <button id="cgBtn" class="mini-btn paw-icon-btn" type="button" aria-label="CG calculator" title="CG calculator"></button>
+            <button id="cgBtn" class="mini-btn paw-icon-btn" type="button" aria-label="Calculators" title="Calculators"></button>
             <button id="addReceiverBtn" class="add-btn" type="button" aria-label="Add receiver" title="Add receiver">
               <span aria-hidden="true">+</span>
             </button>
@@ -98,9 +98,9 @@
     <form id="offloadForm" class="modal-card">
       <div class="section-row">
         <h2 id="modalTitle">Add Receiver</h2>
-        <div class="block-toggle modal-block-toggle" role="group" aria-label="KC-135 block">
-          <button id="blockB40" class="block-option active" type="button" aria-pressed="true">B40</button>
-          <button id="blockB45" class="block-option" type="button" aria-pressed="false">B45</button>
+        <div class="block-toggle modal-block-toggle" role="group" aria-label="Entry method">
+          <button id="blockB40" class="block-option active" type="button" aria-pressed="true" title="Manual calculation">MAN</button>
+          <button id="blockB45" class="block-option" type="button" aria-pressed="false" title="Direct entry">DIR</button>
         </div>
         <button class="mini-btn modal-close" type="button" data-close="offloadModal" aria-label="Close">&times;</button>
       </div>
@@ -253,11 +253,11 @@
             <label for="rdvzProfile">Receiver Type</label>
             <div class="select-add-control">
               <select id="rdvzProfile" class="native-select-state" tabindex="-1" aria-hidden="true">
-                <option value="" selected disabled>No receiver types</option>
+                <option value="" selected disabled>Add</option>
               </select>
-              <button id="rdvzProfileButton" class="themed-select-button" type="button" aria-haspopup="listbox" aria-expanded="false"><span>No receiver types</span></button>
+              <button id="rdvzProfileButton" class="themed-select-button" type="button" aria-haspopup="dialog"><span>Add</span></button>
               <div id="rdvzProfileMenu" class="themed-select-menu" role="listbox" hidden></div>
-              <button id="rdvzAddProfile" type="button" aria-label="Add receiver type" title="Add receiver type">+</button>
+              <button id="rdvzAddProfile" type="button" aria-label="Add receiver type" title="Add receiver type" hidden>+</button>
             </div>
           </div>
           <div class="field">
@@ -328,8 +328,8 @@
             <div class="rdvz-overrun-heading"><span>Overrun</span><b>--</b></div>
             <div class="rdvz-turn-metrics" aria-label="Turn reference metrics">
               <div><span>Rate of Turn</span><b>--</b></div>
-              <div><span>SR Bank</span><b>--</b></div>
-              <div><span>&frac12; SR Bank</span><b>--</b></div>
+              <div><span>180&deg; Turn Time</span><b>--</b></div>
+              <div><span>SR Bank / &frac12; Bank</span><b>--/--</b></div>
             </div>
           </div>
           <div class="rdvz-timer-result">
@@ -522,7 +522,7 @@
       <div class="form-grid">
         <div class="field">
           <label for="rdvzType">Receiver Type</label>
-          <input id="rdvzType" type="text" maxlength="16" autocomplete="off" spellcheck="false" placeholder="C-17">
+          <input id="rdvzType" type="text" maxlength="48" autocomplete="off" spellcheck="false" placeholder="C-17">
         </div>
         <div class="field">
           <label for="rdvzNewKias">RDVZ KIAS</label>
@@ -536,6 +536,26 @@
         <button id="rdvzCancelProfile" class="primary-btn" type="button">Cancel</button>
         <button id="rdvzSaveProfile" class="primary-btn" type="button">Save</button>
       </div>
+    </div>
+  </div>
+
+  <div id="rdvzLibraryModal" class="modal" hidden>
+    <div class="modal-card rdvz-library-card">
+      <div class="section-row">
+        <h2>Select Receiver</h2>
+        <button class="mini-btn modal-close" data-close="rdvzLibraryModal" type="button" aria-label="Close">&times;</button>
+      </div>
+      <div class="rdvz-library-tankers" role="group" aria-label="Tanker type">
+        <button type="button" data-library-tanker="kc135" class="active">KC-135</button>
+        <button type="button" data-library-tanker="kc46">KC-46</button>
+      </div>
+      <div id="rdvzLibraryCategories" class="rdvz-library-categories" role="group" aria-label="Refueling system"></div>
+      <input id="rdvzLibrarySearch" type="search" autocomplete="off" spellcheck="false" placeholder="Search receivers" aria-label="Search receivers">
+      <div class="rdvz-library-actions">
+        <span class="rdvz-library-source">US National SRD &bull; 1 AUG 2026</span>
+        <button id="rdvzLibraryCustom" class="primary-btn" type="button">Add Custom</button>
+      </div>
+      <div id="rdvzLibraryList" class="rdvz-library-list" aria-live="polite"></div>
     </div>
   </div>
 
@@ -553,6 +573,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=0.1.370"></script>
+  <script src="app.js?v=0.1.381"></script>
 </body>
 </html>

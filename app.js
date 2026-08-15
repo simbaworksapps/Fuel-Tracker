@@ -42,6 +42,11 @@ const els = {
   rdvzNewKias: $("rdvzNewKias"),
   rdvzSaveProfile: $("rdvzSaveProfile"),
   rdvzCancelProfile: $("rdvzCancelProfile"),
+  rdvzLibraryModal: $("rdvzLibraryModal"),
+  rdvzLibraryCategories: $("rdvzLibraryCategories"),
+  rdvzLibrarySearch: $("rdvzLibrarySearch"),
+  rdvzLibraryCustom: $("rdvzLibraryCustom"),
+  rdvzLibraryList: $("rdvzLibraryList"),
   rdvzKias: $("rdvzKias"),
   rdvzArFl: $("rdvzArFl"),
   rdvzTankerKias: $("rdvzTankerKias"),
@@ -121,7 +126,25 @@ const els = {
 
 const STORAGE_KEY = "simba-fuel-tracker-v1";
 const DEFAULT_BURN_RATE = 10.0;
-const APP_CAO = "CAO 14AUG26";
+const APP_CAO = "CAO 15AUG26";
+const RDVZ_RECEIVER_LIBRARY = {
+  kc135: {
+    Boom: [
+      ["B-1B", 350], ["B-2A", null, "450 KTAS"], ["B-52H", 310], ["C-5A-C/M", 300], ["C-17A", 310], ["C-32B", 310],
+      ["C-130E/H/P/U, EC-130J/MC-130J/AC-130J", 215], ["RC-135S/U/V/W, TC-135S/W, WC-135R", 310], ["E-3A-D/F/G, E-6B, CT-49A", 310],
+      ["E-4B/VC-25A", 310], ["E-7 Wedgetail", 310], ["KC-46A", 310], ["P-8A", 310]
+    ],
+    BDA: [["EA-6B", 310]],
+    MPRS: [["EA-6B", 310]]
+  },
+  kc46: {
+    Boom: [
+      ["B-1B", 350], ["B-2A", null, "450 KTAS"], ["B-52H", 310], ["C-5M", 300], ["C-17A", 310], ["C-32B", 310], ["AC/EC/HC/MC-130J", 215],
+      ["EC-130H", 215], ["E-3A/B/G", 285], ["E-4B", null, "310 KTAS"], ["E-6B", 310], ["E-7 Wedgetail", 310], ["RC-135S/U/V/W, TC-135W, WC-135R", 310],
+      ["KC-46A", 310], ["P-8A", 310]
+    ]
+  }
+};
 const CG_FILL_VALUES = {
   cgFb: "39",
   cgCw: "49",
@@ -201,7 +224,7 @@ const RDVZ_OFFSET_25 = [
 let state = {
   entries: [],
   lastUpdated: null,
-  lastBlockMode: "B40",
+  lastBlockMode: "MAN",
   receiverProfiles: [],
   rdvzInputs: null
 };
@@ -212,7 +235,7 @@ let deferredInstallPrompt = null;
 let waitingWorker = null;
 let activeFilter = { query: "", from: "", to: "" };
 let suppressClicksUntil = 0;
-let activeBlockMode = "B40";
+let activeBlockMode = "MAN";
 let entryDateSyncTimer = null;
 let boomTimerInterval = null;
 let boomTimerStartedAt = 0;
@@ -227,6 +250,8 @@ let burnTimerCompleted = false;
 let burnTimerHasStarted = false;
 let rdvzWindAdjustMode = false;
 let rdvzWindDragging = false;
+let rdvzLibraryTanker = "kc135";
+let rdvzLibraryCategory = "Boom";
 let burnTimerBlinking = false;
 let burnTimerHold = null;
 let burnTimerIgnoreClick = false;
@@ -269,13 +294,13 @@ function loadState() {
       state = {
         entries,
         lastUpdated: parsed.lastUpdated || null,
-        lastBlockMode: validBlockMode(parsed.lastBlockMode) || latestEntryBlockMode(entries) || "B40",
+        lastBlockMode: validBlockMode(parsed.lastBlockMode) || latestEntryBlockMode(entries) || "MAN",
         receiverProfiles: normalizeRdvzProfiles(parsed.receiverProfiles),
         rdvzInputs: normalizeRdvzWorkingInputs(parsed.rdvzInputs)
       };
     }
   } catch {
-    state = { entries: [], lastUpdated: null, lastBlockMode: "B40", receiverProfiles: [], rdvzInputs: null };
+    state = { entries: [], lastUpdated: null, lastBlockMode: "MAN", receiverProfiles: [], rdvzInputs: null };
   }
 }
 
@@ -365,7 +390,9 @@ function negativeClass(value) {
 }
 
 function validBlockMode(mode) {
-  return mode === "B45" || mode === "B40" ? mode : "";
+  if (mode === "DIR" || mode === "B45") return "DIR";
+  if (mode === "MAN" || mode === "B40") return "MAN";
+  return "";
 }
 
 function latestEntryBlockMode(entries) {
@@ -377,7 +404,7 @@ function latestEntryBlockMode(entries) {
 
 function normalizeEntryUnits(entry) {
   const normalized = { ...entry };
-  normalized.blockMode = normalized.blockMode || "B40";
+  normalized.blockMode = validBlockMode(normalized.blockMode) || "MAN";
   const looksLikeRawLbs = [normalized.fuelStart, normalized.fuelEnd, normalized.burnRate, normalized.fuelOffload, normalized.offload]
     .some((value) => Math.abs(Number(value) || 0) > 1000);
   if (!looksLikeRawLbs) return normalized;
@@ -392,7 +419,7 @@ function entryImportKey(entry) {
     String(entry.date || ""),
     String(entry.callsign || "").trim().toUpperCase(),
     String(entryTail(entry)).trim().toUpperCase(),
-    String(entry.blockMode || "B40"),
+    String(validBlockMode(entry.blockMode) || "MAN"),
     Number(entry.fuelStart) || 0,
     Number(entry.fuelEnd) || 0,
     Number(entry.burnRate) || 0,
@@ -608,7 +635,7 @@ function formatBoomTimerInput(totalSeconds) {
 }
 
 function calculateOffload(values) {
-  if (values.blockMode === "B45") {
+  if (values.blockMode === "DIR") {
     const offload = Number(values.fuelOffload);
     if (!Number.isFinite(offload)) return null;
     const boomMinutes = parseBoomMinutes(values.boomTime);
@@ -663,12 +690,12 @@ function updatePreview() {
   card.classList.remove("warn", "bad");
   if (!result) {
     els.previewOffload.textContent = "0.0 K lbs";
-    els.formulaText.textContent = values.blockMode === "B45" ? "Direct fuel entry" : "Start - End - (Boom Time x Burn Rate)";
+    els.formulaText.textContent = values.blockMode === "DIR" ? "Direct entry" : "Start - End - (Boom Time x Burn Rate)";
     return;
   }
   els.previewOffload.textContent = formatFuel(result.offload);
-  els.formulaText.textContent = values.blockMode === "B45"
-    ? "Direct fuel entry"
+  els.formulaText.textContent = values.blockMode === "DIR"
+    ? "Direct entry"
     : `${formatK(values.fuelStart)} - ${formatK(values.fuelEnd)} - (${formatBoomTime(result.boomMinutes)} x ${formatK(values.burnRate)} K/hr)`;
   if (result.offload < 0) card.classList.add("bad");
   else if (result.offload === 0) card.classList.add("warn");
@@ -841,6 +868,7 @@ function calculateRdvz() {
   const turnRate25 = 1091 * Math.tan(25 * Math.PI / 180) / tankerTas;
   const standardRateBank = Math.atan((3 * tankerTas) / 1091) * 180 / Math.PI;
   const halfStandardRateBank = Math.atan((1.5 * tankerTas) / 1091) * 180 / Math.PI;
+  const turnTime180 = 180 / turnRate25 / 60;
   const receiverTasEstimated = Number.isFinite(receiverTas) && (receiverFl / 10 < 3 || receiverFl / 10 > 35 || receiverKias < 200 || receiverKias > 360);
   const tankerTasEstimated = Number.isFinite(tankerTas) && (arFl / 10 < 3 || arFl / 10 > 35 || tankerKias < 200 || tankerKias > 360);
   const closureEstimated = receiverTasEstimated || tankerTasEstimated;
@@ -874,7 +902,7 @@ function calculateRdvz() {
     windTime: !Number.isFinite(windTime40) || !Number.isFinite(windTime30),
     turnMetrics: !Number.isFinite(tankerTas)
   };
-  return { receiverFl, tankerFl: arFl, tankerTas, receiverTas, closure, drift, turnRange, offset, chartTime40, chartTime30, windTime40, windTime30, turnRate25, standardRateBank, halfStandardRateBank, tableWarnings, estimates, outOfRange };
+  return { receiverFl, tankerFl: arFl, tankerTas, receiverTas, closure, drift, turnRange, offset, chartTime40, chartTime30, windTime40, windTime30, turnRate25, standardRateBank, halfStandardRateBank, turnTime180, tableWarnings, estimates, outOfRange };
 }
 
 function lookupRdvzChartTime(closure, values) {
@@ -902,10 +930,61 @@ function updateRdvzProfileOptions() {
   else if (state.receiverProfiles.length) els.rdvzProfile.value = state.receiverProfiles[0].id;
   else els.rdvzProfile.value = "";
   const active = state.receiverProfiles.find((profile) => profile.id === els.rdvzProfile.value);
-  els.rdvzProfileButton.querySelector("span").textContent = active?.type || "No receiver types";
+  els.rdvzProfileButton.querySelector("span").textContent = active?.type || "Add";
   els.rdvzProfileMenu.innerHTML = state.receiverProfiles.length
     ? state.receiverProfiles.map((profile) => `<div class="receiver-profile-option" role="option" aria-selected="${profile.id === els.rdvzProfile.value}"><button class="profile-select" type="button" data-select-profile="${escapeHtml(profile.id)}">${escapeHtml(profile.type)}</button><button class="profile-edit" type="button" data-edit-profile="${escapeHtml(profile.id)}" aria-label="Edit ${escapeHtml(profile.type)}" title="Edit">&#9998;</button><button class="profile-delete" type="button" data-delete-profile="${escapeHtml(profile.id)}" aria-label="Delete ${escapeHtml(profile.type)}" title="Delete">&times;</button></div>`).join("")
-    : '<span class="themed-select-empty">No receiver types</span>';
+    : '<span class="themed-select-empty">Add</span>';
+}
+
+function renderRdvzLibrary() {
+  const groups = RDVZ_RECEIVER_LIBRARY[rdvzLibraryTanker];
+  const categories = Object.keys(groups);
+  if (!categories.includes(rdvzLibraryCategory)) rdvzLibraryCategory = categories[0];
+  const query = els.rdvzLibrarySearch.value.trim().toUpperCase();
+  els.rdvzLibraryCategories.innerHTML = categories.map((category) => (
+    `<button type="button" data-library-category="${category}" class="${category === rdvzLibraryCategory ? "active" : ""}">${category}</button>`
+  )).join("");
+  document.querySelectorAll("[data-library-tanker]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.libraryTanker === rdvzLibraryTanker);
+  });
+  const saved = state.receiverProfiles.filter((profile) => !query || profile.type.includes(query));
+  const catalog = groups[rdvzLibraryCategory].filter(([type]) => !query || type.includes(query));
+  const savedHtml = saved.length
+    ? `<h3>Saved</h3>${saved.map((profile) => `<div class="rdvz-library-row saved"><button type="button" class="rdvz-library-select" data-select-profile="${escapeHtml(profile.id)}"><span>${escapeHtml(profile.type)}</span><b>${profile.kias} KIAS</b></button><button type="button" class="profile-edit" data-edit-profile="${escapeHtml(profile.id)}" aria-label="Edit ${escapeHtml(profile.type)}">&#9998;</button><button type="button" class="profile-delete" data-delete-profile="${escapeHtml(profile.id)}" aria-label="Delete ${escapeHtml(profile.type)}">&times;</button></div>`).join("")}`
+    : "";
+  const catalogHtml = catalog.length
+    ? `<h3>${rdvzLibraryTanker === "kc135" ? "KC-135" : "KC-46"} ${rdvzLibraryCategory}</h3>${catalog.map(([type, kias, alternate]) => `<div class="rdvz-library-row${kias ? "" : " unavailable"}">${kias ? `<button type="button" class="rdvz-library-select" data-library-type="${escapeHtml(type)}" data-library-kias="${kias}">` : "<div class=\"rdvz-library-select\">"}<span>${escapeHtml(type)}</span><b>${kias ? `${kias} KIAS` : escapeHtml(alternate || "Not listed")}</b>${kias ? "</button>" : "</div>"}</div>`).join("")}`
+    : '<p class="rdvz-library-empty">No matching receivers</p>';
+  els.rdvzLibraryList.innerHTML = savedHtml + catalogHtml;
+}
+
+function openRdvzLibrary() {
+  closeRdvzMenus();
+  els.rdvzLibrarySearch.value = "";
+  renderRdvzLibrary();
+  openModal("rdvzLibraryModal");
+}
+
+function selectLibraryReceiver(type, kias) {
+  const normalizedType = String(type).trim().toUpperCase();
+  const speed = Math.round(Number(kias) || 0);
+  if (!normalizedType || speed <= 0) return;
+  let profile = state.receiverProfiles.find((item) => item.type === normalizedType);
+  if (profile) profile.kias = speed;
+  else {
+    profile = { id: id(), type: normalizedType, kias: speed, notes: "" };
+    state.receiverProfiles.push(profile);
+  }
+  state.receiverProfiles = normalizeRdvzProfiles(state.receiverProfiles);
+  profile = state.receiverProfiles.find((item) => item.type === normalizedType);
+  saveState();
+  updateRdvzProfileOptions();
+  if (profile) els.rdvzProfile.value = profile.id;
+  updateRdvzProfileOptions();
+  els.rdvzKias.value = speed;
+  closeModal("rdvzLibraryModal");
+  updateRdvzPreview();
+  saveRdvzWorkingInputs();
 }
 
 function closeRdvzMenus() {
@@ -933,8 +1012,8 @@ function syncRdvzOrbitControl() {
 function openRdvzProfileEditor(profile = null) {
   closeRdvzMenus();
   editingRdvzProfileId = profile?.id || null;
-  els.rdvzType.value = profile?.type || "C-17";
-  els.rdvzNewKias.value = profile?.kias || "310";
+  els.rdvzType.value = profile ? profile.type : "";
+  els.rdvzNewKias.value = profile ? profile.kias : "";
   openModal("rdvzProfileModal");
   setTimeout(() => els.rdvzType.focus(), 0);
 }
@@ -1148,8 +1227,8 @@ function updateRdvzPreview() {
       ['30 NM <button class="rdvz-wind-time-info" type="button" data-rdvz-wind-info aria-label="About wind-corrected timing" title="Wind-corrected timing">&#127788;&#65039;</button>', "--"]
     ];
   const turnMetrics = result
-    ? [["Rate of Turn", tableValue(`${formatK(result.turnRate25, 1)}°/sec`, result.estimates.turnMetrics, result.outOfRange.turnMetrics)], ["SR Bank", tableValue(`${formatK(result.standardRateBank, 0)}°`, result.estimates.turnMetrics, result.outOfRange.turnMetrics)], ["½ SR Bank", tableValue(`${formatK(result.halfStandardRateBank, 0)}°`, result.estimates.turnMetrics, result.outOfRange.turnMetrics)]]
-    : [["Rate of Turn", "--"], ["SR Bank", "--"], ["½ SR Bank", "--"]];
+    ? [["Rate of Turn", tableValue(`${formatK(result.turnRate25, 1)}°/sec`, result.estimates.turnMetrics, result.outOfRange.turnMetrics)], ["180° Turn Time", tableValue(formatTimerMinutes(result.turnTime180), result.estimates.turnMetrics, result.outOfRange.turnMetrics)], ["SR Bank / ½ Bank", tableValue(`${formatK(result.standardRateBank, 0)}°/${formatK(result.halfStandardRateBank, 0)}°`, result.estimates.turnMetrics, result.outOfRange.turnMetrics)]]
+    : [["Rate of Turn", "--"], ["180° Turn Time", "--"], ["SR Bank / ½ Bank", "--/--"]];
   const overrun = result ? tableValue(`&lt;${formatK(result.turnRange / 3, 1)} NM`, result.estimates.overrun, result.outOfRange.turnRange) : "--";
   const hasOutOfRange = result && Object.values(result.outOfRange).some(Boolean);
   const warning = result?.tableWarnings.length
@@ -1237,7 +1316,7 @@ function restoreRdvzWorkingInputs() {
 }
 
 function saveRdvzProfile() {
-  const type = els.rdvzType.value.trim().toUpperCase().slice(0, 16);
+  const type = els.rdvzType.value.trim().toUpperCase().slice(0, 48);
   const kias = Math.round(Number(els.rdvzNewKias.value) || 0);
   if (!type || kias <= 0) {
     openConfirm("Receiver Profile", "Enter a receiver type and RDVZ KIAS before saving.", null, { hideCancel: true, hideOk: true, danger: false });
@@ -1274,6 +1353,7 @@ function deleteRdvzProfile(profileId) {
       updateRdvzPreview();
     }
     saveRdvzWorkingInputs();
+    if (!els.rdvzLibraryModal.hidden) renderRdvzLibrary();
   }, { okText: "Delete", danger: true });
 }
 
@@ -1564,12 +1644,12 @@ function renderReceiverCard(group) {
 
 function renderEntryRow(entry) {
   const contacts = entry.contacts ? ` - ${entry.contacts} ct` : "";
-  const blockMode = entry.blockMode || "B40";
+  const blockMode = validBlockMode(entry.blockMode) || "MAN";
   const hasBoomTime = entry.boomMinutes !== null && entry.boomMinutes !== undefined && Number.isFinite(Number(entry.boomMinutes));
   const boomText = hasBoomTime ? ` - ${formatBoomTime(entry.boomMinutes)}` : "";
-  const details = blockMode === "B45"
-    ? `${blockMode} - direct${boomText}${contacts}`
-    : `${formatK(entry.fuelStart)} to ${formatK(entry.fuelEnd)} K - ${formatBoomTime(entry.boomMinutes)}${contacts}`;
+  const details = blockMode === "DIR"
+    ? `DIR - Direct entry${boomText}${contacts}`
+    : `MAN - ${formatK(entry.fuelStart)} to ${formatK(entry.fuelEnd)} K - ${formatBoomTime(entry.boomMinutes)}${contacts}`;
   return `
     <button class="entry-row" type="button" data-entry-id="${entry.id}">
       <span>
@@ -1714,13 +1794,13 @@ function resetForm() {
   els.deleteEntryBtn.hidden = true;
   editingEntryId = null;
   addToReceiver = null;
-  setBlockMode(state.lastBlockMode || "B40");
+  setBlockMode(state.lastBlockMode || "MAN");
   updatePreview();
 }
 
 function setBlockMode(mode) {
-  activeBlockMode = mode === "B45" ? "B45" : "B40";
-  const isB45 = activeBlockMode === "B45";
+  activeBlockMode = validBlockMode(mode) === "DIR" ? "DIR" : "MAN";
+  const isB45 = activeBlockMode === "DIR";
   els.blockB40.classList.toggle("active", !isB45);
   els.blockB45.classList.toggle("active", isB45);
   els.blockB40.setAttribute("aria-pressed", String(!isB45));
@@ -1863,10 +1943,10 @@ function openNewEntry(receiver = null) {
     els.tail.value = receiver.tail;
     els.receiverType.value = entryType(receiver.entries[0]) === "UNKNOWN" ? "" : entryType(receiver.entries[0]);
     els.receiverInfo.value = receiver.receiverInfo || entryInfo(receiver.entries[0]);
-    setBlockMode(receiver.entries[0]?.blockMode || "B40");
+    setBlockMode(receiver.entries[0]?.blockMode || "MAN");
   }
   openModal("offloadModal");
-  const focusTarget = receiver ? (activeBlockMode === "B45" ? els.fuelOffload : els.fuelStart) : els.callsign;
+  const focusTarget = receiver ? (activeBlockMode === "DIR" ? els.fuelOffload : els.fuelStart) : els.callsign;
   focusAndSelect(focusTarget, { preventScroll: true, keepModalTop: true });
 }
 
@@ -1889,7 +1969,7 @@ function setEntryDateToNow() {
 }
 
 function offloadEnterTargets() {
-  const blockFields = activeBlockMode === "B45"
+  const blockFields = activeBlockMode === "DIR"
     ? [els.fuelOffload, els.boomTime]
     : [els.burnRate, els.fuelStart, els.fuelEnd, els.boomTime];
   return [
@@ -1920,7 +2000,7 @@ function openEditEntry(entryId) {
   editingEntryId = entry.id;
   els.modalTitle.textContent = "Edit Offload";
   els.entryDate.value = entry.date || zuluDatetimeValue();
-  setBlockMode(entry.blockMode || "B40");
+  setBlockMode(entry.blockMode || "MAN");
   els.callsign.value = entry.callsign || "";
   els.tail.value = entryTail(entry);
   els.receiverType.value = entryType(entry) === "UNKNOWN" ? "" : entryType(entry);
@@ -2340,7 +2420,7 @@ function initEvents() {
     event.stopPropagation();
     clearCgInputs();
   });
-  els.rdvzProfileButton.addEventListener("click", () => toggleRdvzMenu(els.rdvzProfileMenu, els.rdvzProfileButton));
+  els.rdvzProfileButton.addEventListener("click", openRdvzLibrary);
   els.rdvzProfileMenu.addEventListener("click", (event) => {
     const editButton = event.target.closest("[data-edit-profile]");
     if (editButton) {
@@ -2362,6 +2442,52 @@ function initEvents() {
     saveRdvzWorkingInputs();
   });
   els.rdvzAddProfile.addEventListener("click", () => openRdvzProfileEditor());
+  els.rdvzLibrarySearch.addEventListener("input", renderRdvzLibrary);
+  els.rdvzLibraryModal.addEventListener("click", (event) => {
+    const tanker = event.target.closest("[data-library-tanker]");
+    if (tanker) {
+      rdvzLibraryTanker = tanker.dataset.libraryTanker;
+      rdvzLibraryCategory = Object.keys(RDVZ_RECEIVER_LIBRARY[rdvzLibraryTanker])[0];
+      renderRdvzLibrary();
+      return;
+    }
+    const category = event.target.closest("[data-library-category]");
+    if (category) {
+      rdvzLibraryCategory = category.dataset.libraryCategory;
+      renderRdvzLibrary();
+    }
+  });
+  els.rdvzLibraryList.addEventListener("click", (event) => {
+    const editButton = event.target.closest("[data-edit-profile]");
+    if (editButton) {
+      const profile = state.receiverProfiles.find((item) => item.id === editButton.dataset.editProfile);
+      if (profile) {
+        closeModal("rdvzLibraryModal");
+        openRdvzProfileEditor(profile);
+      }
+      return;
+    }
+    const deleteButton = event.target.closest("[data-delete-profile]");
+    if (deleteButton) {
+      deleteRdvzProfile(deleteButton.dataset.deleteProfile);
+      return;
+    }
+    const savedButton = event.target.closest("[data-select-profile]");
+    if (savedButton) {
+      els.rdvzProfile.value = savedButton.dataset.selectProfile;
+      updateRdvzProfileOptions();
+      applyRdvzProfile();
+      closeModal("rdvzLibraryModal");
+      saveRdvzWorkingInputs();
+      return;
+    }
+    const catalogButton = event.target.closest("[data-library-type]");
+    if (catalogButton) selectLibraryReceiver(catalogButton.dataset.libraryType, catalogButton.dataset.libraryKias);
+  });
+  els.rdvzLibraryCustom.addEventListener("click", () => {
+    closeModal("rdvzLibraryModal");
+    openRdvzProfileEditor();
+  });
   els.rdvzSaveProfile.addEventListener("click", saveRdvzProfile);
   els.rdvzCancelProfile.addEventListener("click", () => {
     editingRdvzProfileId = null;
@@ -2371,8 +2497,8 @@ function initEvents() {
   });
   els.rdvzType.addEventListener("input", () => {
     const cursor = els.rdvzType.selectionStart;
-    els.rdvzType.value = els.rdvzType.value.toUpperCase().slice(0, 16);
-    if (cursor !== null) els.rdvzType.setSelectionRange(Math.min(cursor, 16), Math.min(cursor, 16));
+    els.rdvzType.value = els.rdvzType.value.toUpperCase().slice(0, 48);
+    if (cursor !== null) els.rdvzType.setSelectionRange(Math.min(cursor, 48), Math.min(cursor, 48));
     updateRdvzPreview();
   });
   [els.rdvzKias, els.rdvzArFl, els.rdvzTankerKias, els.rdvzTrack].forEach((el) => {
@@ -2549,8 +2675,8 @@ function initEvents() {
     });
   });
 
-  els.blockB40.addEventListener("click", () => setBlockMode("B40"));
-  els.blockB45.addEventListener("click", () => setBlockMode("B45"));
+  els.blockB40.addEventListener("click", () => setBlockMode("MAN"));
+  els.blockB45.addEventListener("click", () => setBlockMode("DIR"));
 
   els.callsign.addEventListener("input", () => {
     const cursor = els.callsign.selectionStart;
@@ -2624,7 +2750,7 @@ function initEvents() {
         state = {
           entries: [],
           lastUpdated: new Date().toISOString(),
-          lastBlockMode: state.lastBlockMode || "B40",
+          lastBlockMode: validBlockMode(state.lastBlockMode) || "MAN",
           receiverProfiles: state.receiverProfiles || []
         };
         saveState();
