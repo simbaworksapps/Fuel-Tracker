@@ -79,6 +79,14 @@ const els = {
   rdvzVisualTrack: $("rdvzVisualTrack"),
   rdvzVisualWind: $("rdvzVisualWind"),
   rdvzVisualOrbit: $("rdvzVisualOrbit"),
+  fragRampFuel: $("fragRampFuel"),
+  fragLandFuel: $("fragLandFuel"),
+  fragBurnRate: $("fragBurnRate"),
+  fragFlightTime: $("fragFlightTime"),
+  fragOffload: $("fragOffload"),
+  fragResult: $("fragResult"),
+  fragFormula: $("fragFormula"),
+  fragInfoBtn: $("fragInfoBtn"),
   burnTimeRate: $("burnTimeRate"),
   burnTimeAmount: $("burnTimeAmount"),
   burnTimeInfoBtn: $("burnTimeInfoBtn"),
@@ -1600,6 +1608,60 @@ function updateBurnTimePreview() {
     : `${formatK(els.burnTimeAmount.value)} K / ${formatK(els.burnTimeRate.value)} K/hr x 60`;
 }
 
+function parseFragFlightHours(value) {
+  const text = String(value || "").trim();
+  if (!text) return null;
+  if (text.includes(":")) {
+    const match = text.match(/^(\d+):([0-5]?\d)$/);
+    if (!match) return null;
+    return Number(match[1]) + (Number(match[2]) / 60);
+  }
+  if (/^\d{3,4}$/.test(text)) {
+    const hours = Number(text.slice(0, -2));
+    const minutes = Number(text.slice(-2));
+    if (minutes >= 60) return null;
+    return hours + (minutes / 60);
+  }
+  const hours = Number(text);
+  return Number.isFinite(hours) && hours >= 0 ? hours : null;
+}
+
+function calculateFrag() {
+  const inputs = [els.fragRampFuel, els.fragLandFuel, els.fragBurnRate, els.fragOffload];
+  if (inputs.some((input) => input.value === "")) return null;
+  const [rampFuel, landFuel, burnRate, offload] = inputs.map((input) => Number(input.value));
+  const flightHours = parseFragFlightHours(els.fragFlightTime.value);
+  if (flightHours === null || [rampFuel, landFuel, burnRate, offload].some((value) => !Number.isFinite(value) || value < 0)) return null;
+  return { rampFuel, landFuel, burnRate, flightHours, offload, frag: rampFuel - offload - (flightHours * burnRate) - landFuel };
+}
+
+function updateFragPreview() {
+  const result = calculateFrag();
+  if (!result) {
+    els.fragResult.textContent = "--";
+    els.fragResult.classList.remove("is-negative", "is-zero");
+    els.fragFormula.textContent = "Ramp Fuel - Offload - (Flight Time × Burn Rate) - Land Fuel";
+    return;
+  }
+  const roundedFrag = Math.abs(result.frag) < .0005 ? 0 : result.frag;
+  const sign = roundedFrag < 0 ? "−" : "+";
+  els.fragResult.textContent = `FRAG ${sign} ${formatK(Math.abs(roundedFrag), 1)}K`;
+  els.fragResult.classList.toggle("is-negative", roundedFrag < 0);
+  els.fragResult.classList.toggle("is-zero", roundedFrag === 0);
+  els.fragFormula.textContent = `${formatK(result.rampFuel, 1)} - ${formatK(result.offload, 1)} - (${els.fragFlightTime.value.trim()} × ${formatK(result.burnRate, 1)}) - ${formatK(result.landFuel, 1)} = ${formatK(roundedFrag, 1)}K`;
+}
+
+function openFragInfo() {
+  openConfirm(
+    "Frag",
+    `<p>Your frag is the amount of fuel you are planned to offload while retaining enough fuel to return to your destination and land with the planned landing fuel.</p>
+     <p>Example: if you are fragged to offload 50K but can provide only 45K, the result is <strong>FRAG − 5K</strong>.</p>
+     <p>If your station time is extended, include the additional airborne time so the calculator accounts for the extra fuel burned.</p>`,
+    null,
+    { hideCancel: true, hideOk: true, danger: false, html: true }
+  );
+}
+
 function formatBurnTimerMinutes(seconds) {
   return `${formatK(Math.max(0, seconds) / 60, 1)} min`;
 }
@@ -1663,14 +1725,31 @@ function toggleBurnTimer() {
 }
 
 function openCgCalculator() {
+  collapseCalculatorSections();
   updateRdvzProfileOptions();
   if (!restoreRdvzWorkingInputs()) {
     if (state.receiverProfiles.length) applyRdvzProfile();
     else updateRdvzPreview();
   }
   updateCgPreview();
+  updateFragPreview();
   updateBurnTimePreview();
   openModal("cgModal");
+}
+
+function setCalculatorSectionExpanded(section, expanded) {
+  if (!section) return;
+  section.classList.toggle("is-collapsed", !expanded);
+  const header = section.querySelector(":scope > .calculator-section-header");
+  header?.setAttribute("aria-expanded", String(expanded));
+  const toggle = section.querySelector(":scope > .calculator-section-header .calculator-section-toggle");
+  if (!toggle) return;
+  toggle.setAttribute("aria-expanded", String(expanded));
+  toggle.textContent = expanded ? "−" : "+";
+}
+
+function collapseCalculatorSections() {
+  els.cgModal.querySelectorAll(".cg-collapsible").forEach((section) => setCalculatorSectionExpanded(section, false));
 }
 
 function setCgMaxValues() {
@@ -1683,7 +1762,8 @@ function setCgMaxValues() {
 function clearCgInputs() {
   [
     els.rdvzType, els.rdvzNewKias, els.rdvzKias, els.rdvzArFl, els.rdvzTrack, els.rdvzWind,
-    els.cgFb, els.cgCw, els.cgAb, els.cgRes, els.cgUd, els.burnTimeRate, els.burnTimeAmount
+    els.cgFb, els.cgCw, els.cgAb, els.cgRes, els.cgUd, els.fragRampFuel, els.fragLandFuel,
+    els.fragBurnRate, els.fragFlightTime, els.fragOffload, els.burnTimeRate, els.burnTimeAmount
   ].forEach((input) => {
     input.value = "";
   });
@@ -1694,6 +1774,7 @@ function clearCgInputs() {
   updateRdvzPreview();
   saveRdvzWorkingInputs();
   updateCgPreview();
+  updateFragPreview();
   resetBurnTimer();
   resetRdvzTimer();
 }
@@ -2864,6 +2945,49 @@ function initEvents() {
       if (next) focusAndSelect(next);
       else el.blur();
     });
+  });
+
+  const fragInputs = [els.fragRampFuel, els.fragLandFuel, els.fragBurnRate, els.fragFlightTime, els.fragOffload];
+  fragInputs.forEach((el, index) => {
+    if (el === els.fragFlightTime) el.addEventListener("input", updateFragPreview);
+    else bindNumberOnlyInput(el, updateFragPreview, { allowDecimal: true });
+    el.addEventListener("focus", () => selectInputValue(el));
+    el.addEventListener("click", () => selectInputValue(el));
+    el.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      const next = fragInputs[index + 1];
+      if (next) focusAndSelect(next);
+      else el.blur();
+    });
+  });
+  els.fragInfoBtn.addEventListener("click", (event) => {
+    event.stopPropagation();
+    openFragInfo();
+  });
+
+  els.cgModal.querySelectorAll(".calculator-section-header").forEach((header) => {
+    header.setAttribute("role", "button");
+    header.setAttribute("tabindex", "0");
+    header.setAttribute("aria-expanded", "false");
+    const indicator = header.querySelector(".calculator-section-toggle");
+    if (indicator) indicator.tabIndex = -1;
+  });
+  const toggleCalculatorHeader = (header) => {
+    const section = header?.closest(".cg-collapsible");
+    if (!section) return;
+    setCalculatorSectionExpanded(section, header.getAttribute("aria-expanded") !== "true");
+  };
+  els.cgModal.addEventListener("click", (event) => {
+    const header = event.target.closest(".calculator-section-header");
+    if (header) toggleCalculatorHeader(header);
+  });
+  els.cgModal.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    const header = event.target.closest(".calculator-section-header");
+    if (!header || event.target !== header) return;
+    event.preventDefault();
+    toggleCalculatorHeader(header);
   });
 
   els.blockB40.addEventListener("click", () => setBlockMode("MAN"));

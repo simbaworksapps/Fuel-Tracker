@@ -13,7 +13,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
   <link rel="icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=0.1.456">
+  <link rel="stylesheet" href="styles.css?v=0.1.468">
 </head>
 <body>
   <header class="app-header">
@@ -247,9 +247,10 @@
         <button class="mini-btn modal-close" data-close="cgModal" type="button" aria-label="Close">&times;</button>
       </div>
 
-      <div class="formula-card rdvz-card">
-        <div class="rdvz-header">
+      <div class="formula-card rdvz-card cg-collapsible is-collapsed">
+        <div class="rdvz-header calculator-section-header">
           <span>Turn Range &amp; Offset</span>
+          <button class="calculator-section-toggle" type="button" aria-expanded="false" aria-label="Expand Turn Range and Offset">+</button>
         </div>
         <div class="rdvz-grid">
           <div class="field">
@@ -400,10 +401,46 @@
         </div>
       </div>
 
-      <div class="formula-card burn-time-card">
-        <div class="burn-time-header">
+      <div class="formula-card frag-card cg-collapsible is-collapsed">
+        <div class="calculator-section-header">
+          <span>Frag Calc</span>
+          <button class="calculator-section-toggle" type="button" aria-expanded="false" aria-label="Expand Frag Calc">+</button>
+        </div>
+        <div class="frag-grid">
+          <div class="field">
+            <label for="fragRampFuel">Ramp Fuel</label>
+            <div class="unit-input"><input id="fragRampFuel" type="number" min="0" step="0.1" inputmode="decimal" enterkeyhint="next" placeholder="125"><span>K</span></div>
+          </div>
+          <div class="field">
+            <label for="fragLandFuel">Land Fuel</label>
+            <div class="unit-input"><input id="fragLandFuel" type="number" min="0" step="0.1" inputmode="decimal" enterkeyhint="next" placeholder="20"><span>K</span></div>
+          </div>
+          <div class="field">
+            <label for="fragBurnRate">Burn Rate</label>
+            <div class="unit-input"><input id="fragBurnRate" type="number" min="0" step="0.1" inputmode="decimal" enterkeyhint="next" placeholder="10"><span>K/hr</span></div>
+          </div>
+          <div class="field">
+            <label for="fragFlightTime">Flight Time <span class="label-note">HHMM or hr</span></label>
+            <input id="fragFlightTime" type="text" inputmode="decimal" enterkeyhint="next" autocomplete="off" placeholder="1025, 10:25, or 10">
+          </div>
+          <div class="field">
+            <label for="fragOffload">Offload</label>
+            <div class="unit-input"><input id="fragOffload" type="number" min="0" step="0.1" inputmode="decimal" enterkeyhint="done" placeholder="50"><span>K</span></div>
+          </div>
+          <div class="field frag-output-field">
+            <label for="fragResult">Frag</label>
+            <button id="fragInfoBtn" class="mini-btn cg-info-btn frag-info-btn" type="button" aria-label="About Frag" title="About Frag">i</button>
+            <output id="fragResult" class="frag-output-value">--</output>
+          </div>
+        </div>
+        <small id="fragFormula" class="frag-formula">Ramp Fuel - Offload - (Flight Time &times; Burn Rate) - Land Fuel</small>
+      </div>
+
+      <div class="formula-card burn-time-card cg-collapsible is-collapsed">
+        <div class="burn-time-header calculator-section-header">
           <span>Main Tank Burn Time</span>
           <strong id="burnTimeResult">-- / --</strong>
+          <button class="calculator-section-toggle" type="button" aria-expanded="false" aria-label="Expand Main Tank Burn Time">+</button>
         </div>
         <div class="burn-time-grid">
           <div class="field">
@@ -429,7 +466,11 @@
           </div>
         </div>
       </div>
-      <div class="cg-reference">
+      <div class="cg-reference cg-collapsible is-collapsed">
+        <div class="calculator-section-header">
+          <span>KC135 Fuel Reference</span>
+          <button class="calculator-section-toggle" type="button" aria-expanded="false" aria-label="Expand KC135 Fuel Reference">+</button>
+        </div>
         <div>
           <span>Mains &rarr; AB</span>
           <b>~1.3K PPM</b>
@@ -459,8 +500,11 @@
           <b>More Stable</b>
         </div>
       </div>
-      <section class="formula-card cg-calculator-card">
-        <h2 class="subsection-title">KC135 CG Calc Estimate</h2>
+      <section class="formula-card cg-calculator-card cg-collapsible is-collapsed">
+        <div class="calculator-section-header">
+          <h2 class="subsection-title">KC135 CG Calc Estimate</h2>
+          <button class="calculator-section-toggle" type="button" aria-expanded="false" aria-label="Expand KC135 CG Calc Estimate">+</button>
+        </div>
         <div class="cg-input-grid">
         <div class="field">
           <label for="cgFb">FB <span class="label-note">MAX ~39K</span></label>
@@ -602,6 +646,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=0.1.456"></script>
+  <script src="app.js?v=0.1.468"></script>
 </body>
 </html>
