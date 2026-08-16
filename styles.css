@@ -526,7 +526,7 @@ button:disabled {
 }
 
 .receiver-total {
-  color: var(--green);
+  color: var(--gold);
   font-size: .86rem;
   font-weight: 850;
   line-height: 1.1;
@@ -1447,11 +1447,11 @@ button:disabled {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 8px;
+  padding: 8px 0;
   color: var(--text);
-  background: var(--field);
-  border: 1px solid var(--stroke-strong);
-  border-radius: 8px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
   font-size: .78rem;
   font-weight: 760;
   white-space: nowrap;
@@ -2328,6 +2328,27 @@ button.rdvz-library-select:focus-visible {
   color: var(--gold);
 }
 
+#cgModal #fragFlightTime.is-suspect-time {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px rgba(245, 200, 76, .28);
+}
+
+#cgModal .unit-input.is-empty-required,
+#cgModal input.is-empty-required {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 1px rgba(91, 167, 255, .28);
+}
+
+#cgModal .unit-input.is-suspect-parameter {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px rgba(245, 200, 76, .28);
+}
+
+#cgModal input.is-suspect-parameter {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px rgba(245, 200, 76, .28);
+}
+
 #cgModal .cg-calculator-card .cg-input-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2371,7 +2392,7 @@ button.rdvz-library-select:focus-visible {
   height: auto;
   min-height: 0;
   padding: 0;
-  color: var(--green);
+  color: var(--gold);
   background: transparent;
   border: 0;
   border-radius: 0;

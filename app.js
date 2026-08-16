@@ -135,7 +135,7 @@ const els = {
 
 const STORAGE_KEY = "simba-fuel-tracker-v1";
 const DEFAULT_BURN_RATE = 10.0;
-const APP_CAO = "CAO 15AUG26";
+const APP_CAO = "CAO 16AUG26";
 const RDVZ_RECEIVER_LIBRARY = {
   kc135: {
     Boom: [
@@ -341,7 +341,7 @@ function normalizeRdvzWorkingInputs(value) {
     profileId: String(value.profileId || ""),
     kias: String(value.kias || ""),
     arFl: String(value.arFl || ""),
-    tankerKias: String(value.tankerKias || "275"),
+    tankerKias: value.tankerKias === undefined || value.tankerKias === null ? "275" : String(value.tankerKias),
     track: String(value.track || ""),
     wind: String(value.wind || ""),
     orbit: value.orbit === "right" ? "right" : "left"
@@ -353,7 +353,7 @@ function saveRdvzWorkingInputs() {
     profileId: els.rdvzProfile.value || "",
     kias: els.rdvzKias.value,
     arFl: els.rdvzArFl.value,
-    tankerKias: els.rdvzTankerKias.value || "275",
+    tankerKias: els.rdvzTankerKias.value,
     track: els.rdvzTrack.value,
     wind: els.rdvzWind.value,
     orbit: els.rdvzOrbit.value === "right" ? "right" : "left"
@@ -860,7 +860,7 @@ function normalizeRdvzWind() {
 function calculateRdvz() {
   const receiverKias = Number(els.rdvzKias.value);
   const arFl = Number(els.rdvzArFl.value);
-  const tankerKias = Number(els.rdvzTankerKias.value || 275);
+  const tankerKias = Number(els.rdvzTankerKias.value);
   if (![receiverKias, arFl, tankerKias].every(Number.isFinite) || receiverKias <= 0 || arFl <= 0 || tankerKias <= 0) return null;
   const receiverFl = Math.max(0, arFl - 10);
   const tankerTas = lookupTas(arFl / 10, tankerKias);
@@ -1302,7 +1302,7 @@ function updateRdvzChartGuides() {
   const tasRows = RDVZ_TAS_TABLE.rows.map(([altitude]) => altitude);
   const tasPoints = [
     { fl: result.receiverFl / 10, kias: Number(els.rdvzKias.value) },
-    { fl: result.tankerFl / 10, kias: Number(els.rdvzTankerKias.value || 275) }
+    { fl: result.tankerFl / 10, kias: Number(els.rdvzTankerKias.value) }
   ];
   tasPoints.forEach(({ fl, kias }) => {
     const rows = rdvzBracketIndices(tasRows, fl);
@@ -1337,7 +1337,7 @@ function renderRdvzDigitalCharts() {
   }
 
   const receiverKias = Number(els.rdvzKias.value);
-  const tankerKias = Number(els.rdvzTankerKias.value || 275);
+  const tankerKias = Number(els.rdvzTankerKias.value);
   const orbit = els.rdvzOrbit.value || "left";
   references.tas.classList.add("has-lines");
   references.tas.innerHTML = `<span class="rdvz-tas-reference-row"><span>Tanker:</span><span>FL${formatK(result.tankerFl, 0)}</span><span>•</span><span>${formatK(tankerKias, 0)} KIAS</span><span>→</span><span>${formatK(result.tankerTas, 0)} KTAS</span></span><span class="rdvz-tas-reference-row"><span>Receiver:</span><span>FL${formatK(result.receiverFl, 0)}</span><span>•</span><span>${formatK(receiverKias, 0)} KIAS</span><span>→</span><span>${formatK(result.receiverTas, 0)} KTAS</span></span>`;
@@ -1385,6 +1385,8 @@ function renderRdvzDigitalCharts() {
 }
 
 function updateRdvzPreview() {
+  updateCalculatorEmptyHighlights();
+  updateRdvzInputWarnings();
   const result = calculateRdvz();
   const approximate = (value, estimated) => estimated ? `<span class="rdvz-estimate-mark" aria-label="Estimated">~</span>${value}` : value;
   const tableValue = (value, estimated, outOfRange) => outOfRange ? "OUT OF RANGE" : approximate(value, estimated);
@@ -1392,10 +1394,10 @@ function updateRdvzPreview() {
     ? [
       ["Turn Range", tableValue(`${formatK(result.turnRange, 1)} NM`, result.estimates.turnRange, result.outOfRange.turnRange)],
       ["Offset", tableValue(`${formatK(result.offset, 1)} NM`, result.estimates.offset, result.outOfRange.offset)],
-      ["Receiver Alt", `FL${formatK(result.receiverFl, 0)}`],
       ["Tanker Alt", `FL${formatK(result.tankerFl, 0)}`],
-      ["Receiver TAS", tableValue(`${formatK(result.receiverTas, 0)} kt`, result.estimates.receiverTas, result.outOfRange.receiverTas)],
+      ["Receiver Alt", `FL${formatK(result.receiverFl, 0)}`],
       ["Tanker TAS", tableValue(`${formatK(result.tankerTas, 0)} kt`, result.estimates.tankerTas, result.outOfRange.tankerTas)],
+      ["Receiver TAS", tableValue(`${formatK(result.receiverTas, 0)} kt`, result.estimates.receiverTas, result.outOfRange.receiverTas)],
       ["Closure", tableValue(`${formatK(result.closure, 0)} kt`, result.estimates.closure, result.outOfRange.closure)],
       ["Drift", formatDrift(result.drift)],
       ["40 NM (Chart)", tableValue(formatTimerMinutes(result.chartTime40), result.estimates.chartTime, result.outOfRange.chartTime)],
@@ -1404,8 +1406,8 @@ function updateRdvzPreview() {
       ['30 NM <button class="rdvz-wind-time-info" type="button" data-rdvz-wind-info aria-label="About wind-corrected timing" title="Wind-corrected timing">&#127788;&#65039;</button>', tableValue(formatTimerMinutes(result.windTime30), result.estimates.windTime, result.outOfRange.windTime)]
     ]
     : [
-      ["Turn Range", "--"], ["Offset", "--"], ["Receiver Alt", "--"], ["Tanker Alt", "--"],
-      ["Receiver TAS", "--"], ["Tanker TAS", "--"],
+      ["Turn Range", "--"], ["Offset", "--"], ["Tanker Alt", "--"], ["Receiver Alt", "--"],
+      ["Tanker TAS", "--"], ["Receiver TAS", "--"],
       ["Closure", "--"], ["Drift", "--"], ["40 NM (Chart)", "--"], ["30 NM (Chart)", "--"],
       ['40 NM <button class="rdvz-wind-time-info" type="button" data-rdvz-wind-info aria-label="About wind-corrected timing" title="Wind-corrected timing">&#127788;&#65039;</button>', "--"],
       ['30 NM <button class="rdvz-wind-time-info" type="button" data-rdvz-wind-info aria-label="About wind-corrected timing" title="Wind-corrected timing">&#127788;&#65039;</button>', "--"]
@@ -1422,6 +1424,23 @@ function updateRdvzPreview() {
   updateRdvzWindComponents();
   updateRdvzVisualization();
   renderRdvzTimer();
+}
+
+function setRdvzInputWarning(input, isSuspect) {
+  input.classList.toggle("is-suspect-parameter", isSuspect);
+  input.closest(".unit-input")?.classList.toggle("is-suspect-parameter", isSuspect);
+  input.setAttribute("aria-invalid", String(isSuspect));
+}
+
+function updateRdvzInputWarnings() {
+  const receiverKias = Number(els.rdvzKias.value);
+  const tankerKias = Number(els.rdvzTankerKias.value);
+  const arFl = Number(els.rdvzArFl.value);
+  setRdvzInputWarning(els.rdvzKias, els.rdvzKias.value !== "" && (!Number.isFinite(receiverKias) || receiverKias < 200 || receiverKias > 360));
+  setRdvzInputWarning(els.rdvzTankerKias, els.rdvzTankerKias.value !== "" && (!Number.isFinite(tankerKias) || tankerKias < 200 || tankerKias > 360));
+  setRdvzInputWarning(els.rdvzArFl, els.rdvzArFl.value !== "" && (!Number.isFinite(arFl) || arFl < 40 || arFl > 350));
+  const windText = els.rdvzWind.value.trim();
+  setRdvzInputWarning(els.rdvzWind, windText !== "" && parseRdvzWind(windText) === null);
 }
 
 function formatCountUpTimer(seconds) {
@@ -1490,7 +1509,7 @@ function restoreRdvzWorkingInputs() {
   }
   els.rdvzKias.value = saved.kias;
   els.rdvzArFl.value = saved.arFl;
-  els.rdvzTankerKias.value = saved.tankerKias || "275";
+  els.rdvzTankerKias.value = saved.tankerKias ?? "275";
   els.rdvzTrack.value = saved.track;
   els.rdvzWind.value = saved.wind;
   els.rdvzOrbit.value = saved.orbit === "right" ? "right" : "left";
@@ -1734,7 +1753,22 @@ function openCgCalculator() {
   updateCgPreview();
   updateFragPreview();
   updateBurnTimePreview();
+  updateCalculatorEmptyHighlights();
   openModal("cgModal");
+}
+
+function updateCalculatorEmptyHighlights() {
+  const requiredInputs = [
+    els.rdvzKias, els.rdvzArFl, els.rdvzTankerKias, els.rdvzTrack, els.rdvzWind,
+    els.fragRampFuel, els.fragLandFuel, els.fragBurnRate, els.fragFlightTime, els.fragOffload,
+    els.burnTimeAmount, els.burnTimeRate,
+    els.cgFb, els.cgCw, els.cgAb, els.cgRes, els.cgUd
+  ];
+  requiredInputs.forEach((input) => {
+    const isEmpty = input.value.trim() === "";
+    input.classList.toggle("is-empty-required", isEmpty);
+    input.closest(".unit-input")?.classList.toggle("is-empty-required", isEmpty);
+  });
 }
 
 function setCalculatorSectionExpanded(section, expanded) {
@@ -1761,13 +1795,12 @@ function setCgMaxValues() {
 
 function clearCgInputs() {
   [
-    els.rdvzType, els.rdvzNewKias, els.rdvzKias, els.rdvzArFl, els.rdvzTrack, els.rdvzWind,
+    els.rdvzType, els.rdvzNewKias, els.rdvzArFl, els.rdvzTrack, els.rdvzWind,
     els.cgFb, els.cgCw, els.cgAb, els.cgRes, els.cgUd, els.fragRampFuel, els.fragLandFuel,
     els.fragBurnRate, els.fragFlightTime, els.fragOffload, els.burnTimeRate, els.burnTimeAmount
   ].forEach((input) => {
     input.value = "";
   });
-  els.rdvzProfile.value = "";
   els.rdvzTankerKias.value = "275";
   els.rdvzOrbit.value = "left";
   syncRdvzOrbitControl();
@@ -2124,7 +2157,7 @@ function sanitizeNumberText(value, allowDecimal = true) {
   return `${text.slice(0, firstDot + 1)}${text.slice(firstDot + 1).replace(/\./g, "")}`;
 }
 
-function bindNumberOnlyInput(el, onInput, { allowDecimal = true } = {}) {
+function bindNumberOnlyInput(el, onInput, { allowDecimal = true, maxDigits = null, minValue = null, maxValue = null } = {}) {
   el.addEventListener("keydown", (event) => {
     if (event.ctrlKey || event.metaKey || event.altKey || event.key.length !== 1) return;
     if (/\d/.test(event.key)) return;
@@ -2140,7 +2173,13 @@ function bindNumberOnlyInput(el, onInput, { allowDecimal = true } = {}) {
     event.preventDefault();
   });
   el.addEventListener("input", () => {
-    const cleaned = sanitizeNumberText(el.value, allowDecimal);
+    let cleaned = sanitizeNumberText(el.value, allowDecimal);
+    if (Number.isInteger(maxDigits) && maxDigits > 0) cleaned = cleaned.slice(0, maxDigits);
+    if (cleaned !== "") {
+      const numericValue = Number(cleaned);
+      if (Number.isFinite(maxValue) && numericValue > maxValue) cleaned = String(maxValue);
+      if (Number.isFinite(minValue) && numericValue < minValue) cleaned = String(minValue);
+    }
     if (el.value !== cleaned) el.value = cleaned;
     onInput();
   });
@@ -2758,13 +2797,20 @@ function initEvents() {
     if (cursor !== null) els.rdvzType.setSelectionRange(Math.min(cursor, 48), Math.min(cursor, 48));
     updateRdvzPreview();
   });
-  [els.rdvzKias, els.rdvzArFl, els.rdvzTankerKias, els.rdvzTrack].forEach((el) => {
+  [els.rdvzKias, els.rdvzArFl, els.rdvzTankerKias].forEach((el) => {
     bindNumberOnlyInput(el, () => {
       updateRdvzPreview();
       saveRdvzWorkingInputs();
-    }, { allowDecimal: false });
+    }, { allowDecimal: false, maxDigits: 3 });
   });
-  bindNumberOnlyInput(els.rdvzNewKias, updateRdvzPreview, { allowDecimal: false });
+  bindNumberOnlyInput(els.rdvzTrack, () => {
+    const track = Number(els.rdvzTrack.value);
+    const isSuspect = els.rdvzTrack.value !== "" && (!Number.isFinite(track) || track < 0 || track > 360);
+    setRdvzInputWarning(els.rdvzTrack, isSuspect);
+    updateRdvzPreview();
+    saveRdvzWorkingInputs();
+  }, { allowDecimal: false, maxDigits: 3 });
+  bindNumberOnlyInput(els.rdvzNewKias, updateRdvzPreview, { allowDecimal: false, maxDigits: 3 });
   els.rdvzWind.addEventListener("input", () => {
     const cursor = els.rdvzWind.selectionStart;
     els.rdvzWind.value = els.rdvzWind.value.replace(/[^\d/]/g, "");
@@ -2949,8 +2995,14 @@ function initEvents() {
 
   const fragInputs = [els.fragRampFuel, els.fragLandFuel, els.fragBurnRate, els.fragFlightTime, els.fragOffload];
   fragInputs.forEach((el, index) => {
-    if (el === els.fragFlightTime) el.addEventListener("input", updateFragPreview);
-    else bindNumberOnlyInput(el, updateFragPreview, { allowDecimal: true });
+    if (el === els.fragFlightTime) {
+      el.addEventListener("input", () => {
+        const isSuspect = el.value.trim() !== "" && parseFragFlightHours(el.value) === null;
+        el.classList.toggle("is-suspect-time", isSuspect);
+        el.setAttribute("aria-invalid", String(isSuspect));
+        updateFragPreview();
+      });
+    } else bindNumberOnlyInput(el, updateFragPreview, { allowDecimal: true });
     el.addEventListener("focus", () => selectInputValue(el));
     el.addEventListener("click", () => selectInputValue(el));
     el.addEventListener("keydown", (event) => {
@@ -2973,6 +3025,7 @@ function initEvents() {
     const indicator = header.querySelector(".calculator-section-toggle");
     if (indicator) indicator.tabIndex = -1;
   });
+  els.cgModal.addEventListener("input", updateCalculatorEmptyHighlights);
   const toggleCalculatorHeader = (header) => {
     const section = header?.closest(".cg-collapsible");
     if (!section) return;

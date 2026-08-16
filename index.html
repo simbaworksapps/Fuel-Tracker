@@ -13,7 +13,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
   <link rel="icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=0.1.469">
+  <link rel="stylesheet" href="styles.css?v=0.1.484">
 </head>
 <body>
   <header class="app-header">
@@ -28,7 +28,7 @@
     </div>
     <div class="header-actions">
       <div class="header-reference">
-        <div class="cao-line" id="caoLine">CAO 15AUG26</div>
+        <div class="cao-line" id="caoLine">CAO 16AUG26</div>
         <a class="share-link" href="https://simbaops.com" target="_blank" rel="noopener noreferrer">simbaops.com</a>
       </div>
     </div>
@@ -267,21 +267,21 @@
           <div class="field">
             <label for="rdvzKias">RDVZ KIAS</label>
             <div class="unit-input">
-              <input id="rdvzKias" type="number" min="0" step="1" inputmode="numeric" enterkeyhint="next" placeholder="315">
+              <input id="rdvzKias" type="number" min="0" max="999" step="1" inputmode="numeric" enterkeyhint="next" placeholder="315">
               <span>KIAS</span>
             </div>
           </div>
           <div class="field">
             <label for="rdvzArFl">AR Altitude</label>
             <div class="unit-input">
-              <input id="rdvzArFl" type="text" inputmode="numeric" pattern="[0-9]*" enterkeyhint="next" autocomplete="off" placeholder="210">
+              <input id="rdvzArFl" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" enterkeyhint="next" autocomplete="off" placeholder="210">
               <span>FL</span>
             </div>
           </div>
           <div class="field">
             <label for="rdvzTankerKias">Tanker KIAS</label>
             <div class="unit-input">
-              <input id="rdvzTankerKias" type="number" min="0" step="1" inputmode="numeric" enterkeyhint="next" value="275">
+              <input id="rdvzTankerKias" type="number" min="0" max="999" step="1" inputmode="numeric" enterkeyhint="next" value="275">
               <span>KIAS</span>
             </div>
           </div>
@@ -318,10 +318,10 @@
         <div id="rdvzResults" class="rdvz-results">
           <div><span>Turn Range</span><b>--</b></div>
           <div><span>Offset</span><b>--</b></div>
-          <div><span>Receiver Alt</span><b>--</b></div>
           <div><span>Tanker Alt</span><b>--</b></div>
-          <div><span>Receiver TAS</span><b>--</b></div>
+          <div><span>Receiver Alt</span><b>--</b></div>
           <div><span>Tanker TAS</span><b>--</b></div>
+          <div><span>Receiver TAS</span><b>--</b></div>
           <div><span>Closure</span><b>--</b></div>
           <div><span>Drift</span><b>--</b></div>
           <div><span>40 NM (Chart)</span><b>--</b></div>
@@ -576,7 +576,7 @@
         <div class="field">
           <label for="rdvzNewKias">RDVZ KIAS</label>
           <div class="unit-input">
-            <input id="rdvzNewKias" type="number" min="0" step="1" inputmode="numeric" enterkeyhint="done" placeholder="310">
+            <input id="rdvzNewKias" type="number" min="0" max="999" step="1" inputmode="numeric" enterkeyhint="done" placeholder="310">
             <span>KIAS</span>
           </div>
         </div>
@@ -646,6 +646,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=0.1.469"></script>
+  <script src="app.js?v=0.1.484"></script>
 </body>
 </html>
