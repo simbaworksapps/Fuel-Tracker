@@ -410,7 +410,7 @@ function rdvzRolloutLabel(result) {
 function rdvzRolloutSelectHtml(result) {
   const selected = result.selectedRolloutReferenceNm;
   const changed = Math.abs(selected - result.defaultRolloutReferenceNm) > 0.001;
-  const choices = [...new Set([-1, -0.5, 0, 0.5, 1, 1.5, 2, 2.5, 3, selected])].sort((a, b) => a - b);
+  const choices = [...new Set([-1, -0.5, 0, 0.5, 1, 1.5, 2, 2.5, 3, selected])].sort((a, b) => b - a);
   const options = choices.map((value) => {
     const label = `${formatK(value, value % 1 ? 1 : 0)}NM`;
     return `<option value="${value}"${Math.abs(value - selected) < 0.001 ? " selected" : ""}>${label}</option>`;
