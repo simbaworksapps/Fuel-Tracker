@@ -1582,13 +1582,13 @@ function updateRdvzPreview() {
       ["Receiver TAS", tableValue(`${formatK(result.receiverTas, 0)} kt`, result.estimates.receiverTas, result.outOfRange.receiverTas)],
       ["Closure", tableValue(`${formatK(result.closure, 0)} kt`, result.estimates.closure, result.outOfRange.closure)],
       ["Drift", formatDrift(result.drift)],
-      ["40 NM (Chart)", tableValue(formatTimerMinutes(result.chartTime40), result.estimates.chartTime, result.outOfRange.chartTime)],
-      ["30 NM (Chart)", tableValue(formatTimerMinutes(result.chartTime30), result.estimates.chartTime, result.outOfRange.chartTime)]
+      ["40 NM &#128683;&#127788;&#65039;", tableValue(formatTimerMinutes(result.chartTime40), result.estimates.chartTime, result.outOfRange.chartTime)],
+      ["30 NM &#128683;&#127788;&#65039;", tableValue(formatTimerMinutes(result.chartTime30), result.estimates.chartTime, result.outOfRange.chartTime)]
     ]
     : [
       ["Turn Range", "--"], ["Offset", "--"], ["Tanker Alt", "--"], ["Receiver Alt", "--"],
       ["Tanker TAS", "--"], ["Receiver TAS", "--"],
-      ["Closure", "--"], ["Drift", "--"], ["40 NM (Chart)", "--"], ["30 NM (Chart)", "--"]
+      ["Closure", "--"], ["Drift", "--"], ["40 NM &#128683;&#127788;&#65039;", "--"], ["30 NM &#128683;&#127788;&#65039;", "--"]
     ];
   const turnMetrics = result
     ? [["Rate of Turn", tableValue(`${formatK(result.turnRate25, 1)}°/sec`, result.estimates.turnMetrics, result.outOfRange.turnMetrics)], ["180° Turn Time", tableValue(formatTimerMinutes(result.turnTime180), result.estimates.turnMetrics, result.outOfRange.turnMetrics)], ["SR Bank / ½ Bank", tableValue(`${formatK(result.standardRateBank, 0)}°/${formatK(result.halfStandardRateBank, 0)}°`, result.estimates.turnMetrics, result.outOfRange.turnMetrics)]]
