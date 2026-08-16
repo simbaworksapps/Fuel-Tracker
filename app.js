@@ -1654,7 +1654,7 @@ function updateFragPreview() {
 function openFragInfo() {
   openConfirm(
     "Frag",
-    `<p>Your frag is the amount of fuel you are planned to offload while retaining enough fuel to return to your destination and land with the planned landing fuel.</p>
+    `<p>Frag is the amount of fuel, if any, that differs from the fragged plan. A positive value means more fuel is available than planned; a negative value means less fuel is available.</p>
      <p>Example: if you are fragged to offload 50K but can provide only 45K, the result is <strong>FRAG − 5K</strong>.</p>
      <p>If your station time is extended, include the additional airborne time so the calculator accounts for the extra fuel burned.</p>`,
     null,
