@@ -233,6 +233,13 @@ const RDVZ_TURN_RANGE_25 = [
   [550, [8, 9, 9, 10, 11, 12, 12]], [525, [7, 8, 8, 9, 10, 11, 11]],
   [500, [7, 7, 8, 8, 9, 10, 11]], [475, [6, 7, 7, 8, 8, 9, 10]]
 ];
+const RDVZ_TURN_RANGE_C130_25 = [
+  [575, [8, 9, 10, 11, 11, 12, 13]],
+  [550, [7, 8, 9, 10, 11, 12, 13]],
+  [525, [6, 7, 8, 9, 10, 11, 12]],
+  [500, [6, 6, 7, 8, 9, 10, 11]],
+  [475, [5, 6, 6, 7, 7, 8, 9]]
+];
 const RDVZ_OFFSET_25 = [
   [520, [11, 13, 15, 17, 20, 22, 26]], [500, [10, 12, 14, 16, 18, 21, 23]],
   [480, [9, 11, 13, 15, 17, 19, 21]], [460, [9, 10, 12, 13, 15, 18, 20]],
@@ -382,6 +389,24 @@ function formatK(value, digits = 1) {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits
   });
+}
+
+function formatFlightLevel(value) {
+  return `FL${String(Math.max(0, Math.round(Number(value) || 0))).padStart(3, "0")}`;
+}
+
+function rdvzRolloutLabel(result) {
+  if (result.isC130Receiver) return "1NM Trail";
+  if (result.closure >= 675) return "Rollout 3 NM Lead";
+  if (result.closure <= 650) return "Rollout ½ NM Lead (A-10)";
+  return "Rollout ½–3 NM Lead";
+}
+
+function rdvzTurnRangeOutputLabel(result) {
+  if (result.isC130Receiver) return "TR (-1NM)";
+  if (result.closure >= 675) return "TR (3NM)";
+  if (result.closure <= 650) return "TR (½NM)";
+  return "TR (½–3NM)";
 }
 
 function formatOneDecimalInput(value) {
@@ -857,6 +882,11 @@ function normalizeRdvzWind() {
   saveRdvzWorkingInputs();
 }
 
+function usesC130TurnRangeTable() {
+  const profile = state.receiverProfiles.find((item) => item.id === els.rdvzProfile.value);
+  return /\bC-?130/i.test(profile?.type || "");
+}
+
 function calculateRdvz() {
   const receiverKias = Number(els.rdvzKias.value);
   const arFl = Number(els.rdvzArFl.value);
@@ -873,13 +903,23 @@ function calculateRdvz() {
   // Orbit direction only reverses which ATP table header maps to the numeric column.
   const drift = windDrift;
   const orbitDrift = rdvzOrbitDrift(windDrift, orbit);
+  const isC130Receiver = usesC130TurnRangeTable();
+  const c130CombinedTurnRange = [
+    ...RDVZ_TURN_RANGE_25.filter(([tableClosure]) => tableClosure > 575),
+    ...RDVZ_TURN_RANGE_C130_25
+  ];
+  const usesC130TurnRange = isC130Receiver && closure <= 575;
+  const turnRangeTable = isC130Receiver ? c130CombinedTurnRange : RDVZ_TURN_RANGE_25;
+  const turnRangeClosures = turnRangeTable.map(([value]) => value);
+  const turnRangeMinClosure = Math.min(...turnRangeClosures);
+  const turnRangeMaxClosure = Math.max(...turnRangeClosures);
   const turnRangeInRange = Number.isFinite(closure)
-    && tableRangeStatus(RDVZ_TURN_RANGE_25.map(([value]) => value), closure) !== "out"
+    && tableRangeStatus(turnRangeClosures, closure) !== "out"
     && tableRangeStatus(RDVZ_DRIFT_BUCKETS, orbitDrift) !== "out";
   const offsetInRange = Number.isFinite(tankerTas)
     && tableRangeStatus(RDVZ_OFFSET_25.map(([value]) => value), tankerTas) !== "out"
     && tableRangeStatus(RDVZ_DRIFT_BUCKETS, orbitDrift) !== "out";
-  const turnRange = !turnRangeInRange ? NaN : extrapolateDriftTable(RDVZ_TURN_RANGE_25, closure, orbitDrift);
+  const turnRange = !turnRangeInRange ? NaN : extrapolateDriftTable(turnRangeTable, closure, orbitDrift);
   const offset = !offsetInRange ? NaN : extrapolateDriftTable(RDVZ_OFFSET_25, tankerTas, orbitDrift);
   const windTime40 = Number.isFinite(turnRange) && Number.isFinite(closure) ? Math.max(0, (40 - turnRange) / (closure / 60)) : NaN;
   const windTime30 = Number.isFinite(turnRange) && Number.isFinite(closure) ? Math.max(0, (30 - turnRange) / (closure / 60)) : NaN;
@@ -889,10 +929,25 @@ function calculateRdvz() {
   const standardRateBank = Math.atan((3 * tankerTas) / 1091) * 180 / Math.PI;
   const halfStandardRateBank = Math.atan((1.5 * tankerTas) / 1091) * 180 / Math.PI;
   const turnTime180 = 180 / turnRate25 / 60;
+  const c130OutsideChart = isC130Receiver && (closure < 475 || closure > 575);
+  const turnRadius25 = (tankerTas ** 2) / (68626 * Math.tan(25 * Math.PI / 180));
+  const receiverTravelDuringTurn = receiverTas * (Math.PI * turnRadius25 / tankerTas);
+  const geometricRolloutNm = isC130Receiver
+    ? -1
+    : closure >= 675
+      ? 3
+      : closure <= 650
+        ? 0.5
+        : interpolate(0.5, 3, (closure - 650) / 25);
+  const geometricBaseTurnRange = Math.max(0, turnRadius25 + receiverTravelDuringTurn + geometricRolloutNm);
+  const geometricBaseOffset = 2 * turnRadius25;
+  const geometricDriftRadians = orbitDrift * Math.PI / 180;
+  const geometricTurnRange = Math.max(0, (geometricBaseTurnRange * Math.cos(geometricDriftRadians)) + (geometricBaseOffset * Math.sin(geometricDriftRadians)));
+  const geometricOffset = Math.max(0, (geometricBaseOffset * Math.cos(geometricDriftRadians)) + (geometricBaseTurnRange * Math.sin(geometricDriftRadians)));
   const receiverTasEstimated = Number.isFinite(receiverTas) && (receiverFl / 10 < 3 || receiverFl / 10 > 35 || receiverKias < 200 || receiverKias > 360);
   const tankerTasEstimated = Number.isFinite(tankerTas) && (arFl / 10 < 3 || arFl / 10 > 35 || tankerKias < 200 || tankerKias > 360);
   const closureEstimated = receiverTasEstimated || tankerTasEstimated;
-  const turnRangeEstimated = closureEstimated || closure < 475 || closure > 1000 || Math.abs(drift) > 15;
+  const turnRangeEstimated = closureEstimated || closure < turnRangeMinClosure || closure > turnRangeMaxClosure || Math.abs(drift) > 15;
   const offsetEstimated = tankerTasEstimated || tankerTas < 220 || tankerTas > 520 || Math.abs(drift) > 15;
   const chartTimeEstimated = closureEstimated || closure < 460 || closure > 1000;
   const estimates = {
@@ -909,7 +964,7 @@ function calculateRdvz() {
   const tableWarnings = [];
   if (arFl / 10 < 3 || arFl / 10 > 35 || receiverFl / 10 < 3 || receiverFl / 10 > 35) tableWarnings.push("altitude");
   if (receiverKias < 200 || receiverKias > 360 || tankerKias < 200 || tankerKias > 360) tableWarnings.push("KIAS");
-  if (closure < 475 || closure > 1000) tableWarnings.push("closure");
+  if (closure < turnRangeMinClosure || closure > turnRangeMaxClosure) tableWarnings.push("closure");
   if (tankerTas < 220 || tankerTas > 520) tableWarnings.push("tanker TAS");
   if (Math.abs(drift) > 15) tableWarnings.push("drift");
   const outOfRange = {
@@ -922,7 +977,7 @@ function calculateRdvz() {
     windTime: !Number.isFinite(windTime40) || !Number.isFinite(windTime30),
     turnMetrics: !Number.isFinite(tankerTas)
   };
-  return { receiverFl, tankerFl: arFl, tankerTas, receiverTas, closure, drift, turnRange, offset, chartTime40, chartTime30, windTime40, windTime30, turnRate25, standardRateBank, halfStandardRateBank, turnTime180, tableWarnings, estimates, outOfRange };
+  return { receiverFl, tankerFl: arFl, tankerTas, receiverTas, closure, drift, turnRange, offset, chartTime40, chartTime30, windTime40, windTime30, turnRate25, standardRateBank, halfStandardRateBank, turnTime180, isC130Receiver, usesC130TurnRange, c130OutsideChart, geometricTurnRange, geometricOffset, tableWarnings, estimates, outOfRange };
 }
 
 function lookupRdvzChartTime(closure, values) {
@@ -1321,9 +1376,12 @@ function updateRdvzChartGuides() {
   });
 }
 
-function rdvzDigitalTable(headers, rows, highlighted = new Set(), firstHeader = "") {
+function rdvzDigitalTable(headers, rows, highlighted = new Set(), firstHeader = "", includeHeader = true) {
   const tableClass = headers.length <= 7 ? ' class="fills-viewport"' : "";
-  return `<table${tableClass}><thead><tr><th>${escapeHtml(firstHeader)}</th>${headers.map((header) => `<th>${escapeHtml(String(header))}</th>`).join("")}</tr></thead><tbody>${rows.map((row, rowIndex) => `<tr><th>${escapeHtml(String(row[0]))}</th>${row.slice(1).map((value, columnIndex) => `<td${highlighted.has(`${rowIndex}:${columnIndex}`) ? ' class="is-source"' : ""}>${escapeHtml(String(value))}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+  const tableHeader = includeHeader
+    ? `<thead><tr><th>${escapeHtml(firstHeader)}</th>${headers.map((header) => `<th>${escapeHtml(String(header))}</th>`).join("")}</tr></thead>`
+    : "";
+  return `<table${tableClass}>${tableHeader}<tbody>${rows.map((row, rowIndex) => `<tr><th>${escapeHtml(String(row[0]))}</th>${row.slice(1).map((value, columnIndex) => `<td${highlighted.has(`${rowIndex}:${columnIndex}`) ? ' class="is-source"' : ""}>${escapeHtml(String(value))}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
 }
 
 function renderRdvzDigitalCharts() {
@@ -1340,8 +1398,9 @@ function renderRdvzDigitalCharts() {
   const tankerKias = Number(els.rdvzTankerKias.value);
   const orbit = els.rdvzOrbit.value || "left";
   references.tas.classList.add("has-lines");
-  references.tas.innerHTML = `<span class="rdvz-tas-reference-row"><span>Tanker:</span><span>FL${formatK(result.tankerFl, 0)}</span><span>•</span><span>${formatK(tankerKias, 0)} KIAS</span><span>→</span><span>${formatK(result.tankerTas, 0)} KTAS</span></span><span class="rdvz-tas-reference-row"><span>Receiver:</span><span>FL${formatK(result.receiverFl, 0)}</span><span>•</span><span>${formatK(receiverKias, 0)} KIAS</span><span>→</span><span>${formatK(result.receiverTas, 0)} KTAS</span></span>`;
-  references.turn.textContent = `Closure ${formatK(result.closure, 0)} kt • Drift ${formatDrift(result.drift)} → Turn Range ${formatK(result.turnRange, 1)} NM`;
+  references.tas.innerHTML = `<span class="rdvz-tas-reference-row"><span>Tanker:</span><span>${formatFlightLevel(result.tankerFl)}</span><span>•</span><span>${formatK(tankerKias, 0)} KIAS</span><span>→</span><span>${formatK(result.tankerTas, 0)} KTAS</span></span><span class="rdvz-tas-reference-row"><span>Receiver:</span><span>${formatFlightLevel(result.receiverFl)}</span><span>•</span><span>${formatK(receiverKias, 0)} KIAS</span><span>→</span><span>${formatK(result.receiverTas, 0)} KTAS</span></span>`;
+  references.turn.textContent = `Closure ${formatK(result.closure, 0)} kt • Drift ${formatDrift(result.drift)} → Turn Range ${formatK(result.turnRange, 1)} NM • ${rdvzRolloutLabel(result)}`;
+  references.turn.classList.remove("has-c130-badge");
   references.offset.classList.add("has-orbit");
   references.offset.innerHTML = `<span>T TAS ${formatK(result.tankerTas, 0)} kt • Drift ${formatDrift(result.drift)} → Offset ${formatK(result.offset, 1)} NM</span><span class="rdvz-reference-orbit">Orbit ${orbit === "right" ? "Right" : "Left"}</span>`;
   references.timing.textContent = `Closure ${formatK(result.closure, 0)} kt • 40 NM → ${formatTimerMinutes(result.chartTime40)} | 30 NM → ${formatTimerMinutes(result.chartTime30)}`;
@@ -1364,9 +1423,27 @@ function renderRdvzDigitalCharts() {
 
   const driftColumns = rdvzBracketIndices(RDVZ_DRIFT_BUCKETS, rdvzOrbitDrift(result.drift, orbit));
   const driftHeaders = orbit === "left" ? ["15L", "10L", "5L", "0", "5R", "10R", "15R"] : ["15R", "10R", "5R", "0", "5L", "10L", "15L"];
-  const turnMarks = new Set(rdvzBracketIndices(RDVZ_TURN_RANGE_25.map(([value]) => value), result.closure).flatMap((row) => driftColumns.map((column) => `${row}:${column}`)));
+  const displayedMainTurnRange = result.isC130Receiver
+    ? RDVZ_TURN_RANGE_25.filter(([closure]) => closure > 575)
+    : RDVZ_TURN_RANGE_25;
+  const displayedTurnRange = result.isC130Receiver
+    ? [...displayedMainTurnRange, ...RDVZ_TURN_RANGE_C130_25]
+    : displayedMainTurnRange;
+  const selectedTurnClosures = new Set(
+    rdvzBracketIndices(displayedTurnRange.map(([value]) => value), result.closure)
+      .map((row) => displayedTurnRange[row][0])
+  );
+  const turnMarks = new Set(displayedMainTurnRange.flatMap(([value], row) => (
+    selectedTurnClosures.has(value) ? driftColumns.map((column) => `${row}:${column}`) : []
+  )));
+  const c130TurnMarks = new Set(RDVZ_TURN_RANGE_C130_25.flatMap(([value], row) => (
+    result.isC130Receiver && selectedTurnClosures.has(value) ? driftColumns.map((column) => `${row}:${column}`) : []
+  )));
   const offsetMarks = new Set(rdvzBracketIndices(RDVZ_OFFSET_25.map(([value]) => value), result.tankerTas).flatMap((row) => driftColumns.map((column) => `${row}:${column}`)));
-  targets.turn.innerHTML = rdvzDigitalTable(driftHeaders, RDVZ_TURN_RANGE_25.map(([value, cells]) => [value, ...cells]), turnMarks, "Closure");
+  const c130TableHtml = result.isC130Receiver
+    ? `<div class="rdvz-table-block rdvz-c130-table is-active"><div class="rdvz-table-kicker"><span>1 NM Rollout Behind C-130</span></div>${rdvzDigitalTable(driftHeaders, RDVZ_TURN_RANGE_C130_25.map(([value, cells]) => [value, ...cells]), c130TurnMarks, "Closure", false)}</div>`
+    : "";
+  targets.turn.innerHTML = `<div class="rdvz-table-block">${rdvzDigitalTable(driftHeaders, displayedMainTurnRange.map(([value, cells]) => [value, ...cells]), turnMarks, "Closure")}</div>${c130TableHtml}`;
   targets.offset.innerHTML = rdvzDigitalTable(driftHeaders, RDVZ_OFFSET_25.map(([value, cells]) => [value, ...cells]), offsetMarks, "T TAS");
 
   const timingMarks = new Set();
@@ -1392,10 +1469,10 @@ function updateRdvzPreview() {
   const tableValue = (value, estimated, outOfRange) => outOfRange ? "OUT OF RANGE" : approximate(value, estimated);
   const rows = result
     ? [
-      ["Turn Range", tableValue(`${formatK(result.turnRange, 1)} NM`, result.estimates.turnRange, result.outOfRange.turnRange)],
+      [rdvzTurnRangeOutputLabel(result), tableValue(`${formatK(result.turnRange, 1)} NM`, result.estimates.turnRange, result.outOfRange.turnRange)],
       ["Offset", tableValue(`${formatK(result.offset, 1)} NM`, result.estimates.offset, result.outOfRange.offset)],
-      ["Tanker Alt", `FL${formatK(result.tankerFl, 0)}`],
-      ["Receiver Alt", `FL${formatK(result.receiverFl, 0)}`],
+      ["Tanker Alt", formatFlightLevel(result.tankerFl)],
+      ["Receiver Alt", formatFlightLevel(result.receiverFl)],
       ["Tanker TAS", tableValue(`${formatK(result.tankerTas, 0)} kt`, result.estimates.tankerTas, result.outOfRange.tankerTas)],
       ["Receiver TAS", tableValue(`${formatK(result.receiverTas, 0)} kt`, result.estimates.receiverTas, result.outOfRange.receiverTas)],
       ["Closure", tableValue(`${formatK(result.closure, 0)} kt`, result.estimates.closure, result.outOfRange.closure)],
@@ -1420,7 +1497,13 @@ function updateRdvzPreview() {
   const warning = result?.tableWarnings.length
     ? `<span class="rdvz-table-warning">&#9888; ${hasOutOfRange ? "Outside supported range" : "Estimated outside ATP table"}: ${escapeHtml(result.tableWarnings.join(", "))}</span>`
     : "";
-  els.rdvzResults.innerHTML = `${rows.map(([label, value]) => `<div><span>${label}</span><b>${value}</b></div>`).join("")}<div class="rdvz-overrun-result"><div class="rdvz-overrun-heading"><span>Overrun</span><b>${overrun}</b></div><div class="rdvz-turn-metrics" aria-label="Turn reference metrics">${turnMetrics.map(([label, value]) => `<div><span>${label}</span><b>${value}</b></div>`).join("")}</div></div><div class="rdvz-timer-result"><span class="rdvz-timer-heading"><span>Timer</span><b id="rdvzTimerDisplay">0:00</b></span><div class="rdvz-timer-actions"><button class="mini-btn cg-info-btn rdvz-chart-btn" type="button" data-rdvz-charts aria-label="View source charts" title="View source charts">&#9638;</button><button class="mini-btn cg-info-btn" type="button" data-rdvz-info aria-label="Turn range assumptions" title="Turn range assumptions">i</button><button id="rdvzTimerBtn" class="mini-btn burn-time-timer-btn" type="button" tabindex="-1" aria-label="Start rendezvous timer" title="Start rendezvous timer">&#9201;</button></div></div><div class="rdvz-assumptions"><span>25° AOB • Standard atmosphere</span><span class="rdvz-wind-override-status"${rdvzWindAdjustMode ? "" : " hidden"}>WIND OVERRIDE - SCROLL OFF</span>${warning}</div>`;
+  const c130MathWarning = result?.c130OutsideChart
+    ? `<span class="rdvz-table-warning rdvz-c130-math-warning">&#9888; Outside C-130 1 NM in-trail chart.<br>Geometric estimate: TR ~${formatK(result.geometricTurnRange, 1)} NM &bull; OFF ~${formatK(result.geometricOffset, 1)} NM</span>`
+    : "";
+  const geometricReference = result && !result.c130OutsideChart
+    ? `<span class="rdvz-geometric-reference">Geometric estimate: TR ~${formatK(result.geometricTurnRange, 1)} NM &bull; OFF ~${formatK(result.geometricOffset, 1)} NM</span>`
+    : "";
+  els.rdvzResults.innerHTML = `${rows.map(([label, value]) => `<div><span>${label}</span><b>${value}</b></div>`).join("")}<div class="rdvz-overrun-result"><div class="rdvz-overrun-heading"><span>Overrun</span><b>${overrun}</b></div><div class="rdvz-turn-metrics" aria-label="Turn reference metrics">${turnMetrics.map(([label, value]) => `<div><span>${label}</span><b>${value}</b></div>`).join("")}</div></div><div class="rdvz-timer-result"><span class="rdvz-timer-heading"><span>Timer</span><b id="rdvzTimerDisplay">0:00</b></span><div class="rdvz-timer-actions"><button class="mini-btn cg-info-btn rdvz-chart-btn" type="button" data-rdvz-charts aria-label="View source charts" title="View source charts">&#9638;</button><button class="mini-btn cg-info-btn" type="button" data-rdvz-info aria-label="Turn range assumptions" title="Turn range assumptions">i</button><button id="rdvzTimerBtn" class="mini-btn burn-time-timer-btn" type="button" tabindex="-1" aria-label="Start rendezvous timer" title="Start rendezvous timer">&#9201;</button></div></div><div class="rdvz-assumptions"><span>25° AOB • Standard atmosphere</span><span class="rdvz-wind-override-status"${rdvzWindAdjustMode ? "" : " hidden"}>WIND OVERRIDE - SCROLL OFF</span>${geometricReference}${c130MathWarning}${warning}</div>`;
   updateRdvzWindComponents();
   updateRdvzVisualization();
   renderRdvzTimer();
