@@ -1954,6 +1954,10 @@ button.rdvz-library-select:focus-visible {
   color: var(--dim);
 }
 
+#cgModal .rdvz-assumptions:has(.rdvz-kinematic-grid) > span:first-child {
+  display: none;
+}
+
 #cgModal .rdvz-kinematic-title {
   white-space: nowrap;
 }
@@ -1970,9 +1974,6 @@ button.rdvz-library-select:focus-visible {
   white-space: nowrap;
 }
 
-#cgModal .rdvz-kinematic-spacer {
-  visibility: hidden;
-}
 
 #cgModal .rdvz-assumptions .rdvz-c130-math-warning {
   margin-top: 3px;

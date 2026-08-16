@@ -1599,7 +1599,7 @@ function updateRdvzPreview() {
     ? `<span class="rdvz-table-warning">&#9888; ${hasOutOfRange ? "Outside supported range" : "Estimated outside ATP table"}: ${escapeHtml(result.tableWarnings.join(", "))}</span>`
     : "";
   const kinematicText = result?.kinematic
-    ? `<span class="rdvz-kinematic-grid"><span class="rdvz-kinematic-title">Kinematic simulation (${formatK(result.selectedRolloutReferenceNm, result.selectedRolloutReferenceNm % 1 ? 1 : 0)}NM):</span><span>TR ${formatK(result.kinematic.turnRange, 1)} NM</span><span>OFF ${formatK(result.kinematic.offset, 1)} NM</span><span class="rdvz-kinematic-spacer" aria-hidden="true"></span><span>40 NM ${formatTimerMinutes(result.kinematic.time40Minutes)}</span><span>30 NM ${formatTimerMinutes(result.kinematic.time30Minutes)}</span></span>`
+    ? `<span class="rdvz-kinematic-grid"><span class="rdvz-kinematic-title">Kinematic simulation (${formatK(result.selectedRolloutReferenceNm, result.selectedRolloutReferenceNm % 1 ? 1 : 0)}NM):</span><span>TR ${formatK(result.kinematic.turnRange, 1)} NM</span><span>OFF ${formatK(result.kinematic.offset, 1)} NM</span><span>25° AOB &bull; Standard atmosphere</span><span>40 NM ${formatTimerMinutes(result.kinematic.time40Minutes)}</span><span>30 NM ${formatTimerMinutes(result.kinematic.time30Minutes)}</span></span>`
     : "Kinematic simulation unavailable for these inputs";
   const c130MathWarning = result?.c130OutsideChart
     ? `<span class="rdvz-table-warning rdvz-c130-math-warning">&#9888; Outside C-130 1 NM in-trail chart.<br>${kinematicText}</span>`
