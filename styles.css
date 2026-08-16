@@ -1839,6 +1839,42 @@ button.rdvz-library-select:focus-visible {
   white-space: nowrap;
 }
 
+#cgModal .rdvz-rollout-select {
+  width: 68px;
+  min-width: 68px;
+  max-width: 68px;
+  margin: 0;
+  padding: 2px 14px 2px 5px;
+  text-align: center;
+  text-align-last: center;
+  color: inherit;
+  background-color: transparent;
+  border: 1px solid var(--stroke-strong);
+  border-radius: 5px;
+  font: inherit;
+  font-weight: 700;
+  line-height: 1.2;
+  vertical-align: baseline;
+}
+
+#cgModal .rdvz-results > div:first-child > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+#cgModal .rdvz-rollout-select.is-override {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+
+#cgModal .rdvz-rollout-select:hover,
+#cgModal .rdvz-rollout-select:focus-visible {
+  border-color: var(--blue);
+  outline: none;
+}
+
 #cgModal .rdvz-wind-time-info {
   width: 20px;
   min-width: 20px;
@@ -1916,6 +1952,26 @@ button.rdvz-library-select:focus-visible {
 #cgModal .rdvz-assumptions .rdvz-geometric-reference {
   grid-column: 1 / -1;
   color: var(--dim);
+}
+
+#cgModal .rdvz-kinematic-title {
+  white-space: nowrap;
+}
+
+#cgModal .rdvz-kinematic-grid {
+  display: grid;
+  grid-template-columns: auto repeat(2, minmax(0, 1fr));
+  column-gap: 8px;
+}
+
+#cgModal .rdvz-kinematic-grid > span {
+  min-width: 0;
+  color: inherit;
+  white-space: nowrap;
+}
+
+#cgModal .rdvz-kinematic-spacer {
+  visibility: hidden;
 }
 
 #cgModal .rdvz-assumptions .rdvz-c130-math-warning {

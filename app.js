@@ -294,6 +294,7 @@ let rdvzTimerBaseSeconds = 0;
 let rdvzTimerHold = null;
 let rdvzTimerIgnoreClick = false;
 let editingRdvzProfileId = null;
+let rdvzRolloutOverride = null;
 
 function id() {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -351,7 +352,10 @@ function normalizeRdvzWorkingInputs(value) {
     tankerKias: value.tankerKias === undefined || value.tankerKias === null ? "275" : String(value.tankerKias),
     track: String(value.track || ""),
     wind: String(value.wind || ""),
-    orbit: value.orbit === "right" ? "right" : "left"
+    orbit: value.orbit === "right" ? "right" : "left",
+    rollout: value.rollout !== null && value.rollout !== undefined && Number.isFinite(Number(value.rollout))
+      ? clamp(Number(value.rollout), -1, 3)
+      : null
   };
 }
 
@@ -363,7 +367,8 @@ function saveRdvzWorkingInputs() {
     tankerKias: els.rdvzTankerKias.value,
     track: els.rdvzTrack.value,
     wind: els.rdvzWind.value,
-    orbit: els.rdvzOrbit.value === "right" ? "right" : "left"
+    orbit: els.rdvzOrbit.value === "right" ? "right" : "left",
+    rollout: rdvzRolloutOverride
   };
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -396,17 +401,21 @@ function formatFlightLevel(value) {
 }
 
 function rdvzRolloutLabel(result) {
-  if (result.isC130Receiver) return "1NM Trail";
-  if (result.closure >= 675) return "Rollout 3 NM Lead";
-  if (result.closure <= 650) return "Rollout ½ NM Lead (A-10)";
-  return "Rollout ½–3 NM Lead";
+  const value = result.selectedRolloutReferenceNm;
+  if (value < 0) return `${formatK(Math.abs(value), value % 1 ? 1 : 0)}NM Trail`;
+  if (value > 0) return `${formatK(value, value % 1 ? 1 : 0)}NM Lead`;
+  return "0NM Rollout";
 }
 
-function rdvzTurnRangeOutputLabel(result) {
-  if (result.isC130Receiver) return "TR (-1NM)";
-  if (result.closure >= 675) return "TR (3NM)";
-  if (result.closure <= 650) return "TR (½NM)";
-  return "TR (½–3NM)";
+function rdvzRolloutSelectHtml(result) {
+  const selected = result.selectedRolloutReferenceNm;
+  const changed = Math.abs(selected - result.defaultRolloutReferenceNm) > 0.001;
+  const choices = [...new Set([-1, -0.5, 0, 0.5, 1, 1.5, 2, 2.5, 3, selected])].sort((a, b) => a - b);
+  const options = choices.map((value) => {
+    const label = `${formatK(value, value % 1 ? 1 : 0)}NM`;
+    return `<option value="${value}"${Math.abs(value - selected) < 0.001 ? " selected" : ""}>${label}</option>`;
+  }).join("");
+  return `TR <select class="rdvz-rollout-select${changed ? " is-override" : ""}" aria-label="Rollout spacing">${options}</select>`;
 }
 
 function formatOneDecimalInput(value) {
@@ -862,6 +871,80 @@ function calculateWindDrift(tas, track, windDir, windKts) {
   return Math.asin(clamp(crosswind / tas, -1, 1)) * 180 / Math.PI;
 }
 
+function calculateRdvzKinematicSimulation({ tankerTas, receiverTas, track, wind, orbit, rolloutNm }) {
+  if (![tankerTas, receiverTas, track, wind?.direction, wind?.speed, rolloutNm].every(Number.isFinite)
+    || tankerTas <= 0 || receiverTas <= 0) return null;
+  const relativeWind = ((wind.direction - track + 540) % 360) - 180;
+  const relativeWindRadians = relativeWind * Math.PI / 180;
+  // Track coordinates: +x is right of course, +y is along ARIP-to-ARCP.
+  const windCross = -wind.speed * Math.sin(relativeWindRadians);
+  const windAlong = -wind.speed * Math.cos(relativeWindRadians);
+  if (Math.abs(windCross) >= tankerTas || Math.abs(windCross) >= receiverTas) return null;
+
+  const tankerAlongAir = Math.sqrt((tankerTas ** 2) - (windCross ** 2));
+  const receiverAlongAir = Math.sqrt((receiverTas ** 2) - (windCross ** 2));
+  const initialHeading = Math.atan2(-tankerAlongAir, -windCross);
+  const finalHeading = Math.atan2(tankerAlongAir, -windCross);
+  const positiveAngle = (angle) => ((angle % (2 * Math.PI)) + (2 * Math.PI)) % (2 * Math.PI);
+  const turnAngle = orbit === "right"
+    ? -positiveAngle(initialHeading - finalHeading)
+    : positiveAngle(finalHeading - initialHeading);
+  const rollRateDegPerSecond = 2;
+  const maxBankDegrees = 25;
+  const rampSeconds = maxBankDegrees / rollRateDegPerSecond;
+  const integrationStepSeconds = 0.05;
+  const headingRate = (bankDegrees) => (1091 * Math.tan(bankDegrees * Math.PI / 180) / tankerTas) * Math.PI / 180;
+  const integrateHeadingChange = (duration, bankAtTime) => {
+    let change = 0;
+    for (let elapsed = 0; elapsed < duration;) {
+      const step = Math.min(integrationStepSeconds, duration - elapsed);
+      change += headingRate(bankAtTime(elapsed + (step / 2))) * step;
+      elapsed += step;
+    }
+    return change;
+  };
+  const rampHeadingChange = integrateHeadingChange(rampSeconds, (time) => rollRateDegPerSecond * time);
+  const maxHeadingRate = headingRate(maxBankDegrees);
+  const steadySeconds = Math.max(0, (Math.abs(turnAngle) - (2 * rampHeadingChange)) / maxHeadingRate);
+  const turnDirection = Math.sign(turnAngle) || 1;
+  let heading = initialHeading;
+  let tankerGroundCross = 0;
+  let tankerGroundAlong = 0;
+  const integrateMotion = (duration, bankAtTime) => {
+    for (let elapsed = 0; elapsed < duration;) {
+      const step = Math.min(integrationStepSeconds, duration - elapsed);
+      const bank = clamp(bankAtTime(elapsed + (step / 2)), 0, maxBankDegrees);
+      const rate = turnDirection * headingRate(bank);
+      const midpointHeading = heading + ((rate * step) / 2);
+      tankerGroundCross += ((tankerTas * Math.cos(midpointHeading)) + windCross) * step / 3600;
+      tankerGroundAlong += ((tankerTas * Math.sin(midpointHeading)) + windAlong) * step / 3600;
+      heading += rate * step;
+      elapsed += step;
+    }
+  };
+  integrateMotion(rampSeconds, (time) => rollRateDegPerSecond * time);
+  integrateMotion(steadySeconds, () => maxBankDegrees);
+  integrateMotion(rampSeconds, (time) => maxBankDegrees - (rollRateDegPerSecond * time));
+  const turnHours = ((2 * rampSeconds) + steadySeconds) / 3600;
+  if (!Number.isFinite(turnHours) || turnHours <= 0) return null;
+  const receiverGroundAlong = (receiverAlongAir + windAlong) * turnHours;
+  const relativeClosure = tankerAlongAir + receiverAlongAir;
+
+  // Positive rolloutNm is tanker ahead (lead); negative is tanker behind (trail).
+  const initialCross = -tankerGroundCross;
+  const initialAlong = receiverGroundAlong + rolloutNm - tankerGroundAlong;
+  return {
+    turnRange: Math.hypot(initialAlong, initialCross),
+    offset: Math.abs(initialCross),
+    initialAlong,
+    initialCross,
+    relativeClosure,
+    turnHours,
+    turnDegrees: Math.abs(turnAngle) * 180 / Math.PI,
+    rollRateDegPerSecond
+  };
+}
+
 function parseRdvzWind(value) {
   const text = String(value || "").trim();
   if (!text || text === "0") return { direction: 0, speed: 0 };
@@ -919,8 +1002,25 @@ function calculateRdvz() {
   const offsetInRange = Number.isFinite(tankerTas)
     && tableRangeStatus(RDVZ_OFFSET_25.map(([value]) => value), tankerTas) !== "out"
     && tableRangeStatus(RDVZ_DRIFT_BUCKETS, orbitDrift) !== "out";
-  const turnRange = !turnRangeInRange ? NaN : extrapolateDriftTable(turnRangeTable, closure, orbitDrift);
+  const tableTurnRange = !turnRangeInRange ? NaN : extrapolateDriftTable(turnRangeTable, closure, orbitDrift);
   const offset = !offsetInRange ? NaN : extrapolateDriftTable(RDVZ_OFFSET_25, tankerTas, orbitDrift);
+  const defaultRolloutReferenceNm = isC130Receiver
+    ? -1
+    : closure >= 675
+      ? 3
+      : closure <= 650
+        ? 0.5
+        : interpolate(0.5, 3, (closure - 650) / 25);
+  const selectedRolloutReferenceNm = Number.isFinite(rdvzRolloutOverride)
+    ? clamp(rdvzRolloutOverride, -1, 3)
+    : defaultRolloutReferenceNm;
+  const rolloutAdjustment = selectedRolloutReferenceNm - defaultRolloutReferenceNm;
+  const tableAlongTrack = Number.isFinite(tableTurnRange) && Number.isFinite(offset)
+    ? Math.sqrt(Math.max(0, (tableTurnRange ** 2) - (offset ** 2)))
+    : NaN;
+  const turnRange = Number.isFinite(tableAlongTrack)
+    ? Math.hypot(Math.max(0, tableAlongTrack + rolloutAdjustment), offset)
+    : tableTurnRange;
   const windTime40 = Number.isFinite(turnRange) && Number.isFinite(closure) ? Math.max(0, (40 - turnRange) / (closure / 60)) : NaN;
   const windTime30 = Number.isFinite(turnRange) && Number.isFinite(closure) ? Math.max(0, (30 - turnRange) / (closure / 60)) : NaN;
   const chartTime40 = lookupRdvzChartTime(closure, RDVZ_TIMING_CHART.time40Seconds);
@@ -930,24 +1030,29 @@ function calculateRdvz() {
   const halfStandardRateBank = Math.atan((1.5 * tankerTas) / 1091) * 180 / Math.PI;
   const turnTime180 = 180 / turnRate25 / 60;
   const c130OutsideChart = isC130Receiver && (closure < 475 || closure > 575);
-  const turnRadius25 = (tankerTas ** 2) / (68626 * Math.tan(25 * Math.PI / 180));
-  const receiverTravelDuringTurn = receiverTas * (Math.PI * turnRadius25 / tankerTas);
-  const geometricRolloutNm = isC130Receiver
-    ? -1
-    : closure >= 675
-      ? 3
-      : closure <= 650
-        ? 0.5
-        : interpolate(0.5, 3, (closure - 650) / 25);
-  const geometricBaseTurnRange = Math.max(0, turnRadius25 + receiverTravelDuringTurn + geometricRolloutNm);
-  const geometricBaseOffset = 2 * turnRadius25;
-  const geometricDriftRadians = orbitDrift * Math.PI / 180;
-  const geometricTurnRange = Math.max(0, (geometricBaseTurnRange * Math.cos(geometricDriftRadians)) + (geometricBaseOffset * Math.sin(geometricDriftRadians)));
-  const geometricOffset = Math.max(0, (geometricBaseOffset * Math.cos(geometricDriftRadians)) + (geometricBaseTurnRange * Math.sin(geometricDriftRadians)));
+  const baseKinematic = calculateRdvzKinematicSimulation({
+    tankerTas,
+    receiverTas,
+    track: Number(els.rdvzTrack.value),
+    wind,
+    orbit,
+    rolloutNm: defaultRolloutReferenceNm
+  });
+  const kinematic = baseKinematic
+    ? (() => {
+      const simulatedTurnRange = Math.hypot(baseKinematic.initialAlong + rolloutAdjustment, baseKinematic.initialCross);
+      return {
+        ...baseKinematic,
+        turnRange: simulatedTurnRange,
+        time40Minutes: Math.max(0, (40 - simulatedTurnRange) / (baseKinematic.relativeClosure / 60)),
+        time30Minutes: Math.max(0, (30 - simulatedTurnRange) / (baseKinematic.relativeClosure / 60))
+      };
+    })()
+    : null;
   const receiverTasEstimated = Number.isFinite(receiverTas) && (receiverFl / 10 < 3 || receiverFl / 10 > 35 || receiverKias < 200 || receiverKias > 360);
   const tankerTasEstimated = Number.isFinite(tankerTas) && (arFl / 10 < 3 || arFl / 10 > 35 || tankerKias < 200 || tankerKias > 360);
   const closureEstimated = receiverTasEstimated || tankerTasEstimated;
-  const turnRangeEstimated = closureEstimated || closure < turnRangeMinClosure || closure > turnRangeMaxClosure || Math.abs(drift) > 15;
+  const turnRangeEstimated = closureEstimated || closure < turnRangeMinClosure || closure > turnRangeMaxClosure || Math.abs(drift) > 15 || Math.abs(rolloutAdjustment) > 0.001;
   const offsetEstimated = tankerTasEstimated || tankerTas < 220 || tankerTas > 520 || Math.abs(drift) > 15;
   const chartTimeEstimated = closureEstimated || closure < 460 || closure > 1000;
   const estimates = {
@@ -977,7 +1082,7 @@ function calculateRdvz() {
     windTime: !Number.isFinite(windTime40) || !Number.isFinite(windTime30),
     turnMetrics: !Number.isFinite(tankerTas)
   };
-  return { receiverFl, tankerFl: arFl, tankerTas, receiverTas, closure, drift, turnRange, offset, chartTime40, chartTime30, windTime40, windTime30, turnRate25, standardRateBank, halfStandardRateBank, turnTime180, isC130Receiver, usesC130TurnRange, c130OutsideChart, geometricTurnRange, geometricOffset, tableWarnings, estimates, outOfRange };
+  return { receiverFl, tankerFl: arFl, tankerTas, receiverTas, closure, drift, turnRange, tableTurnRange, offset, chartTime40, chartTime30, windTime40, windTime30, turnRate25, standardRateBank, halfStandardRateBank, turnTime180, isC130Receiver, usesC130TurnRange, c130OutsideChart, defaultRolloutReferenceNm, selectedRolloutReferenceNm, kinematic, tableWarnings, estimates, outOfRange };
 }
 
 function lookupRdvzChartTime(closure, values) {
@@ -1469,7 +1574,7 @@ function updateRdvzPreview() {
   const tableValue = (value, estimated, outOfRange) => outOfRange ? "OUT OF RANGE" : approximate(value, estimated);
   const rows = result
     ? [
-      [rdvzTurnRangeOutputLabel(result), tableValue(`${formatK(result.turnRange, 1)} NM`, result.estimates.turnRange, result.outOfRange.turnRange)],
+      [rdvzRolloutSelectHtml(result), tableValue(`${formatK(result.turnRange, 1)} NM`, result.estimates.turnRange, result.outOfRange.turnRange)],
       ["Offset", tableValue(`${formatK(result.offset, 1)} NM`, result.estimates.offset, result.outOfRange.offset)],
       ["Tanker Alt", formatFlightLevel(result.tankerFl)],
       ["Receiver Alt", formatFlightLevel(result.receiverFl)],
@@ -1478,16 +1583,12 @@ function updateRdvzPreview() {
       ["Closure", tableValue(`${formatK(result.closure, 0)} kt`, result.estimates.closure, result.outOfRange.closure)],
       ["Drift", formatDrift(result.drift)],
       ["40 NM (Chart)", tableValue(formatTimerMinutes(result.chartTime40), result.estimates.chartTime, result.outOfRange.chartTime)],
-      ["30 NM (Chart)", tableValue(formatTimerMinutes(result.chartTime30), result.estimates.chartTime, result.outOfRange.chartTime)],
-      ['40 NM <button class="rdvz-wind-time-info" type="button" data-rdvz-wind-info aria-label="About wind-corrected timing" title="Wind-corrected timing">&#127788;&#65039;</button>', tableValue(formatTimerMinutes(result.windTime40), result.estimates.windTime, result.outOfRange.windTime)],
-      ['30 NM <button class="rdvz-wind-time-info" type="button" data-rdvz-wind-info aria-label="About wind-corrected timing" title="Wind-corrected timing">&#127788;&#65039;</button>', tableValue(formatTimerMinutes(result.windTime30), result.estimates.windTime, result.outOfRange.windTime)]
+      ["30 NM (Chart)", tableValue(formatTimerMinutes(result.chartTime30), result.estimates.chartTime, result.outOfRange.chartTime)]
     ]
     : [
       ["Turn Range", "--"], ["Offset", "--"], ["Tanker Alt", "--"], ["Receiver Alt", "--"],
       ["Tanker TAS", "--"], ["Receiver TAS", "--"],
-      ["Closure", "--"], ["Drift", "--"], ["40 NM (Chart)", "--"], ["30 NM (Chart)", "--"],
-      ['40 NM <button class="rdvz-wind-time-info" type="button" data-rdvz-wind-info aria-label="About wind-corrected timing" title="Wind-corrected timing">&#127788;&#65039;</button>', "--"],
-      ['30 NM <button class="rdvz-wind-time-info" type="button" data-rdvz-wind-info aria-label="About wind-corrected timing" title="Wind-corrected timing">&#127788;&#65039;</button>', "--"]
+      ["Closure", "--"], ["Drift", "--"], ["40 NM (Chart)", "--"], ["30 NM (Chart)", "--"]
     ];
   const turnMetrics = result
     ? [["Rate of Turn", tableValue(`${formatK(result.turnRate25, 1)}°/sec`, result.estimates.turnMetrics, result.outOfRange.turnMetrics)], ["180° Turn Time", tableValue(formatTimerMinutes(result.turnTime180), result.estimates.turnMetrics, result.outOfRange.turnMetrics)], ["SR Bank / ½ Bank", tableValue(`${formatK(result.standardRateBank, 0)}°/${formatK(result.halfStandardRateBank, 0)}°`, result.estimates.turnMetrics, result.outOfRange.turnMetrics)]]
@@ -1497,13 +1598,16 @@ function updateRdvzPreview() {
   const warning = result?.tableWarnings.length
     ? `<span class="rdvz-table-warning">&#9888; ${hasOutOfRange ? "Outside supported range" : "Estimated outside ATP table"}: ${escapeHtml(result.tableWarnings.join(", "))}</span>`
     : "";
+  const kinematicText = result?.kinematic
+    ? `<span class="rdvz-kinematic-grid"><span class="rdvz-kinematic-title">Kinematic simulation (${formatK(result.selectedRolloutReferenceNm, result.selectedRolloutReferenceNm % 1 ? 1 : 0)}NM):</span><span>TR ${formatK(result.kinematic.turnRange, 1)} NM</span><span>OFF ${formatK(result.kinematic.offset, 1)} NM</span><span class="rdvz-kinematic-spacer" aria-hidden="true"></span><span>40 NM ${formatTimerMinutes(result.kinematic.time40Minutes)}</span><span>30 NM ${formatTimerMinutes(result.kinematic.time30Minutes)}</span></span>`
+    : "Kinematic simulation unavailable for these inputs";
   const c130MathWarning = result?.c130OutsideChart
-    ? `<span class="rdvz-table-warning rdvz-c130-math-warning">&#9888; Outside C-130 1 NM in-trail chart.<br>Geometric estimate: TR ~${formatK(result.geometricTurnRange, 1)} NM &bull; OFF ~${formatK(result.geometricOffset, 1)} NM</span>`
+    ? `<span class="rdvz-table-warning rdvz-c130-math-warning">&#9888; Outside C-130 1 NM in-trail chart.<br>${kinematicText}</span>`
     : "";
-  const geometricReference = result && !result.c130OutsideChart
-    ? `<span class="rdvz-geometric-reference">Geometric estimate: TR ~${formatK(result.geometricTurnRange, 1)} NM &bull; OFF ~${formatK(result.geometricOffset, 1)} NM</span>`
+  const kinematicReference = result && !result.c130OutsideChart
+    ? `<span class="rdvz-geometric-reference">${kinematicText}</span>`
     : "";
-  els.rdvzResults.innerHTML = `${rows.map(([label, value]) => `<div><span>${label}</span><b>${value}</b></div>`).join("")}<div class="rdvz-overrun-result"><div class="rdvz-overrun-heading"><span>Overrun</span><b>${overrun}</b></div><div class="rdvz-turn-metrics" aria-label="Turn reference metrics">${turnMetrics.map(([label, value]) => `<div><span>${label}</span><b>${value}</b></div>`).join("")}</div></div><div class="rdvz-timer-result"><span class="rdvz-timer-heading"><span>Timer</span><b id="rdvzTimerDisplay">0:00</b></span><div class="rdvz-timer-actions"><button class="mini-btn cg-info-btn rdvz-chart-btn" type="button" data-rdvz-charts aria-label="View source charts" title="View source charts">&#9638;</button><button class="mini-btn cg-info-btn" type="button" data-rdvz-info aria-label="Turn range assumptions" title="Turn range assumptions">i</button><button id="rdvzTimerBtn" class="mini-btn burn-time-timer-btn" type="button" tabindex="-1" aria-label="Start rendezvous timer" title="Start rendezvous timer">&#9201;</button></div></div><div class="rdvz-assumptions"><span>25° AOB • Standard atmosphere</span><span class="rdvz-wind-override-status"${rdvzWindAdjustMode ? "" : " hidden"}>WIND OVERRIDE - SCROLL OFF</span>${geometricReference}${c130MathWarning}${warning}</div>`;
+  els.rdvzResults.innerHTML = `${rows.map(([label, value]) => `<div><span>${label}</span><b>${value}</b></div>`).join("")}<div class="rdvz-overrun-result"><div class="rdvz-overrun-heading"><span>Overrun</span><b>${overrun}</b></div><div class="rdvz-turn-metrics" aria-label="Turn reference metrics">${turnMetrics.map(([label, value]) => `<div><span>${label}</span><b>${value}</b></div>`).join("")}</div></div><div class="rdvz-timer-result"><span class="rdvz-timer-heading"><span>Timer</span><b id="rdvzTimerDisplay">0:00</b></span><div class="rdvz-timer-actions"><button class="mini-btn cg-info-btn rdvz-chart-btn" type="button" data-rdvz-charts aria-label="View source charts" title="View source charts">&#9638;</button><button class="mini-btn cg-info-btn" type="button" data-rdvz-info aria-label="Turn range assumptions" title="Turn range assumptions">i</button><button id="rdvzTimerBtn" class="mini-btn burn-time-timer-btn" type="button" tabindex="-1" aria-label="Start rendezvous timer" title="Start rendezvous timer">&#9201;</button></div></div><div class="rdvz-assumptions"><span>25° AOB • Standard atmosphere</span><span class="rdvz-wind-override-status"${rdvzWindAdjustMode ? "" : " hidden"}>WIND OVERRIDE - SCROLL OFF</span>${kinematicReference}${c130MathWarning}${warning}</div>`;
   updateRdvzWindComponents();
   updateRdvzVisualization();
   renderRdvzTimer();
@@ -1574,6 +1678,7 @@ function toggleRdvzTimer() {
 }
 
 function applyRdvzProfile() {
+  rdvzRolloutOverride = null;
   const profile = state.receiverProfiles.find((item) => item.id === els.rdvzProfile.value);
   if (!profile) {
     updateRdvzPreview();
@@ -1596,6 +1701,7 @@ function restoreRdvzWorkingInputs() {
   els.rdvzTrack.value = saved.track;
   els.rdvzWind.value = saved.wind;
   els.rdvzOrbit.value = saved.orbit === "right" ? "right" : "left";
+  rdvzRolloutOverride = Number.isFinite(saved.rollout) ? saved.rollout : null;
   syncRdvzOrbitControl();
   updateRdvzPreview();
   return true;
@@ -2977,6 +3083,13 @@ function initEvents() {
       return;
     }
     toggleRdvzTimer();
+  });
+  els.rdvzResults.addEventListener("change", (event) => {
+    const select = event.target.closest(".rdvz-rollout-select");
+    if (!select) return;
+    rdvzRolloutOverride = clamp(Number(select.value), -1, 3);
+    updateRdvzPreview();
+    saveRdvzWorkingInputs();
   });
   els.rdvzChartsModal.addEventListener("click", (event) => {
     const selectedTable = event.target.closest(".rdvz-digital-table");
