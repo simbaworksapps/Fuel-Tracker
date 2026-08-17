@@ -13,7 +13,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
   <link rel="icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=0.1.524">
+  <link rel="stylesheet" href="styles.css?v=0.1.527">
 </head>
 <body>
   <header class="app-header">
@@ -286,7 +286,7 @@
             </div>
           </div>
           <div class="field">
-            <label for="rdvzTrack">AR Track</label>
+            <label for="rdvzTrack">IP &rarr; CP CRS</label>
             <div class="unit-input">
               <input id="rdvzTrack" type="number" min="0" max="360" step="1" inputmode="numeric" enterkeyhint="next" placeholder="090">
               <span>&deg;</span>
@@ -346,14 +346,14 @@
           <div class="rdvz-assumptions"><span>25&deg; AOB &bull; Standard atmosphere</span><span class="rdvz-wind-override-status" hidden>WIND OVERRIDE - SCROLL OFF</span></div>
         </div>
         <div id="rdvzVisual" class="rdvz-visual">
-          <div class="rdvz-visual-readout" aria-label="Wind relationship to AR track">
+          <div class="rdvz-visual-readout" aria-label="Wind relationship to AR course">
             <div><span>XW</span><b id="rdvzCompassXw">--</b></div>
             <div id="rdvzCompassAlongRow"><span id="rdvzCompassAlongLabel">HW</span><b id="rdvzCompassAlong">--</b></div>
             <div><span>Angle</span><b id="rdvzCompassAngle">--</b></div>
           </div>
           <button id="rdvzWindAdjustBtn" class="mini-btn rdvz-wind-adjust-btn" type="button" aria-label="Adjust wind direction" title="Adjust wind direction" aria-pressed="false"></button>
           <svg id="rdvzVisualSvg" viewBox="0 0 320 320" role="img" aria-labelledby="rdvzVisualTitle rdvzVisualDesc">
-            <title id="rdvzVisualTitle">AR track, wind, and orbit diagram</title>
+            <title id="rdvzVisualTitle">AR course, wind, and orbit diagram</title>
             <desc id="rdvzVisualDesc">A north-up view of the ARIP-to-ARCP course, wind push, and selected orbit side.</desc>
             <defs>
               <marker id="rdvzTrackArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker>
@@ -394,7 +394,7 @@
             <text id="rdvzArcpLabel" class="rdvz-diagram-label">ARCP</text>
           </svg>
           <div class="rdvz-visual-key">
-            <span id="rdvzVisualTrack">Track --&deg;</span>
+            <span id="rdvzVisualTrack">IP &rarr; CP --&deg;</span>
             <span id="rdvzVisualWind">Wind --</span>
             <span id="rdvzVisualOrbit">Orbit Left</span>
           </div>
@@ -646,6 +646,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=0.1.524"></script>
+  <script src="app.js?v=0.1.527"></script>
 </body>
 </html>

@@ -1373,7 +1373,7 @@ function updateRdvzVisualization() {
   }
 
   els.rdvzVisual.classList.toggle("is-incomplete", !hasTrack);
-  els.rdvzVisualTrack.textContent = `Track ${hasTrack ? String(Math.round(track)).padStart(3, "0") : "--"}°`;
+  els.rdvzVisualTrack.textContent = `IP → CP ${hasTrack ? String(Math.round(track)).padStart(3, "0") : "--"}°`;
   els.rdvzVisualWind.textContent = wind && wind.speed > 0
     ? `Wind ${String(wind.direction).padStart(3, "0")}° / ${wind.speed} kt`
     : "Wind calm";
