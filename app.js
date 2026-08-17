@@ -136,7 +136,7 @@ const els = {
 
 const STORAGE_KEY = "simba-fuel-tracker-v1";
 const DEFAULT_BURN_RATE = 10.0;
-const APP_CAO = "CAO 16AUG26";
+const APP_CAO = "CAO 17AUG26";
 const RDVZ_RECEIVER_LIBRARY = {
   kc135: {
     Boom: [
