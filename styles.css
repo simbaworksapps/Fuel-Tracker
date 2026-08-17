@@ -203,6 +203,25 @@ p {
   text-decoration: underline;
 }
 
+.copy-link-notice {
+  position: fixed;
+  z-index: 5000;
+  left: 50%;
+  bottom: calc(18px + env(safe-area-inset-bottom));
+  width: max-content;
+  max-width: calc(100vw - 28px);
+  padding: 10px 14px;
+  transform: translateX(-50%);
+  color: var(--text);
+  background: #121d2e;
+  border: 1px solid var(--gold);
+  border-radius: 9px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .45);
+  font-size: .85rem;
+  font-weight: 650;
+  text-align: center;
+}
+
 .header-actions {
   display: flex;
   align-items: center;
@@ -526,7 +545,7 @@ button:disabled {
 }
 
 .receiver-total {
-  color: var(--gold);
+  color: var(--green);
   font-size: .86rem;
   font-weight: 850;
   line-height: 1.1;

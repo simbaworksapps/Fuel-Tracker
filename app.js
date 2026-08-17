@@ -1,6 +1,7 @@
 const $ = (id) => document.getElementById(id);
 
 const els = {
+  shareLink: $("shareLink"),
   caoLine: $("caoLine"),
   nowLine: $("nowLine"),
   addReceiverBtn: $("addReceiverBtn"),
@@ -2199,6 +2200,27 @@ async function copyText(text) {
   if (!copied) throw new Error("Copy failed");
 }
 
+function showCopiedLinkNotice() {
+  document.querySelector(".copy-link-notice")?.remove();
+  const notice = document.createElement("div");
+  notice.className = "copy-link-notice";
+  notice.setAttribute("role", "status");
+  notice.setAttribute("aria-live", "polite");
+  notice.textContent = "Link copied — share it or paste it into Chrome.";
+  document.body.appendChild(notice);
+  window.setTimeout(() => notice.remove(), 3000);
+}
+
+async function copyShareLink(event) {
+  event.preventDefault();
+  try {
+    await copyText("https://simbaops.com");
+    showCopiedLinkNotice();
+  } catch {
+    openConfirm("Copy Link", "Unable to copy automatically. The address is simbaops.com.", null, { hideCancel: true, danger: false });
+  }
+}
+
 async function copyTimeline() {
   const entries = currentEntries();
   if (!entries.length) {
@@ -3283,6 +3305,7 @@ function initEvents() {
   els.entryDateNowBtn.addEventListener("click", setEntryDateToNow);
   els.exportBtn.addEventListener("click", confirmExport);
   els.copyTimelineBtn.addEventListener("click", copyTimeline);
+  els.shareLink.addEventListener("click", copyShareLink);
   els.backToTopBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
   els.importBtn.addEventListener("click", confirmImport);
   els.importFile.addEventListener("change", () => importData(els.importFile.files?.[0]));
