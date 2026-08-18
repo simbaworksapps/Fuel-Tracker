@@ -2033,6 +2033,7 @@ function openTurnDiameterInfo() {
     "Ground Track Orbit Diameter",
     `<p>Use this calculator when you need to conduct circular ground-track orbits, such as during a contingency rejoin or while absorbing a delay in a MOA.</p>
      <p>For the entered altitude, airspeed, and wind, it estimates how large the ground circle must be and how long one complete 360° orbit takes at each maximum bank angle.</p>
+     <p>You may notice a slightly different TAS here than in Turn Range &amp; Offset. That calculator intentionally uses the published ATP-3.3.4.2 KIAS-to-TAS table. Ground Track Orbit Diameter instead uses a continuous standard-atmosphere compressible-flow conversion for its kinematic calculations.</p>
      <p>If a Wait Time is entered, the full-orbit plan suggests a combination of complete circles that comes closest to that time while favoring fewer bank-angle changes.</p>
      <p>This is a planning aid. Continue to account for aircraft limitations, airspace, weather, and applicable guidance.</p>`,
     null,
