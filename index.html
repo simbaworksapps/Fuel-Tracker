@@ -13,7 +13,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
   <link rel="icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=0.1.538">
+  <link rel="stylesheet" href="styles.css?v=0.1.571">
 </head>
 <body>
   <header class="app-header">
@@ -401,6 +401,39 @@
         </div>
       </div>
 
+      <div class="formula-card turn-diameter-card cg-collapsible is-collapsed">
+        <div class="calculator-section-header">
+          <span>Ground Track Orbit Diameter</span>
+          <button class="calculator-section-toggle" type="button" aria-expanded="false" aria-label="Expand Ground Track Orbit Diameter">+</button>
+        </div>
+        <div class="turn-diameter-grid">
+          <div class="field">
+            <label for="turnDiameterFl">Altitude</label>
+            <div class="unit-input"><input id="turnDiameterFl" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" enterkeyhint="next" autocomplete="off" placeholder="210"><span>FL</span></div>
+          </div>
+          <div class="field">
+            <label for="turnDiameterKias">Airspeed</label>
+            <div class="unit-input"><input id="turnDiameterKias" type="number" min="0" max="999" step="1" inputmode="numeric" enterkeyhint="next" placeholder="275"><span>KIAS</span></div>
+          </div>
+          <div class="field">
+            <label for="turnDiameterWind">Wind</label>
+            <input id="turnDiameterWind" type="text" inputmode="text" enterkeyhint="done" autocomplete="off" spellcheck="false" placeholder="270/20, 270020, 0">
+          </div>
+          <div class="field">
+            <label for="turnDiameterTimeToKill">Wait Time</label>
+            <div class="unit-input"><input id="turnDiameterTimeToKill" type="text" inputmode="numeric" enterkeyhint="done" autocomplete="off" maxlength="4" placeholder="1025"><span>mmss</span></div>
+          </div>
+        </div>
+        <div id="turnDiameterResults" class="turn-diameter-results">
+          <div><span>15&deg; Max Bank</span><b>--</b><small>360&deg; -- &bull; Min Bank --</small></div>
+          <div><span>20&deg; Max Bank</span><b>--</b><small>360&deg; -- &bull; Min Bank --</small></div>
+          <div><span>25&deg; Max Bank</span><b>--</b><small>360&deg; -- &bull; Min Bank --</small></div>
+          <div><span>30&deg; Max Bank</span><b>--</b><small>360&deg; -- &bull; Min Bank --</small></div>
+        </div>
+        <div id="turnDiameterPlan" class="turn-diameter-plan" hidden></div>
+        <div id="turnDiameterWarning" class="turn-diameter-warning" hidden>No closed ground-circle solution</div>
+      </div>
+
       <div class="formula-card frag-card cg-collapsible is-collapsed">
         <div class="calculator-section-header">
           <span>Frag Calc</span>
@@ -646,6 +679,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=0.1.538"></script>
+  <script src="app.js?v=0.1.571"></script>
 </body>
 </html>

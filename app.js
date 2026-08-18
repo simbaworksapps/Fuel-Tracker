@@ -80,6 +80,13 @@ const els = {
   rdvzVisualTrack: $("rdvzVisualTrack"),
   rdvzVisualWind: $("rdvzVisualWind"),
   rdvzVisualOrbit: $("rdvzVisualOrbit"),
+  turnDiameterFl: $("turnDiameterFl"),
+  turnDiameterKias: $("turnDiameterKias"),
+  turnDiameterWind: $("turnDiameterWind"),
+  turnDiameterTimeToKill: $("turnDiameterTimeToKill"),
+  turnDiameterResults: $("turnDiameterResults"),
+  turnDiameterPlan: $("turnDiameterPlan"),
+  turnDiameterWarning: $("turnDiameterWarning"),
   fragRampFuel: $("fragRampFuel"),
   fragLandFuel: $("fragLandFuel"),
   fragBurnRate: $("fragBurnRate"),
@@ -141,7 +148,7 @@ const RDVZ_RECEIVER_LIBRARY = {
   kc135: {
     Boom: [
       ["B-1B", 350], ["B-2A", null, "450 KTAS"], ["B-52H", 310], ["C-5A-C/M", 300], ["C-17A", 310], ["C-32B", 310],
-      ["C-130E/H/P/U, EC-130J/MC-130J/AC-130J", 215], ["RC-135S/U/V/W, TC-135S/W, WC-135R", 310], ["E-3A-D/F/G, E-6B, CT-49A", 310],
+      ["C-130", 215], ["RC/TC/WC-135", 310], ["E-3A-D/F/G, E-6B, CT-49A", 310],
       ["E-4B/VC-25A", 310], ["E-7 Wedgetail", 310], ["KC-46A", 310], ["P-8A", 310]
     ],
     BDA: [["EA-6B", 310]],
@@ -149,8 +156,8 @@ const RDVZ_RECEIVER_LIBRARY = {
   },
   kc46: {
     Boom: [
-      ["B-1B", 350], ["B-2A", null, "450 KTAS"], ["B-52H", 310], ["C-5M", 300], ["C-17A", 310], ["C-32B", 310], ["AC/EC/HC/MC-130J", 215],
-      ["EC-130H", 215], ["E-3A/B/G", 285], ["E-4B", null, "310 KTAS"], ["E-6B", 310], ["E-7 Wedgetail", 310], ["RC-135S/U/V/W, TC-135W, WC-135R", 310],
+      ["B-1B", 350], ["B-2A", null, "450 KTAS"], ["B-52H", 310], ["C-5M", 300], ["C-17A", 310], ["C-32B", 310], ["C-130", 215],
+      ["E-3A/B/G", 285], ["E-4B", null, "310 KTAS"], ["E-6B", 310], ["E-7 Wedgetail", 310], ["RC/TC/WC-135", 310],
       ["KC-46A", 310], ["P-8A", 310]
     ]
   }
@@ -864,6 +871,71 @@ function lookupTas(fl, kias) {
   return interpolate(tasLo, tasHi, altitudeRatio);
 }
 
+function standardAtmosphereTas(fl, kias) {
+  if (!Number.isFinite(fl) || !Number.isFinite(kias) || fl < 0 || kias <= 0) return NaN;
+  const altitudeMeters = fl * 100 * 0.3048;
+  const seaLevelTemperature = 288.15;
+  const seaLevelPressure = 101325;
+  const tropopauseMeters = 11000;
+  const lapseRate = 0.0065;
+  const gravity = 9.80665;
+  const gasConstant = 287.05287;
+  const gamma = 1.4;
+  const temperature = altitudeMeters <= tropopauseMeters
+    ? seaLevelTemperature - (lapseRate * altitudeMeters)
+    : 216.65;
+  const pressureAtTropopause = seaLevelPressure * ((216.65 / seaLevelTemperature) ** (gravity / (gasConstant * lapseRate)));
+  const pressure = altitudeMeters <= tropopauseMeters
+    ? seaLevelPressure * ((temperature / seaLevelTemperature) ** (gravity / (gasConstant * lapseRate)))
+    : pressureAtTropopause * Math.exp((-gravity * (altitudeMeters - tropopauseMeters)) / (gasConstant * temperature));
+  const seaLevelSoundKnots = Math.sqrt(gamma * gasConstant * seaLevelTemperature) * 1.94384449;
+  const impactPressure = seaLevelPressure * (((1 + (0.2 * ((kias / seaLevelSoundKnots) ** 2))) ** 3.5) - 1);
+  const mach = Math.sqrt(5 * ((((impactPressure / pressure) + 1) ** (2 / 7)) - 1));
+  const localSoundKnots = Math.sqrt(gamma * gasConstant * temperature) * 1.94384449;
+  return mach * localSoundKnots;
+}
+
+function calculateGroundOrbitForMaxBank(tasKnots, windKnots, maxBankDegrees) {
+  if (![tasKnots, windKnots, maxBankDegrees].every(Number.isFinite) || tasKnots <= 0 || windKnots < 0 || windKnots >= tasKnots) return null;
+  const tasMetersPerSecond = tasKnots * 0.514444;
+  const windMetersPerSecond = windKnots * 0.514444;
+  const gravity = 9.80665;
+  const samples = 3600;
+  const step = (2 * Math.PI) / samples;
+  const epsilon = 0.0001;
+  const groundSpeedAt = (theta) => {
+    const tangentWind = -windMetersPerSecond * Math.sin(theta);
+    const remaining = (tasMetersPerSecond ** 2) - ((windMetersPerSecond * Math.cos(theta)) ** 2);
+    return remaining > 0 ? tangentWind + Math.sqrt(remaining) : NaN;
+  };
+  const airHeadingAt = (theta) => {
+    const groundSpeed = groundSpeedAt(theta);
+    const tangentX = -Math.sin(theta);
+    const tangentY = Math.cos(theta);
+    return Math.atan2((groundSpeed * tangentY), (groundSpeed * tangentX) - windMetersPerSecond);
+  };
+  const wrappedRadians = (value) => Math.atan2(Math.sin(value), Math.cos(value));
+  const coefficients = [];
+  let inverseGroundSpeedIntegral = 0;
+  for (let index = 0; index < samples; index += 1) {
+    const theta = index * step;
+    const groundSpeed = groundSpeedAt(theta);
+    if (!Number.isFinite(groundSpeed) || groundSpeed <= 0) return null;
+    const headingDerivative = wrappedRadians(airHeadingAt(theta + epsilon) - airHeadingAt(theta - epsilon)) / (2 * epsilon);
+    coefficients.push(Math.abs(headingDerivative) * groundSpeed);
+    inverseGroundSpeedIntegral += step / groundSpeed;
+  }
+  const maximumCoefficient = Math.max(...coefficients);
+  const radiusMeters = (tasMetersPerSecond * maximumCoefficient) / (gravity * Math.tan(maxBankDegrees * Math.PI / 180));
+  const banks = coefficients.map((coefficient) => Math.atan((tasMetersPerSecond * coefficient) / (gravity * radiusMeters)) * 180 / Math.PI);
+  return {
+    diameterNm: (2 * radiusMeters) / 1852,
+    orbitSeconds: radiusMeters * inverseGroundSpeedIntegral,
+    minimumBankDegrees: Math.min(...banks),
+    maximumBankDegrees: Math.max(...banks)
+  };
+}
+
 function calculateWindDrift(tas, track, windDir, windKts) {
   if (![tas, track, windDir, windKts].every(Number.isFinite) || tas <= 0 || windKts <= 0) return 0;
   const relative = ((windDir - track + 540) % 360) - 180;
@@ -964,6 +1036,13 @@ function normalizeRdvzWind() {
   if (!wind) return;
   els.rdvzWind.value = wind.speed === 0 ? "0" : `${String(wind.direction).padStart(3, "0")}/${wind.speed}`;
   saveRdvzWorkingInputs();
+}
+
+function normalizeTurnDiameterWind() {
+  const wind = parseRdvzWind(els.turnDiameterWind.value);
+  if (!wind) return;
+  els.turnDiameterWind.value = wind.speed === 0 ? "0" : `${String(wind.direction).padStart(3, "0")}/${wind.speed}`;
+  updateTurnDiameterPreview();
 }
 
 function usesC130TurnRangeTable() {
@@ -1817,6 +1896,108 @@ function updateBurnTimePreview() {
     : `${formatK(els.burnTimeAmount.value)} K / ${formatK(els.burnTimeRate.value)} K/hr x 60`;
 }
 
+function parseTimeToKillSeconds(value) {
+  const text = String(value || "").trim();
+  if (!text) return null;
+  const colon = text.match(/^(\d{1,3}):([0-5]\d)$/);
+  if (colon) return (Number(colon[1]) * 60) + Number(colon[2]);
+  if (!/^\d{1,4}$/.test(text)) return NaN;
+  if (text.length <= 2) return Number(text) * 60;
+  const minutes = Number(text.slice(0, -2));
+  const seconds = Number(text.slice(-2));
+  return seconds < 60 ? (minutes * 60) + seconds : NaN;
+}
+
+function closestOrbitPlan(targetSeconds, orbitOptions) {
+  if (!Number.isFinite(targetSeconds) || targetSeconds <= 0 || !orbitOptions.length) return null;
+  const transitionPenaltySeconds = 15;
+  const shortestOrbit = Math.min(...orbitOptions.map((option) => option.seconds));
+  const maximumCount = Math.min(200, Math.ceil(targetSeconds / shortestOrbit) + 2);
+  let best = null;
+  const consider = (selected, counts) => {
+    const totalSeconds = selected.reduce((sum, option, index) => sum + (option.seconds * counts[index]), 0);
+    const errorSeconds = Math.abs(totalSeconds - targetSeconds);
+    const changes = selected.length - 1;
+    const totalOrbits = counts.reduce((sum, count) => sum + count, 0);
+    const nonPreferredOrbits = selected.reduce((sum, option, index) => sum + (option.bank === 20 ? 0 : counts[index]), 0);
+    const thirtyDegreeOrbits = selected.reduce((sum, option, index) => sum + (option.bank === 30 ? counts[index] : 0), 0);
+    const score = errorSeconds + (changes * transitionPenaltySeconds) + (nonPreferredOrbits * 5) + (thirtyDegreeOrbits * 30);
+    const candidate = { selected, counts, totalSeconds, errorSeconds, changes, totalOrbits, score, nonPreferredOrbits, thirtyDegreeOrbits };
+    if (!best || score < best.score - 0.001 || (Math.abs(score - best.score) < 0.001 && (changes < best.changes || (changes === best.changes && totalOrbits < best.totalOrbits)))) best = candidate;
+  };
+  for (let mask = 1; mask < (1 << orbitOptions.length); mask += 1) {
+    const selected = orbitOptions.filter((_, index) => mask & (1 << index));
+    const counts = new Array(selected.length).fill(1);
+    const search = (index, usedSeconds) => {
+      if (index === selected.length - 1) {
+        const remaining = targetSeconds - usedSeconds;
+        const estimate = Math.max(1, Math.round(remaining / selected[index].seconds));
+        [Math.max(1, estimate - 1), estimate, estimate + 1].forEach((count) => {
+          if (count > maximumCount) return;
+          counts[index] = count;
+          consider(selected, [...counts]);
+        });
+        return;
+      }
+      for (let count = 1; count <= maximumCount; count += 1) {
+        const nextSeconds = usedSeconds + (selected[index].seconds * count);
+        if (nextSeconds > targetSeconds + (2 * shortestOrbit)) break;
+        counts[index] = count;
+        search(index + 1, nextSeconds);
+      }
+    };
+    search(0, 0);
+  }
+  return best;
+}
+
+function updateTurnDiameterPreview() {
+  const fl = Number(els.turnDiameterFl.value);
+  const kias = Number(els.turnDiameterKias.value);
+  const wind = parseRdvzWind(els.turnDiameterWind.value);
+  const tas = els.turnDiameterFl.value !== "" && els.turnDiameterKias.value !== "" ? standardAtmosphereTas(fl, kias) : NaN;
+  const rows = [...els.turnDiameterResults.children];
+  const banks = [15, 20, 25, 30];
+  const orbitOptions = [];
+
+  rows.forEach((row, index) => {
+    const bank = banks[index];
+    const value = row.querySelector("b");
+    const detail = row.querySelector("small");
+    const groundOrbit = wind && Number.isFinite(tas) ? calculateGroundOrbitForMaxBank(tas, wind.speed, bank) : null;
+    if (!groundOrbit) {
+      value.textContent = "--";
+      detail.textContent = "360° -- • Min Bank --";
+      return;
+    }
+    value.textContent = `${formatK(groundOrbit.diameterNm, 1)} NM`;
+    detail.textContent = `360° ${formatTimerMinutes(groundOrbit.orbitSeconds / 60)} • Min Bank ${formatK(groundOrbit.minimumBankDegrees, 0)}°`;
+    orbitOptions.push({ bank, seconds: groundOrbit.orbitSeconds });
+  });
+
+  const windIsSuspect = els.turnDiameterWind.value.trim() !== "" && (!wind || (Number.isFinite(tas) && wind.speed >= tas));
+  els.turnDiameterWind.classList.toggle("is-suspect-parameter", windIsSuspect);
+  const noClosedCircle = Boolean(wind && Number.isFinite(tas) && wind.speed >= tas);
+  els.turnDiameterWarning.hidden = !noClosedCircle;
+  const targetSeconds = parseTimeToKillSeconds(els.turnDiameterTimeToKill.value);
+  const targetIsInvalid = els.turnDiameterTimeToKill.value.trim() !== "" && (!Number.isFinite(targetSeconds) || targetSeconds <= 0);
+  els.turnDiameterTimeToKill.classList.toggle("is-suspect-time", targetIsInvalid);
+  els.turnDiameterTimeToKill.closest(".unit-input")?.classList.toggle("is-suspect-parameter", targetIsInvalid);
+  const plan = !targetIsInvalid && Number.isFinite(targetSeconds) ? closestOrbitPlan(targetSeconds, orbitOptions) : null;
+  els.turnDiameterPlan.hidden = !plan;
+  if (plan) {
+    const planText = plan.selected.map((option, index) => `${plan.counts[index]} × ${option.bank}°`).join("<br>");
+    const difference = Math.round(plan.totalSeconds - targetSeconds);
+    const differenceText = difference === 0 ? "Exact" : `${formatCountUpTimer(Math.abs(difference))} ${difference > 0 ? "long" : "short"}`;
+    const windRadians = wind.direction * Math.PI / 180;
+    const windVector = { x: Math.sin(windRadians), y: -Math.cos(windRadians) };
+    const windStart = { x: 90 + (windVector.x * 60), y: 72 + (windVector.y * 60) };
+    const windEnd = { x: 90 + (windVector.x * 46), y: 72 + (windVector.y * 46) };
+    const windArrow = wind.speed > 0 ? `<line class="ground-orbit-plan-wind" x1="${windStart.x.toFixed(1)}" y1="${windStart.y.toFixed(1)}" x2="${windEnd.x.toFixed(1)}" y2="${windEnd.y.toFixed(1)}" marker-end="url(#groundOrbitWindArrow)"></line>` : "";
+    els.turnDiameterPlan.innerHTML = `<span>Closest full-orbit plan</span><b>${planText}</b><small>${formatCountUpTimer(Math.round(plan.totalSeconds))} total &bull; ${differenceText}</small><svg class="ground-orbit-plan-visual" viewBox="0 10 180 124" role="img" aria-label="Aircraft flying a left-hand circular ground-track orbit with entered wind; interior line D shows the orbit diameter"><defs><marker id="groundOrbitWindArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker></defs><circle class="ground-orbit-plan-path" cx="90" cy="72" r="42"></circle><line class="ground-orbit-plan-diameter" x1="48" y1="72" x2="132" y2="72"></line><text class="ground-orbit-plan-diameter-label" x="90" y="68">D</text>${windArrow}<g class="ground-orbit-plan-aircraft" transform="translate(90 30) rotate(180)"><path d="M-11 -2 H2 V-6 L11 0 L2 6 V2 H-11 Z"></path></g></svg>`;
+  }
+}
+
 function parseFragFlightHours(value) {
   const text = String(value || "").trim();
   if (!text) return null;
@@ -1942,6 +2123,7 @@ function openCgCalculator() {
   }
   updateCgPreview();
   updateFragPreview();
+  updateTurnDiameterPreview();
   updateBurnTimePreview();
   updateCalculatorEmptyHighlights();
   openModal("cgModal");
@@ -1950,6 +2132,7 @@ function openCgCalculator() {
 function updateCalculatorEmptyHighlights() {
   const requiredInputs = [
     els.rdvzKias, els.rdvzArFl, els.rdvzTankerKias, els.rdvzTrack, els.rdvzWind,
+    els.turnDiameterFl, els.turnDiameterKias, els.turnDiameterWind,
     els.fragRampFuel, els.fragLandFuel, els.fragBurnRate, els.fragFlightTime, els.fragOffload,
     els.burnTimeAmount, els.burnTimeRate,
     els.cgFb, els.cgCw, els.cgAb, els.cgRes, els.cgUd
@@ -1987,7 +2170,8 @@ function clearCgInputs() {
   [
     els.rdvzType, els.rdvzNewKias, els.rdvzArFl, els.rdvzTrack, els.rdvzWind,
     els.cgFb, els.cgCw, els.cgAb, els.cgRes, els.cgUd, els.fragRampFuel, els.fragLandFuel,
-    els.fragBurnRate, els.fragFlightTime, els.fragOffload, els.burnTimeRate, els.burnTimeAmount
+    els.fragBurnRate, els.fragFlightTime, els.fragOffload, els.burnTimeRate, els.burnTimeAmount,
+    els.turnDiameterFl, els.turnDiameterKias, els.turnDiameterWind, els.turnDiameterTimeToKill
   ].forEach((input) => {
     input.value = "";
   });
@@ -1998,6 +2182,7 @@ function clearCgInputs() {
   saveRdvzWorkingInputs();
   updateCgPreview();
   updateFragPreview();
+  updateTurnDiameterPreview();
   resetBurnTimer();
   resetRdvzTimer();
 }
@@ -3031,6 +3216,38 @@ function initEvents() {
   });
   els.rdvzWind.addEventListener("blur", normalizeRdvzWind);
   els.rdvzWind.addEventListener("change", normalizeRdvzWind);
+  [els.turnDiameterFl, els.turnDiameterKias].forEach((el) => {
+    bindNumberOnlyInput(el, updateTurnDiameterPreview, { allowDecimal: false, maxDigits: 3 });
+  });
+  els.turnDiameterWind.addEventListener("input", () => {
+    const cursor = els.turnDiameterWind.selectionStart;
+    els.turnDiameterWind.value = els.turnDiameterWind.value.replace(/[^\d/]/g, "");
+    if (cursor !== null) els.turnDiameterWind.setSelectionRange(cursor, cursor);
+    updateTurnDiameterPreview();
+  });
+  els.turnDiameterWind.addEventListener("blur", normalizeTurnDiameterWind);
+  els.turnDiameterWind.addEventListener("change", normalizeTurnDiameterWind);
+  els.turnDiameterTimeToKill.addEventListener("input", () => {
+    const cursor = els.turnDiameterTimeToKill.selectionStart;
+    els.turnDiameterTimeToKill.value = els.turnDiameterTimeToKill.value.replace(/\D/g, "").slice(0, 4);
+    if (cursor !== null) {
+      const nextCursor = Math.min(cursor, els.turnDiameterTimeToKill.value.length);
+      els.turnDiameterTimeToKill.setSelectionRange(nextCursor, nextCursor);
+    }
+    updateTurnDiameterPreview();
+  });
+  const turnDiameterInputs = [els.turnDiameterFl, els.turnDiameterKias, els.turnDiameterWind, els.turnDiameterTimeToKill];
+  turnDiameterInputs.forEach((el, index) => {
+    el.addEventListener("focus", () => selectInputValue(el));
+    el.addEventListener("click", () => selectInputValue(el));
+    el.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      const next = turnDiameterInputs[index + 1];
+      if (next) focusAndSelect(next);
+      else el.blur();
+    });
+  });
   els.rdvzWindAdjustBtn.addEventListener("click", () => setRdvzWindAdjustMode(!rdvzWindAdjustMode));
   initRdvzWindDrag();
   els.rdvzOrbitButton.addEventListener("click", () => toggleRdvzMenu(els.rdvzOrbitMenu, els.rdvzOrbitButton));
