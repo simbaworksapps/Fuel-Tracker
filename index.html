@@ -13,7 +13,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
   <link rel="icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=0.1.582">
+  <link rel="stylesheet" href="styles.css?v=0.1.585">
 </head>
 <body>
   <header class="app-header">
@@ -421,7 +421,7 @@
           </div>
           <div class="field">
             <label for="turnDiameterTimeToKill">Wait Time</label>
-            <div class="unit-input"><input id="turnDiameterTimeToKill" type="text" inputmode="numeric" enterkeyhint="done" autocomplete="off" maxlength="4" placeholder="1500 or 15"><span>mmss</span></div>
+            <div class="unit-input"><input id="turnDiameterTimeToKill" type="text" inputmode="numeric" enterkeyhint="done" autocomplete="off" maxlength="4" placeholder="15"><span>mmss</span></div>
           </div>
         </div>
         <div id="turnDiameterResults" class="turn-diameter-results">
@@ -441,7 +441,7 @@
         </div>
         <div class="frag-grid">
           <div class="field">
-            <label for="fragRampFuel">Ramp Fuel</label>
+            <label for="fragRampFuel">T/O Fuel</label>
             <div class="unit-input"><input id="fragRampFuel" type="number" min="0" step="0.1" inputmode="decimal" enterkeyhint="next" placeholder="180"><span>K</span></div>
           </div>
           <div class="field">
@@ -449,12 +449,12 @@
             <div class="unit-input"><input id="fragLandFuel" type="number" min="0" step="0.1" inputmode="decimal" enterkeyhint="next" placeholder="20"><span>K</span></div>
           </div>
           <div class="field">
-            <label for="fragBurnRate">Burn Rate</label>
-            <div class="unit-input"><input id="fragBurnRate" type="number" min="0" step="0.1" inputmode="decimal" enterkeyhint="next" placeholder="10"><span>K/hr</span></div>
+            <label for="fragFlightTime">Flight Time</label>
+            <div class="unit-input"><input id="fragFlightTime" type="text" inputmode="decimal" enterkeyhint="next" autocomplete="off" placeholder="11"><span>hhmm</span></div>
           </div>
           <div class="field">
-            <label for="fragFlightTime">Flight Time</label>
-            <div class="unit-input"><input id="fragFlightTime" type="text" inputmode="decimal" enterkeyhint="next" autocomplete="off" placeholder="11 or 1100"><span>hhmm</span></div>
+            <label for="fragBurnRate">Burn Rate</label>
+            <div class="unit-input"><input id="fragBurnRate" type="number" min="0" step="0.1" inputmode="decimal" enterkeyhint="next" placeholder="10"><span>K/hr</span></div>
           </div>
           <div class="field">
             <label for="fragOffload">Offload</label>
@@ -466,7 +466,7 @@
             <output id="fragResult" class="frag-output-value">--</output>
           </div>
         </div>
-        <small id="fragFormula" class="frag-formula">Ramp Fuel - Land Fuel - (Burn Rate &times; Flight Time) - Offload</small>
+        <small id="fragFormula" class="frag-formula">T/O - Land - (Flight Time &times; Burn Rate) - Offload</small>
       </div>
 
       <div class="formula-card burn-time-card cg-collapsible is-collapsed">
@@ -679,6 +679,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=0.1.582"></script>
+  <script src="app.js?v=0.1.585"></script>
 </body>
 </html>

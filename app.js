@@ -2049,7 +2049,7 @@ function updateFragPreview() {
   if (!result) {
     els.fragResult.textContent = "--";
     els.fragResult.classList.remove("is-negative", "is-zero");
-    els.fragFormula.textContent = "Ramp Fuel - Land Fuel - (Burn Rate × Flight Time) - Offload";
+    els.fragFormula.textContent = "T/O - Land - (Flight Time × Burn Rate) - Offload";
     return;
   }
   const roundedFrag = Math.abs(result.frag) < .0005 ? 0 : result.frag;
@@ -2057,7 +2057,7 @@ function updateFragPreview() {
   els.fragResult.textContent = `FRAG ${sign} ${formatK(Math.abs(roundedFrag), 1)}K`;
   els.fragResult.classList.toggle("is-negative", roundedFrag < 0);
   els.fragResult.classList.toggle("is-zero", roundedFrag === 0);
-  els.fragFormula.textContent = `${formatK(result.rampFuel, 1)} - ${formatK(result.landFuel, 1)} - (${formatK(result.burnRate, 1)} × ${formatK(result.flightHours, 1)}) - ${formatK(result.offload, 1)} = ${formatK(roundedFrag, 1)}K`;
+  els.fragFormula.textContent = `${formatK(result.rampFuel, 1)} - ${formatK(result.landFuel, 1)} - (${formatK(result.flightHours, 1)} × ${formatK(result.burnRate, 1)}) - ${formatK(result.offload, 1)} = ${formatK(roundedFrag, 1)}K`;
 }
 
 function openFragInfo() {
@@ -3452,7 +3452,7 @@ function initEvents() {
     });
   });
 
-  const fragInputs = [els.fragRampFuel, els.fragLandFuel, els.fragBurnRate, els.fragFlightTime, els.fragOffload];
+  const fragInputs = [els.fragRampFuel, els.fragLandFuel, els.fragFlightTime, els.fragBurnRate, els.fragOffload];
   fragInputs.forEach((el, index) => {
     if (el === els.fragFlightTime) {
       el.addEventListener("input", () => {
