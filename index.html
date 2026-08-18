@@ -13,7 +13,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
   <link rel="icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=0.1.585">
+  <link rel="stylesheet" href="styles.css?v=0.1.592">
 </head>
 <body>
   <header class="app-header">
@@ -412,11 +412,11 @@
             <div class="unit-input"><input id="turnDiameterFl" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" enterkeyhint="next" autocomplete="off" placeholder="210"><span>FL</span></div>
           </div>
           <div class="field">
-            <label for="turnDiameterKias">Airspeed</label>
+            <label for="turnDiameterKias">Airspeed <span id="turnDiameterTas" class="turn-diameter-tas">-- KTAS</span></label>
             <div class="unit-input"><input id="turnDiameterKias" type="number" min="0" max="999" step="1" inputmode="numeric" enterkeyhint="next" placeholder="275"><span>KIAS</span></div>
           </div>
           <div class="field">
-            <label for="turnDiameterWind">Wind</label>
+            <label for="turnDiameterWind">Wind <span id="turnDiameterGs" class="turn-diameter-gs">GS ---–--- KT</span></label>
             <input id="turnDiameterWind" type="text" inputmode="text" enterkeyhint="done" autocomplete="off" spellcheck="false" placeholder="270/20, 270020, 0">
           </div>
           <div class="field">
@@ -425,10 +425,10 @@
           </div>
         </div>
         <div id="turnDiameterResults" class="turn-diameter-results">
-          <div><span>15&deg; Max Bank</span><b>--</b><small>360&deg; -- &bull; Min Bank --</small></div>
-          <div><span>20&deg; Max Bank</span><b>--</b><small>360&deg; -- &bull; Min Bank --</small></div>
-          <div><span>25&deg; Max Bank</span><b>--</b><small>360&deg; -- &bull; Min Bank --</small></div>
-          <div><span>30&deg; Max Bank</span><b>--</b><small>360&deg; -- &bull; Min Bank --</small></div>
+          <div><span>15&deg; Max Bank</span><b>--</b><small>360&deg; -- &bull; --&deg; Min &bull; --&deg; Avg</small></div>
+          <div><span>20&deg; Max Bank</span><b>--</b><small>360&deg; -- &bull; --&deg; Min &bull; --&deg; Avg</small></div>
+          <div><span>25&deg; Max Bank</span><b>--</b><small>360&deg; -- &bull; --&deg; Min &bull; --&deg; Avg</small></div>
+          <div><span>30&deg; Max Bank</span><b>--</b><small>360&deg; -- &bull; --&deg; Min &bull; --&deg; Avg</small></div>
         </div>
         <div id="turnDiameterPlan" class="turn-diameter-plan"></div>
         <div id="turnDiameterWarning" class="turn-diameter-warning" hidden>No closed ground-circle solution</div>
@@ -679,6 +679,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=0.1.585"></script>
+  <script src="app.js?v=0.1.592"></script>
 </body>
 </html>

@@ -82,7 +82,9 @@ const els = {
   rdvzVisualOrbit: $("rdvzVisualOrbit"),
   turnDiameterFl: $("turnDiameterFl"),
   turnDiameterKias: $("turnDiameterKias"),
+  turnDiameterTas: $("turnDiameterTas"),
   turnDiameterWind: $("turnDiameterWind"),
+  turnDiameterGs: $("turnDiameterGs"),
   turnDiameterTimeToKill: $("turnDiameterTimeToKill"),
   turnDiameterResults: $("turnDiameterResults"),
   turnDiameterPlan: $("turnDiameterPlan"),
@@ -917,6 +919,8 @@ function calculateGroundOrbitForMaxBank(tasKnots, windKnots, maxBankDegrees) {
   const wrappedRadians = (value) => Math.atan2(Math.sin(value), Math.cos(value));
   const coefficients = [];
   let inverseGroundSpeedIntegral = 0;
+  let minimumGroundSpeed = Infinity;
+  let maximumGroundSpeed = -Infinity;
   for (let index = 0; index < samples; index += 1) {
     const theta = index * step;
     const groundSpeed = groundSpeedAt(theta);
@@ -924,15 +928,24 @@ function calculateGroundOrbitForMaxBank(tasKnots, windKnots, maxBankDegrees) {
     const headingDerivative = wrappedRadians(airHeadingAt(theta + epsilon) - airHeadingAt(theta - epsilon)) / (2 * epsilon);
     coefficients.push(Math.abs(headingDerivative) * groundSpeed);
     inverseGroundSpeedIntegral += step / groundSpeed;
+    minimumGroundSpeed = Math.min(minimumGroundSpeed, groundSpeed);
+    maximumGroundSpeed = Math.max(maximumGroundSpeed, groundSpeed);
   }
   const maximumCoefficient = Math.max(...coefficients);
   const radiusMeters = (tasMetersPerSecond * maximumCoefficient) / (gravity * Math.tan(maxBankDegrees * Math.PI / 180));
   const banks = coefficients.map((coefficient) => Math.atan((tasMetersPerSecond * coefficient) / (gravity * radiusMeters)) * 180 / Math.PI);
+  const timeWeightedBankTotal = banks.reduce((sum, bank, index) => {
+    const groundSpeed = groundSpeedAt(index * step);
+    return sum + (bank * step / groundSpeed);
+  }, 0);
   return {
     diameterNm: (2 * radiusMeters) / 1852,
     orbitSeconds: radiusMeters * inverseGroundSpeedIntegral,
     minimumBankDegrees: Math.min(...banks),
-    maximumBankDegrees: Math.max(...banks)
+    averageBankDegrees: timeWeightedBankTotal / inverseGroundSpeedIntegral,
+    maximumBankDegrees: Math.max(...banks),
+    minimumGroundSpeedKnots: minimumGroundSpeed / 0.514444,
+    maximumGroundSpeedKnots: maximumGroundSpeed / 0.514444
   };
 }
 
@@ -1956,9 +1969,14 @@ function updateTurnDiameterPreview() {
   const kias = Number(els.turnDiameterKias.value);
   const wind = parseRdvzWind(els.turnDiameterWind.value);
   const tas = els.turnDiameterFl.value !== "" && els.turnDiameterKias.value !== "" ? standardAtmosphereTas(fl, kias) : NaN;
+  els.turnDiameterTas.textContent = Number.isFinite(tas) && tas > 0 ? `${formatK(tas, 0)} KTAS` : "-- KTAS";
+  const speedReadout = Number.isFinite(tas) && tas > 0
+    ? `${formatK(tas, 0)} KTAS &bull; ${formatK(tas / 60, 1)} NM/min`
+    : "-- KTAS &bull; -- NM/min";
   const rows = [...els.turnDiameterResults.children];
   const banks = [15, 20, 25, 30];
   const orbitOptions = [];
+  let groundSpeedRange = null;
 
   rows.forEach((row, index) => {
     const bank = banks[index];
@@ -1967,13 +1985,18 @@ function updateTurnDiameterPreview() {
     const groundOrbit = wind && Number.isFinite(tas) ? calculateGroundOrbitForMaxBank(tas, wind.speed, bank) : null;
     if (!groundOrbit) {
       value.textContent = "--";
-      detail.textContent = "360° -- • Min Bank --";
+      detail.textContent = "360° -- • --° Min • --° Avg";
       return;
     }
     value.textContent = `${formatK(groundOrbit.diameterNm, 1)} NM`;
-    detail.textContent = `360° ${formatTimerMinutes(groundOrbit.orbitSeconds / 60)} • Min Bank ${formatK(groundOrbit.minimumBankDegrees, 0)}°`;
+    detail.textContent = `360° ${formatTimerMinutes(groundOrbit.orbitSeconds / 60)} • ${formatK(groundOrbit.minimumBankDegrees, 0)}° Min • ${formatK(groundOrbit.averageBankDegrees, 0)}° Avg`;
+    if (!groundSpeedRange) groundSpeedRange = groundOrbit;
     orbitOptions.push({ bank, seconds: groundOrbit.orbitSeconds });
   });
+
+  els.turnDiameterGs.textContent = groundSpeedRange
+    ? `GS ${formatK(groundSpeedRange.minimumGroundSpeedKnots, 0)}–${formatK(groundSpeedRange.maximumGroundSpeedKnots, 0)} KT`
+    : "GS ---–--- KT";
 
   const windIsSuspect = els.turnDiameterWind.value.trim() !== "" && (!wind || (Number.isFinite(tas) && wind.speed >= tas));
   els.turnDiameterWind.classList.toggle("is-suspect-parameter", windIsSuspect);
@@ -2002,7 +2025,7 @@ function updateTurnDiameterPreview() {
     const windEnd = { x: 90 + (windVector.x * 46), y: 72 + (windVector.y * 46) };
     windArrow = `<line class="ground-orbit-plan-wind" x1="${windStart.x.toFixed(1)}" y1="${windStart.y.toFixed(1)}" x2="${windEnd.x.toFixed(1)}" y2="${windEnd.y.toFixed(1)}" marker-end="url(#groundOrbitWindArrow)"></line>`;
   }
-  els.turnDiameterPlan.innerHTML = `<span>Closest full-orbit plan</span><b>${planText}</b><small>${planDetail}</small><svg class="ground-orbit-plan-visual" viewBox="0 10 180 124" role="img" aria-label="Aircraft flying a left-hand circular ground-track orbit with entered wind; interior line D shows the orbit diameter"><defs><marker id="groundOrbitWindArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker></defs><circle class="ground-orbit-plan-path" cx="90" cy="72" r="42"></circle><line class="ground-orbit-plan-diameter" x1="48" y1="72" x2="132" y2="72"></line><text class="ground-orbit-plan-diameter-label" x="90" y="68">D</text>${windArrow}<g class="ground-orbit-plan-aircraft" transform="translate(90 30) rotate(180)"><path d="M-11 -2 H2 V-6 L11 0 L2 6 V2 H-11 Z"></path></g></svg><button class="mini-btn turn-diameter-info-btn" type="button" data-turn-diameter-info aria-label="About Ground Track Orbit Diameter" title="About Ground Track Orbit Diameter">i</button>`;
+  els.turnDiameterPlan.innerHTML = `<span>Closest full-orbit plan</span><b>${planText}</b><small>${planDetail}</small><svg class="ground-orbit-plan-visual" viewBox="0 10 180 124" role="img" aria-label="Aircraft flying a left-hand circular ground-track orbit with entered wind; interior line D shows the orbit diameter"><defs><marker id="groundOrbitWindArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker></defs><circle class="ground-orbit-plan-path" cx="90" cy="72" r="42"></circle><line class="ground-orbit-plan-diameter" x1="48" y1="72" x2="132" y2="72"></line><text class="ground-orbit-plan-diameter-label" x="90" y="68">D</text>${windArrow}<g class="ground-orbit-plan-aircraft" transform="translate(90 30) rotate(180)"><path d="M-11 -2 H2 V-6 L11 0 L2 6 V2 H-11 Z"></path></g></svg><div class="ground-orbit-speed">${speedReadout}</div><button class="mini-btn turn-diameter-info-btn" type="button" data-turn-diameter-info aria-label="About Ground Track Orbit Diameter" title="About Ground Track Orbit Diameter">i</button>`;
 }
 
 function openTurnDiameterInfo() {
