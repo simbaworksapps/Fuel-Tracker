@@ -2487,7 +2487,7 @@ button.rdvz-library-select:focus-visible {
 #cgModal .turn-diameter-plan {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: 170px minmax(0, 1fr);
   gap: 3px 10px;
   padding-top: 10px;
   min-height: 134px;
@@ -2502,22 +2502,29 @@ button.rdvz-library-select:focus-visible {
   font-size: .86rem;
 }
 
+#cgModal .turn-diameter-plan > span {
+  grid-column: 2;
+  grid-row: 1;
+}
+
 #cgModal .turn-diameter-plan > b {
-  text-align: right;
+  grid-column: 2;
+  grid-row: 2;
+  text-align: left;
   line-height: 1.35;
 }
 
 #cgModal .turn-diameter-plan > small {
   grid-column: 2;
-  grid-row: 2;
+  grid-row: 3;
   color: var(--dim);
   font-size: .72rem;
-  text-align: right;
+  text-align: left;
 }
 
 #cgModal .ground-orbit-plan-visual {
   position: absolute;
-  top: 24px;
+  top: 17px;
   left: 0;
   display: block;
   width: 160px;
@@ -2547,6 +2554,20 @@ button.rdvz-library-select:focus-visible {
 
 #cgModal .ground-orbit-plan-aircraft {
   fill: var(--gold);
+}
+
+#cgModal .turn-diameter-info-btn {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  min-height: 40px;
+  margin: 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: .86rem;
 }
 
 #cgModal .ground-orbit-plan-wind {

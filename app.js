@@ -143,7 +143,7 @@ const els = {
 
 const STORAGE_KEY = "simba-fuel-tracker-v1";
 const DEFAULT_BURN_RATE = 10.0;
-const APP_CAO = "CAO 17AUG26";
+const APP_CAO = "CAO 18AUG26";
 const RDVZ_RECEIVER_LIBRARY = {
   kc135: {
     Boom: [
@@ -1984,18 +1984,37 @@ function updateTurnDiameterPreview() {
   els.turnDiameterTimeToKill.classList.toggle("is-suspect-time", targetIsInvalid);
   els.turnDiameterTimeToKill.closest(".unit-input")?.classList.toggle("is-suspect-parameter", targetIsInvalid);
   const plan = !targetIsInvalid && Number.isFinite(targetSeconds) ? closestOrbitPlan(targetSeconds, orbitOptions) : null;
-  els.turnDiameterPlan.hidden = !plan;
+  els.turnDiameterPlan.hidden = false;
+  const planText = plan ? plan.selected.map((option, index) => `${plan.counts[index]} × ${option.bank}°`).join("<br>") : "";
+  let planDetail = "Enter wait time";
   if (plan) {
-    const planText = plan.selected.map((option, index) => `${plan.counts[index]} × ${option.bank}°`).join("<br>");
     const difference = Math.round(plan.totalSeconds - targetSeconds);
     const differenceText = difference === 0 ? "Exact" : `${formatCountUpTimer(Math.abs(difference))} ${difference > 0 ? "long" : "short"}`;
+    planDetail = `${formatCountUpTimer(Math.round(plan.totalSeconds))} total &bull; ${differenceText}`;
+  } else if (targetIsInvalid) {
+    planDetail = "Enter valid wait time";
+  }
+  let windArrow = "";
+  if (wind && wind.speed > 0) {
     const windRadians = wind.direction * Math.PI / 180;
     const windVector = { x: Math.sin(windRadians), y: -Math.cos(windRadians) };
     const windStart = { x: 90 + (windVector.x * 60), y: 72 + (windVector.y * 60) };
     const windEnd = { x: 90 + (windVector.x * 46), y: 72 + (windVector.y * 46) };
-    const windArrow = wind.speed > 0 ? `<line class="ground-orbit-plan-wind" x1="${windStart.x.toFixed(1)}" y1="${windStart.y.toFixed(1)}" x2="${windEnd.x.toFixed(1)}" y2="${windEnd.y.toFixed(1)}" marker-end="url(#groundOrbitWindArrow)"></line>` : "";
-    els.turnDiameterPlan.innerHTML = `<span>Closest full-orbit plan</span><b>${planText}</b><small>${formatCountUpTimer(Math.round(plan.totalSeconds))} total &bull; ${differenceText}</small><svg class="ground-orbit-plan-visual" viewBox="0 10 180 124" role="img" aria-label="Aircraft flying a left-hand circular ground-track orbit with entered wind; interior line D shows the orbit diameter"><defs><marker id="groundOrbitWindArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker></defs><circle class="ground-orbit-plan-path" cx="90" cy="72" r="42"></circle><line class="ground-orbit-plan-diameter" x1="48" y1="72" x2="132" y2="72"></line><text class="ground-orbit-plan-diameter-label" x="90" y="68">D</text>${windArrow}<g class="ground-orbit-plan-aircraft" transform="translate(90 30) rotate(180)"><path d="M-11 -2 H2 V-6 L11 0 L2 6 V2 H-11 Z"></path></g></svg>`;
+    windArrow = `<line class="ground-orbit-plan-wind" x1="${windStart.x.toFixed(1)}" y1="${windStart.y.toFixed(1)}" x2="${windEnd.x.toFixed(1)}" y2="${windEnd.y.toFixed(1)}" marker-end="url(#groundOrbitWindArrow)"></line>`;
   }
+  els.turnDiameterPlan.innerHTML = `<span>Closest full-orbit plan</span><b>${planText}</b><small>${planDetail}</small><svg class="ground-orbit-plan-visual" viewBox="0 10 180 124" role="img" aria-label="Aircraft flying a left-hand circular ground-track orbit with entered wind; interior line D shows the orbit diameter"><defs><marker id="groundOrbitWindArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker></defs><circle class="ground-orbit-plan-path" cx="90" cy="72" r="42"></circle><line class="ground-orbit-plan-diameter" x1="48" y1="72" x2="132" y2="72"></line><text class="ground-orbit-plan-diameter-label" x="90" y="68">D</text>${windArrow}<g class="ground-orbit-plan-aircraft" transform="translate(90 30) rotate(180)"><path d="M-11 -2 H2 V-6 L11 0 L2 6 V2 H-11 Z"></path></g></svg><button class="mini-btn turn-diameter-info-btn" type="button" data-turn-diameter-info aria-label="About Ground Track Orbit Diameter" title="About Ground Track Orbit Diameter">i</button>`;
+}
+
+function openTurnDiameterInfo() {
+  openConfirm(
+    "Ground Track Orbit Diameter",
+    `<p>Use this calculator when you need to conduct circular ground-track orbits, such as during a contingency rejoin or while absorbing a delay in a MOA.</p>
+     <p>For the entered altitude, airspeed, and wind, it estimates how large the ground circle must be and how long one complete 360° orbit takes at each maximum bank angle.</p>
+     <p>If a Wait Time is entered, the full-orbit plan suggests a combination of complete circles that comes closest to that time while favoring fewer bank-angle changes.</p>
+     <p>This is a planning aid. Continue to account for aircraft limitations, airspace, weather, and applicable guidance.</p>`,
+    null,
+    { hideCancel: true, hideOk: true, danger: false, html: true }
+  );
 }
 
 function parseFragFlightHours(value) {
@@ -2030,7 +2049,7 @@ function updateFragPreview() {
   if (!result) {
     els.fragResult.textContent = "--";
     els.fragResult.classList.remove("is-negative", "is-zero");
-    els.fragFormula.textContent = "Ramp Fuel - Offload - (Flight Time × Burn Rate) - Land Fuel";
+    els.fragFormula.textContent = "Ramp Fuel - Land Fuel - (Burn Rate × Flight Time) - Offload";
     return;
   }
   const roundedFrag = Math.abs(result.frag) < .0005 ? 0 : result.frag;
@@ -2038,7 +2057,7 @@ function updateFragPreview() {
   els.fragResult.textContent = `FRAG ${sign} ${formatK(Math.abs(roundedFrag), 1)}K`;
   els.fragResult.classList.toggle("is-negative", roundedFrag < 0);
   els.fragResult.classList.toggle("is-zero", roundedFrag === 0);
-  els.fragFormula.textContent = `${formatK(result.rampFuel, 1)} - ${formatK(result.offload, 1)} - (${els.fragFlightTime.value.trim()} × ${formatK(result.burnRate, 1)}) - ${formatK(result.landFuel, 1)} = ${formatK(roundedFrag, 1)}K`;
+  els.fragFormula.textContent = `${formatK(result.rampFuel, 1)} - ${formatK(result.landFuel, 1)} - (${formatK(result.burnRate, 1)} × ${formatK(result.flightHours, 1)}) - ${formatK(result.offload, 1)} = ${formatK(roundedFrag, 1)}K`;
 }
 
 function openFragInfo() {
@@ -2132,7 +2151,7 @@ function openCgCalculator() {
 function updateCalculatorEmptyHighlights() {
   const requiredInputs = [
     els.rdvzKias, els.rdvzArFl, els.rdvzTankerKias, els.rdvzTrack, els.rdvzWind,
-    els.turnDiameterFl, els.turnDiameterKias, els.turnDiameterWind,
+    els.turnDiameterFl, els.turnDiameterKias, els.turnDiameterWind, els.turnDiameterTimeToKill,
     els.fragRampFuel, els.fragLandFuel, els.fragBurnRate, els.fragFlightTime, els.fragOffload,
     els.burnTimeAmount, els.burnTimeRate,
     els.cgFb, els.cgCw, els.cgAb, els.cgRes, els.cgUd
@@ -3236,6 +3255,11 @@ function initEvents() {
     }
     updateTurnDiameterPreview();
   });
+  els.turnDiameterPlan.addEventListener("click", (event) => {
+    if (!event.target.closest("[data-turn-diameter-info]")) return;
+    event.stopPropagation();
+    openTurnDiameterInfo();
+  });
   const turnDiameterInputs = [els.turnDiameterFl, els.turnDiameterKias, els.turnDiameterWind, els.turnDiameterTimeToKill];
   turnDiameterInputs.forEach((el, index) => {
     el.addEventListener("focus", () => selectInputValue(el));
@@ -3434,6 +3458,7 @@ function initEvents() {
       el.addEventListener("input", () => {
         const isSuspect = el.value.trim() !== "" && parseFragFlightHours(el.value) === null;
         el.classList.toggle("is-suspect-time", isSuspect);
+        el.closest(".unit-input")?.classList.toggle("is-suspect-parameter", isSuspect);
         el.setAttribute("aria-invalid", String(isSuspect));
         updateFragPreview();
       });

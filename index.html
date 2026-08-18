@@ -13,7 +13,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
   <link rel="icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=0.1.571">
+  <link rel="stylesheet" href="styles.css?v=0.1.582">
 </head>
 <body>
   <header class="app-header">
@@ -28,7 +28,7 @@
     </div>
     <div class="header-actions">
       <div class="header-reference">
-        <div class="cao-line" id="caoLine">CAO 17AUG26</div>
+        <div class="cao-line" id="caoLine">CAO 18AUG26</div>
         <a id="shareLink" class="share-link" href="https://simbaops.com" target="_blank" rel="noopener noreferrer">simbaops.com</a>
       </div>
     </div>
@@ -421,7 +421,7 @@
           </div>
           <div class="field">
             <label for="turnDiameterTimeToKill">Wait Time</label>
-            <div class="unit-input"><input id="turnDiameterTimeToKill" type="text" inputmode="numeric" enterkeyhint="done" autocomplete="off" maxlength="4" placeholder="1025"><span>mmss</span></div>
+            <div class="unit-input"><input id="turnDiameterTimeToKill" type="text" inputmode="numeric" enterkeyhint="done" autocomplete="off" maxlength="4" placeholder="1500 or 15"><span>mmss</span></div>
           </div>
         </div>
         <div id="turnDiameterResults" class="turn-diameter-results">
@@ -430,7 +430,7 @@
           <div><span>25&deg; Max Bank</span><b>--</b><small>360&deg; -- &bull; Min Bank --</small></div>
           <div><span>30&deg; Max Bank</span><b>--</b><small>360&deg; -- &bull; Min Bank --</small></div>
         </div>
-        <div id="turnDiameterPlan" class="turn-diameter-plan" hidden></div>
+        <div id="turnDiameterPlan" class="turn-diameter-plan"></div>
         <div id="turnDiameterWarning" class="turn-diameter-warning" hidden>No closed ground-circle solution</div>
       </div>
 
@@ -442,7 +442,7 @@
         <div class="frag-grid">
           <div class="field">
             <label for="fragRampFuel">Ramp Fuel</label>
-            <div class="unit-input"><input id="fragRampFuel" type="number" min="0" step="0.1" inputmode="decimal" enterkeyhint="next" placeholder="125"><span>K</span></div>
+            <div class="unit-input"><input id="fragRampFuel" type="number" min="0" step="0.1" inputmode="decimal" enterkeyhint="next" placeholder="180"><span>K</span></div>
           </div>
           <div class="field">
             <label for="fragLandFuel">Land Fuel</label>
@@ -453,8 +453,8 @@
             <div class="unit-input"><input id="fragBurnRate" type="number" min="0" step="0.1" inputmode="decimal" enterkeyhint="next" placeholder="10"><span>K/hr</span></div>
           </div>
           <div class="field">
-            <label for="fragFlightTime">Flight Time <span class="label-note">HHMM or hr</span></label>
-            <input id="fragFlightTime" type="text" inputmode="decimal" enterkeyhint="next" autocomplete="off" placeholder="1025, 10:25, or 10">
+            <label for="fragFlightTime">Flight Time</label>
+            <div class="unit-input"><input id="fragFlightTime" type="text" inputmode="decimal" enterkeyhint="next" autocomplete="off" placeholder="11 or 1100"><span>hhmm</span></div>
           </div>
           <div class="field">
             <label for="fragOffload">Offload</label>
@@ -466,7 +466,7 @@
             <output id="fragResult" class="frag-output-value">--</output>
           </div>
         </div>
-        <small id="fragFormula" class="frag-formula">Ramp Fuel - Offload - (Flight Time &times; Burn Rate) - Land Fuel</small>
+        <small id="fragFormula" class="frag-formula">Ramp Fuel - Land Fuel - (Burn Rate &times; Flight Time) - Offload</small>
       </div>
 
       <div class="formula-card burn-time-card cg-collapsible is-collapsed">
@@ -679,6 +679,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=0.1.571"></script>
+  <script src="app.js?v=0.1.582"></script>
 </body>
 </html>
