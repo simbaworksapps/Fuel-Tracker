@@ -2499,36 +2499,82 @@ button.rdvz-library-select:focus-visible {
   grid-template-columns: 170px minmax(0, 1fr);
   gap: 3px 10px;
   padding-top: 10px;
-  min-height: 154px;
+  min-height: 170px;
   border-top: 1px solid var(--stroke);
   align-items: baseline;
   align-content: start;
 }
 
-#cgModal .turn-diameter-plan > span,
-#cgModal .turn-diameter-plan > b {
+#cgModal .ground-orbit-plan-output {
+  position: absolute;
+  top: 10px;
+  left: calc(50% + 7px);
+  right: 0;
+  display: grid;
+  gap: 7px;
+}
+
+#cgModal .ground-orbit-plan-output > span {
   color: var(--text);
-  font-size: .86rem;
-}
-
-#cgModal .turn-diameter-plan > span {
-  grid-column: 2;
-  grid-row: 1;
-}
-
-#cgModal .turn-diameter-plan > b {
-  grid-column: 2;
-  grid-row: 2;
+  font-size: .78rem;
+  font-weight: 700;
   text-align: left;
-  line-height: 1.35;
+  white-space: nowrap;
 }
 
-#cgModal .turn-diameter-plan > small {
-  grid-column: 2;
-  grid-row: 3;
+#cgModal .ground-orbit-plan-count {
+  color: var(--text);
+  font-size: .78rem;
+  font-weight: 700;
+  line-height: 1;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--text);
+  text-align: left;
+}
+
+#cgModal .ground-orbit-plan-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 8px;
+  align-items: baseline;
+  min-width: 0;
+  color: var(--text);
+  font-size: .78rem;
+}
+
+#cgModal .ground-orbit-plan-card span,
+#cgModal .ground-orbit-plan-card b {
+  color: inherit;
+  font-size: inherit;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+#cgModal .ground-orbit-plan-card b {
+  text-align: right;
+}
+
+#cgModal .ground-orbit-plan-card small {
+  grid-column: 1 / -1;
   color: var(--dim);
   font-size: .72rem;
+  font-weight: 400;
   text-align: left;
+  white-space: nowrap;
+}
+
+#cgModal .ground-orbit-plan-card em {
+  grid-column: 1 / -1;
+  color: var(--dim);
+  font-size: .72rem;
+  font-style: normal;
+  font-weight: 400;
+  text-align: left;
+  white-space: nowrap;
+}
+
+#cgModal .ground-orbit-plan-card em .ground-orbit-time-warning {
+  color: var(--gold);
 }
 
 #cgModal .ground-orbit-plan-visual {
@@ -2568,7 +2614,7 @@ button.rdvz-library-select:focus-visible {
 #cgModal .ground-orbit-speed {
   position: absolute;
   left: 0;
-  bottom: 0;
+  top: 130px;
   display: block;
   width: 160px;
   color: var(--dim);

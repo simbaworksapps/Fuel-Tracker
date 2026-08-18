@@ -1964,6 +1964,72 @@ function closestOrbitPlan(targetSeconds, orbitOptions) {
   return best;
 }
 
+function closestWholeDiameterPlan(targetSeconds, orbitOptions) {
+  if (!Number.isFinite(targetSeconds) || targetSeconds <= 0 || !orbitOptions.length) return null;
+  const reference = orbitOptions.find((option) => option.bank === 20) || orbitOptions[0];
+  const maximumBankReference = orbitOptions.reduce((best, option) => option.bank > best.bank ? option : best, orbitOptions[0]);
+  if (!Number.isFinite(reference.diameterNm) || reference.diameterNm <= 0 || !Number.isFinite(reference.seconds) || reference.seconds <= 0) return null;
+  const secondsPerNm = reference.seconds / reference.diameterNm;
+  const minimumDiameter = Math.max(1, Math.ceil(maximumBankReference.diameterNm - 1e-9));
+  const idealDiameter = targetSeconds / secondsPerNm;
+  const candidates = [...new Set([
+    minimumDiameter,
+    Math.max(minimumDiameter, Math.floor(idealDiameter)),
+    Math.max(minimumDiameter, Math.ceil(idealDiameter))
+  ])];
+  let best = null;
+  candidates.forEach((diameterNm) => {
+    const totalSeconds = diameterNm * secondsPerNm;
+    const errorSeconds = Math.abs(totalSeconds - targetSeconds);
+    const requiredBankDegrees = Math.atan(
+      Math.tan(reference.bank * Math.PI / 180) * (reference.diameterNm / diameterNm)
+    ) * 180 / Math.PI;
+    if (!Number.isFinite(requiredBankDegrees) || requiredBankDegrees > 30.0001) return;
+    const candidate = { diameterNm, totalSeconds, errorSeconds, requiredBankDegrees };
+    if (!best || errorSeconds < best.errorSeconds - 0.001 || (Math.abs(errorSeconds - best.errorSeconds) < 0.001 && diameterNm < best.diameterNm)) best = candidate;
+  });
+  return best;
+}
+
+function closestIntegerDiameterOrbitPlan(targetSeconds, orbitOptions, tasKnots, windKnots) {
+  if (!Number.isFinite(targetSeconds) || targetSeconds <= 0 || orbitOptions.length < 2) return null;
+  const reference = orbitOptions.find((option) => option.bank === 20) || orbitOptions[0];
+  const lowBank = orbitOptions.reduce((best, option) => option.bank < best.bank ? option : best, orbitOptions[0]);
+  const highBank = orbitOptions.reduce((best, option) => option.bank > best.bank ? option : best, orbitOptions[0]);
+  const minimumDiameter = Math.max(1, Math.ceil(highBank.diameterNm - 1e-9));
+  const maximumDiameter = Math.max(minimumDiameter, Math.floor(lowBank.diameterNm + 1e-9));
+  const secondsPerNm = reference.seconds / reference.diameterNm;
+  let best = null;
+  for (let diameterNm = minimumDiameter; diameterNm <= maximumDiameter; diameterNm += 1) {
+    const secondsPerOrbit = diameterNm * secondsPerNm;
+    const estimatedCount = Math.max(1, Math.round(targetSeconds / secondsPerOrbit));
+    const requiredBankDegrees = Math.atan(
+      Math.tan(reference.bank * Math.PI / 180) * (reference.diameterNm / diameterNm)
+    ) * 180 / Math.PI;
+    if (requiredBankDegrees < 15 - 0.001 || requiredBankDegrees > 30 + 0.001) continue;
+    const orbitProfile = calculateGroundOrbitForMaxBank(tasKnots, windKnots, requiredBankDegrees);
+    if (!orbitProfile) continue;
+    for (const count of [...new Set([Math.max(1, estimatedCount - 1), estimatedCount, estimatedCount + 1])]) {
+      const totalSeconds = count * secondsPerOrbit;
+      const errorSeconds = Math.abs(totalSeconds - targetSeconds);
+      const averageBankDegrees = orbitProfile.averageBankDegrees;
+      const candidate = { diameterNm, count, totalSeconds, errorSeconds, requiredBankDegrees, averageBankDegrees };
+      const timingTie = best && Math.abs(errorSeconds - best.errorSeconds) < 0.001;
+      const bankPreference = Math.abs(averageBankDegrees - 20);
+      const bestBankPreference = best ? Math.abs(best.averageBankDegrees - 20) : Infinity;
+      const bankTie = timingTie && Math.abs(bankPreference - bestBankPreference) < 0.001;
+      if (!best ||
+        errorSeconds < best.errorSeconds - 0.001 ||
+        (timingTie && bankPreference < bestBankPreference - 0.001) ||
+        (bankTie && count < best.count) ||
+        (bankTie && count === best.count && diameterNm > best.diameterNm)) {
+        best = candidate;
+      }
+    }
+  }
+  return best;
+}
+
 function updateTurnDiameterPreview() {
   const fl = Number(els.turnDiameterFl.value);
   const kias = Number(els.turnDiameterKias.value);
@@ -1991,7 +2057,7 @@ function updateTurnDiameterPreview() {
     value.textContent = `${formatK(groundOrbit.diameterNm, 1)} NM`;
     detail.textContent = `360° ${formatTimerMinutes(groundOrbit.orbitSeconds / 60)} • ${formatK(groundOrbit.minimumBankDegrees, 0)}° Min • ${formatK(groundOrbit.averageBankDegrees, 0)}° Avg`;
     if (!groundSpeedRange) groundSpeedRange = groundOrbit;
-    orbitOptions.push({ bank, seconds: groundOrbit.orbitSeconds });
+    orbitOptions.push({ bank, seconds: groundOrbit.orbitSeconds, diameterNm: groundOrbit.diameterNm });
   });
 
   els.turnDiameterGs.textContent = groundSpeedRange
@@ -2006,16 +2072,24 @@ function updateTurnDiameterPreview() {
   const targetIsInvalid = els.turnDiameterTimeToKill.value.trim() !== "" && (!Number.isFinite(targetSeconds) || targetSeconds <= 0);
   els.turnDiameterTimeToKill.classList.toggle("is-suspect-time", targetIsInvalid);
   els.turnDiameterTimeToKill.closest(".unit-input")?.classList.toggle("is-suspect-parameter", targetIsInvalid);
-  const plan = !targetIsInvalid && Number.isFinite(targetSeconds) ? closestOrbitPlan(targetSeconds, orbitOptions) : null;
   els.turnDiameterPlan.hidden = false;
-  const planText = plan ? plan.selected.map((option, index) => `${plan.counts[index]} × ${option.bank}°`).join("<br>") : "";
-  let planDetail = "Enter wait time";
-  if (plan) {
-    const difference = Math.round(plan.totalSeconds - targetSeconds);
+  const integerPlan = !targetIsInvalid && Number.isFinite(targetSeconds)
+    ? closestIntegerDiameterOrbitPlan(targetSeconds, orbitOptions, tas, wind?.speed)
+    : null;
+  let planCard = `<b class="ground-orbit-plan-count">--</b><div class="ground-orbit-plan-card"><span>Whole-NM Diameter</span><b>--</b><small>360° -- &bull; --° Min &bull; --° Avg</small><em>Enter wait time</em></div>`;
+  if (integerPlan) {
+    const difference = Math.round(integerPlan.totalSeconds - targetSeconds);
     const differenceText = difference === 0 ? "Exact" : `${formatCountUpTimer(Math.abs(difference))} ${difference > 0 ? "long" : "short"}`;
-    planDetail = `${formatCountUpTimer(Math.round(plan.totalSeconds))} total &bull; ${differenceText}`;
+    const differenceMarkup = Math.abs(difference) >= 30
+      ? `<span class="ground-orbit-time-warning">${differenceText}</span>`
+      : differenceText;
+    const plannedOrbit = calculateGroundOrbitForMaxBank(tas, wind.speed, integerPlan.requiredBankDegrees);
+    const planMinimumBank = plannedOrbit ? formatK(plannedOrbit.minimumBankDegrees, 0) : "--";
+    const planAverageBank = plannedOrbit ? formatK(plannedOrbit.averageBankDegrees, 0) : "--";
+    const planOrbitTime = plannedOrbit ? formatTimerMinutes(plannedOrbit.orbitSeconds / 60) : "--";
+    planCard = `<b class="ground-orbit-plan-count">${integerPlan.count}×</b><div class="ground-orbit-plan-card"><span>${formatK(integerPlan.requiredBankDegrees, 1)}° Max Bank</span><b>${integerPlan.diameterNm} NM</b><small>360° ${planOrbitTime} &bull; ${planMinimumBank}° Min &bull; ${planAverageBank}° Avg</small><em>${formatCountUpTimer(Math.round(integerPlan.totalSeconds))} total &bull; ${differenceMarkup}</em></div>`;
   } else if (targetIsInvalid) {
-    planDetail = "Enter valid wait time";
+    planCard = `<b class="ground-orbit-plan-count">--</b><div class="ground-orbit-plan-card"><span>Whole-NM Diameter</span><b>--</b><small>360° -- &bull; --° Min &bull; --° Avg</small><em>Enter valid wait time</em></div>`;
   }
   let windArrow = "";
   if (wind && wind.speed > 0) {
@@ -2025,16 +2099,16 @@ function updateTurnDiameterPreview() {
     const windEnd = { x: 90 + (windVector.x * 46), y: 72 + (windVector.y * 46) };
     windArrow = `<line class="ground-orbit-plan-wind" x1="${windStart.x.toFixed(1)}" y1="${windStart.y.toFixed(1)}" x2="${windEnd.x.toFixed(1)}" y2="${windEnd.y.toFixed(1)}" marker-end="url(#groundOrbitWindArrow)"></line>`;
   }
-  els.turnDiameterPlan.innerHTML = `<span>Closest full-orbit plan</span><b>${planText}</b><small>${planDetail}</small><svg class="ground-orbit-plan-visual" viewBox="0 10 180 124" role="img" aria-label="Aircraft flying a left-hand circular ground-track orbit with entered wind; interior line D shows the orbit diameter"><defs><marker id="groundOrbitWindArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker></defs><circle class="ground-orbit-plan-path" cx="90" cy="72" r="42"></circle><line class="ground-orbit-plan-diameter" x1="48" y1="72" x2="132" y2="72"></line><text class="ground-orbit-plan-diameter-label" x="90" y="68">D</text>${windArrow}<g class="ground-orbit-plan-aircraft" transform="translate(90 30) rotate(180)"><path d="M-11 -2 H2 V-6 L11 0 L2 6 V2 H-11 Z"></path></g></svg><div class="ground-orbit-speed">${speedReadout}</div><button class="mini-btn turn-diameter-info-btn" type="button" data-turn-diameter-info aria-label="About Ground Track Orbit Diameter" title="About Ground Track Orbit Diameter">i</button>`;
+  els.turnDiameterPlan.innerHTML = `<div class="ground-orbit-plan-output"><span>Closest full-orbit plan</span>${planCard}</div><svg class="ground-orbit-plan-visual" viewBox="0 10 180 124" role="img" aria-label="Aircraft flying a left-hand circular ground-track orbit with entered wind; interior line D shows the orbit diameter"><defs><marker id="groundOrbitWindArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker></defs><circle class="ground-orbit-plan-path" cx="90" cy="72" r="42"></circle><line class="ground-orbit-plan-diameter" x1="48" y1="72" x2="132" y2="72"></line><text class="ground-orbit-plan-diameter-label" x="90" y="68">D</text>${windArrow}<g class="ground-orbit-plan-aircraft" transform="translate(90 30) rotate(180)"><path d="M-11 -2 H2 V-6 L11 0 L2 6 V2 H-11 Z"></path></g></svg><div class="ground-orbit-speed">${speedReadout}</div><button class="mini-btn turn-diameter-info-btn" type="button" data-turn-diameter-info aria-label="About Ground Track Orbit Diameter" title="About Ground Track Orbit Diameter">i</button>`;
 }
 
 function openTurnDiameterInfo() {
   openConfirm(
     "Ground Track Orbit Diameter",
     `<p>Use this calculator when you need to conduct circular ground-track orbits, such as during a contingency rejoin or while absorbing a delay in a MOA.</p>
-     <p>For the entered altitude, airspeed, and wind, it estimates how large the ground circle must be and how long one complete 360° orbit takes at each maximum bank angle.</p>
+     <p>For the entered altitude, airspeed, and wind, it calculates how large the ground circle must be and how long one complete 360° orbit takes at each maximum bank angle.</p>
      <p>You may notice a slightly different TAS here than in Turn Range &amp; Offset. That calculator intentionally uses the published ATP-3.3.4.2 KIAS-to-TAS table. Ground Track Orbit Diameter instead uses a continuous standard-atmosphere compressible-flow conversion for its kinematic calculations.</p>
-     <p>If a Wait Time is entered, the full-orbit plan suggests a combination of complete circles that comes closest to that time while favoring fewer bank-angle changes.</p>
+     <p>If a Wait Time is entered, the plan selects one whole-NM diameter, a whole number of complete orbits, and the required maximum bank between 15° and 30° that most closely matches the requested time.</p>
      <p>This is a planning aid. Continue to account for aircraft limitations, airspace, weather, and applicable guidance.</p>`,
     null,
     { hideCancel: true, hideOk: true, danger: false, html: true }
